@@ -1,6 +1,6 @@
 {
-  "name": "@jspsych-contrib/cli",
-  "private": "true",
+  "name": "@jspsych/jspsych-dev-templates",
+  "private": "false",
   "version": "0.0.1",
   "description": "CLI tool for creating new plugins and extensions",
   "type": "module",
@@ -21,5 +21,6 @@
     "del": "^7.1.0",
     "@inquirer/prompts": "5.3.8",
     "slash": "^5.1.0"
-  }
+  },
+  "bin": "cli/src/index.js"
 }

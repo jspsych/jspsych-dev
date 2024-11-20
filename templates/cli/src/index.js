@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +11,7 @@ import rename from "gulp-rename";
 import replace from "gulp-replace";
 import slash from "slash";
 
-const repoRoot = slash(path.resolve(fileURLToPath(import.meta.url), "../../../.."));
+const repoRoot = slash(process.cwd());
 
 function formatName(input) {
   return input

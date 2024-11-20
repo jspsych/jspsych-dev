@@ -1,5 +1,6 @@
 {
-    "private": true,
+    "name": "@jspsych/jspsych-dev",
+    "private": false,
     "type": "module",
     "workspaces": [
         "packages/*",
@@ -11,8 +12,7 @@
         "prepare": "husky install",
         "changeset": "changeset",
         "changeset:version": "changeset version && npm install && npm run update-unpkg-links && npm run update-readme",
-        "changeset:publish": "npm run build && changeset publish",
-        "new": "node ./templates/cli/src/index.js"
+        "changeset:publish": "npm run build && changeset publish"
     },
     "dependencies": {
         "@inquirer/prompts": "^7.1.0",
@@ -47,5 +47,6 @@
         "projects": [
             "<rootDir>/packages/*"
         ]
-    }
+    },
+    "bin": "./templates/cli/src/index.js"
 }
