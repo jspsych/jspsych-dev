@@ -45,10 +45,7 @@ var _globalName_ = (function (jspsych) {
         type: ParameterType.STRING,
       },
     },
-    citation: {
-      apa: "APA citation for your extension here",
-      bibtex: "BibTex citation for your extension here",
-    },
+    citations: '__CITATIONS__'
   };
 
   return ExtensionNameExtension;

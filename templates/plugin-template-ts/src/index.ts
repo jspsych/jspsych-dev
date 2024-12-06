@@ -27,10 +27,7 @@ const info = <const>{
       type: ParameterType.STRING,
     },
   },
-  citation: {
-    apa: "__APACITATION__",
-    bibtex: "__BIBTEXCITATION__",
-  },
+  citations: '__CITATIONS__',
 };
 
 type Info = typeof info;
