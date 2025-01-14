@@ -3,15 +3,12 @@
     "private": false,
     "type": "module",
     "workspaces": [
-        "packages/*",
-        "templates/cli"
+        "packages/*"
     ],
     "scripts": {
-        "update-unpkg-links": "gulp updateUnpkgLinks",
-        "update-readme": "node ./update-readme.js",
         "prepare": "husky install",
         "changeset": "changeset",
-        "changeset:version": "changeset version && npm install && npm run update-unpkg-links && npm run update-readme",
+        "changeset:version": "changeset version && npm install",
         "changeset:publish": "npm run build && changeset publish"
     },
     "dependencies": {
