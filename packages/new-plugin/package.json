@@ -1,0 +1,40 @@
+{
+  "name": "@jspsych/new-plugin",
+  "version": "0.0.1",
+  "description": "CLI tool to create new jsPsych plugins",
+  "type": "module",
+  "bin": "./src/cli.js",
+  "files": [
+    "src",
+    "../../templates/*"
+  ],
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "jspsych",
+    "psychology",
+    "experiment",
+    "cli"
+  ],
+  "author": "jsPsych Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.3",
+    "del": "^8.0.0",
+    "gulp": "^5.0.0",
+    "gulp-replace": "^1.1.4",
+    "inquirer": "^9.2.10",
+    "inquirer-file-selector": "^0.6.1"
+  },
+  "devDependencies": {
+    "jest": "^29.6.2"
+  },
+  "engines": {
+    "node": ">=14.16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
