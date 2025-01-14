@@ -1,2 +1,3 @@
-# jspsych-dev
-Repository for developers to build plugins, extensions and shareable timelines
+# Tools & Templates for jsPsych development
+
+Do not use this yet. Work in progress.
