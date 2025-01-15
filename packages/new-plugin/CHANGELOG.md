@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.0.4
+
+### Patch Changes
+
+- 5b0eacd: Fix path to templates folder listed under package.json files field.
+
 ## 0.0.3
 
 ### Patch Changes
