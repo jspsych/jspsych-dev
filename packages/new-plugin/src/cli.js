@@ -137,7 +137,7 @@ async function processAnswers(answers) {
         }
     })()
 
-    const templatesDir = path.resolve(__dirname, '../../../templates');
+    const templatesDir = path.resolve(__dirname, '../templates');
 
     function processTemplate() {
         return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
