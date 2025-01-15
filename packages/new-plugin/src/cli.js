@@ -10,7 +10,9 @@ import { deleteSync } from "del";
 import { dest, series, src } from "gulp";
 import rename from "gulp-rename";
 import replace from "gulp-replace";
+import { simpleGit } from "simple-git";
 
+const git = simpleGit();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -23,16 +25,35 @@ function formatName(input) {
         .toLowerCase();
 }
 
+async function getRepoRoot() {
+    try {
+        const rootDir = await git.revparse(['--show-toplevel']);
+        return rootDir;
+    } catch (error) {
+        console.error("Not a git repository or no repository root found.");
+        return null;
+    }
+}
+
 async function runPrompts() {
+    let isGitRepo = await git.checkIsRepo();
+    let isContrib = false;
+    if (isGitRepo) {
+        isContrib = await git.getRemotes(true).then(remotes => {
+            return remotes.some(remote => remote.refs.fetch.includes('git@github.com:jspsych/jspsych-contrib.git'));
+        });
+    }
+
     const publishing = await select({
         message: "Where are you planning to publish this plugin package?",
         choices: [
             {
                 name: "jspsych-contrib",
                 value: "jspsych-contrib",
+                disabled: isContrib ? false : "You are not in the jspsych-contrib repository. Please clone the repository and try again there.",
             },
             {
-                name: "My own repository",
+                name: `My own repository ${isGitRepo ? "" : "(You are not currently in a git repository)"} `,
                 value: "my-own-repository",
             },
             {
@@ -43,7 +64,7 @@ async function runPrompts() {
         loop: false,
     });
 
-    let destDir = `${__dirname}/packages`;
+    let destDir;
     if (publishing != "jspsych-contrib") {
         destDir = await fileSelector({
             message: "Where would you like to save this plugin package?",
@@ -51,6 +72,10 @@ async function runPrompts() {
             type: 'directory',
             loop: false
         })
+    }
+    else {
+        const repoRoot = await getRepoRoot(); // repoRoot should be confirmed to be the root of the jspsych-contrib repository at this point
+        destDir = path.join(repoRoot, 'packages');
     }
 
     let readmePath = "";
@@ -166,7 +191,7 @@ async function processAnswers(answers) {
             .pipe(rename(`${answers.name}.md`))
             .pipe(dest(`${destPath}/docs`))
             .on("end", function () {
-                deleteSync(`${destPath}/docs/docs-template.md`, {force: true});
+                deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
             });
     }
 
