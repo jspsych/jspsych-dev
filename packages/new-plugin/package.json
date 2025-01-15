@@ -1,6 +1,6 @@
 {
   "name": "@jspsych/new-plugin",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "CLI tool to create new jsPsych plugins",
   "type": "module",
   "bin": "./src/cli.js",

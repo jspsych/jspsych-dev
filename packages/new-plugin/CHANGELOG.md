@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.0.5
+
+### Patch Changes
+
+- 3018c91: Fix directory path to templates folder.
+
 ## 0.0.4
 
 ### Patch Changes
