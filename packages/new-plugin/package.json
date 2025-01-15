@@ -6,7 +6,7 @@
   "bin": "./src/cli.js",
   "files": [
     "src",
-    "../../templates/*"
+    "templates"
   ],
   "scripts": {
     "start": "node src/cli.js",
