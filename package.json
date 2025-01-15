@@ -1,6 +1,5 @@
 {
-    "name": "@jspsych/jspsych-dev",
-    "private": false,
+    "private": true,
     "type": "module",
     "workspaces": [
         "packages/*"
@@ -39,6 +38,5 @@
         "projects": [
             "<rootDir>/packages/*"
         ]
-    },
-    "bin": "./templates/cli/src/index.js"
+    }
 }
