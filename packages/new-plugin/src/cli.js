@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import fs, { read } from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,42 +44,9 @@ async function runPrompts() {
         });
     }
 
-    const publishing = await select({
-        message: "Where are you planning to publish this plugin package?",
-        choices: [
-            {
-                name: "jspsych-contrib",
-                value: "jspsych-contrib",
-                disabled: isContrib ? false : "You are not in the jspsych-contrib repository. Please clone the repository and try again there.",
-            },
-            {
-                name: `My own repository ${isGitRepo ? "" : "(You are not currently in a git repository)"} `,
-                value: "my-own-repository",
-            },
-            {
-                name: "Not publishing",
-                value: "not-publishing",
-            }
-        ],
-        loop: false,
-    });
-
-    let destDir;
-    if (publishing != "jspsych-contrib") {
-        destDir = await fileSelector({
-            message: "Where would you like to save this plugin package?",
-            required: true,
-            type: 'directory',
-            loop: false
-        })
-    }
-    else {
-        const repoRoot = await getRepoRoot(); // repoRoot should be confirmed to be the root of the jspsych-contrib repository at this point
-        destDir = path.join(repoRoot, 'packages');
-    }
-
+    let destDir = isContrib ? path.join(await getRepoRoot(), 'packages') : process.cwd();
     let readmePath = "";
-    if (publishing == "my-own-repository") {
+    if (!isContrib) {
         readmePath = await input({
             message: "Type a repository URL to the README file for your plugin package [Optional]:"
         });
@@ -132,7 +99,7 @@ async function runPrompts() {
     });
 
     return {
-        publishing: publishing,
+        isContrib: isContrib,
         destDir: destDir,
         readmePath: readmePath,
         name: name,
@@ -154,10 +121,10 @@ async function processAnswers(answers) {
     const packageFilename = `plugin-${answers.name}`;
     const destPath = path.join(answers.destDir, packageFilename);
     const readMePath = (() => {
-        if (answers.publishing == "jspsych-contrib") {
+        if (answers.isContrib) {
             return `https://github.com/jspsych/jspsych-contrib/packages/${packageFilename}/README.md`;
         }
-        else if (answers.publishing == "my-own-repository") {
+        else {
             return answers.readmePath;
         }
     })()
