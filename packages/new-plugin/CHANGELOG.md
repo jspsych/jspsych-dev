@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.0.6
+
+### Patch Changes
+
+- 80d83bf: This patch adds documentation for jspsych-dev and the new-plugin tool; adds the new-extension tool and new-timeline tool.
+
 ## 0.0.5
 
 ### Patch Changes
