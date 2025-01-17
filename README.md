@@ -1,4 +1,4 @@
-# jspsych-dev
+# Tools & Templates for jsPsych development
 
 This repository is for jsPsych users who would like to develop their own plugins, extensions or shareable timelines (jsPsych experiments). We provide these three packages for each of these purposes:
 
