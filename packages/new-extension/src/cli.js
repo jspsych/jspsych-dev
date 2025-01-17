@@ -44,15 +44,9 @@ async function runPrompts() {
     }
 
     let destDir = isContrib ? path.join(await getRepoRoot(), 'packages') : process.cwd();
-    let readmePath = "";
-    if (!isContrib) {
-        readmePath = await input({
-            message: "Type a repository URL to the README file for your plugin package [Optional]:"
-        });
-    }
-
+    
     const name = await input({
-        message: "What would you like to call this plugin package?",
+        message: "What would you like to call this extension package?",
         required: true,
         transformer: (input) => {
             // convert to hyphen case
@@ -61,29 +55,29 @@ async function runPrompts() {
         validate: (input) => {
             const fullpackageFilename = `${destDir}/plugin-${formatName(input)}`;
             if (fs.existsSync(fullpackageFilename)) {
-                return "A plugin package with this name already exists. Please choose a different name.";
+                return "A extension package with this name already exists. Please choose a different name.";
             } else {
                 return true;
             }
         },
     });
-
+    
     const description = await input({
-        message: "Enter a brief description of the plugin package:",
+        message: "Enter a brief description of the extension package:",
         required: true,
     });
-
+    
     const author = await input({
-        message: "What is the name of the author of this plugin package?",
+        message: "What is the name of the author of this extension package?",
         required: true,
     });
-
+    
     const authorUrl = await input({
         message: "Enter a profile URL for the author, e.g. a link to a GitHub profile [Optional]:",
     });
-
+    
     const language = await select({
-        message: "What language would you like to use for your plugin?",
+        message: "What language would you like to use for your extension?",
         choices: [
             {
                 name: "TypeScript",
@@ -97,15 +91,22 @@ async function runPrompts() {
         loop: false,
     });
 
+    let readmePath = "";
+    if (!isContrib) {
+        readmePath = await input({
+            message: "Type a repository URL to the README file for your extension package [Optional]:"
+        });
+    }
+
     return {
         isContrib: isContrib,
         destDir: destDir,
-        readmePath: readmePath,
         name: name,
         description: description,
         author: author,
         authorUrl: authorUrl,
-        language: language
+        language: language,
+        readmePath: readmePath
     };
 }
 
@@ -117,7 +118,7 @@ async function processAnswers(answers) {
 
     const globalName = "jsPsych" + camelCaseName;
 
-    const packageFilename = `plugin-${answers.name}`;
+    const packageFilename = `extension-${answers.name}`;
     const destPath = path.join(answers.destDir, packageFilename);
     const readMePath = (() => {
         if (answers.isContrib) {
@@ -131,7 +132,7 @@ async function processAnswers(answers) {
     const templatesDir = path.resolve(__dirname, '../templates');
 
     function processTemplate() {
-        return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
+        return src(`${templatesDir}/extension-template-${answers.language}/**/*`)
             .pipe(replace("{name}", answers.name))
             .pipe(replace("{full-name}", packageFilename))
             .pipe(replace("{author}", answers.author))
@@ -140,7 +141,7 @@ async function processAnswers(answers) {
             .pipe(replace("_globalName_", globalName))
             .pipe(replace("{globalName}", globalName))
             .pipe(replace("{camelCaseName}", camelCaseName))
-            .pipe(replace("PluginNamePlugin", `${camelCaseName}Plugin`))
+            .pipe(replace("ExtensionNameExtension", `${camelCaseName}Extension`))
             .pipe(replace("{documentation-url}", readMePath))
             .pipe(dest(destPath));
     }
