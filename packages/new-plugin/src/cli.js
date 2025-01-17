@@ -44,13 +44,7 @@ async function runPrompts() {
     }
 
     let destDir = isContrib ? path.join(await getRepoRoot(), 'packages') : process.cwd();
-    let readmePath = "";
-    if (!isContrib) {
-        readmePath = await input({
-            message: "Type a repository URL to the README file for your plugin package [Optional]:"
-        });
-    }
-
+    
     const name = await input({
         message: "What would you like to call this plugin package?",
         required: true,
@@ -67,21 +61,21 @@ async function runPrompts() {
             }
         },
     });
-
+    
     const description = await input({
         message: "Enter a brief description of the plugin package:",
         required: true,
     });
-
+    
     const author = await input({
         message: "What is the name of the author of this plugin package?",
         required: true,
     });
-
+    
     const authorUrl = await input({
         message: "Enter a profile URL for the author, e.g. a link to a GitHub profile [Optional]:",
     });
-
+    
     const language = await select({
         message: "What language would you like to use for your plugin?",
         choices: [
@@ -96,16 +90,23 @@ async function runPrompts() {
         ],
         loop: false,
     });
-
+    
+    let readmePath = "";
+    if (!isContrib) {
+        readmePath = await input({
+            message: "Enter the path to the README.md file forthis plugin package [Optional]:"
+        });
+    }
+    
     return {
         isContrib: isContrib,
         destDir: destDir,
-        readmePath: readmePath,
         name: name,
         description: description,
         author: author,
         authorUrl: authorUrl,
-        language: language
+        language: language,
+        readmePath: readmePath
     };
 }
 
@@ -126,7 +127,7 @@ async function processAnswers(answers) {
         else {
             return answers.readmePath;
         }
-    })()
+    })();
 
     const templatesDir = path.resolve(__dirname, '../templates');
 

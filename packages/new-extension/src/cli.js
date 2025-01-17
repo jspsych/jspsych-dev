@@ -94,7 +94,8 @@ async function runPrompts() {
     let readmePath = "";
     if (!isContrib) {
         readmePath = await input({
-            message: "Type a repository URL to the README file for your extension package [Optional]:"
+            message: "Enter the path to the README.md file for this extension package [Optional]:",
+            default: `${destDir}/README.md`,
         });
     }
 
@@ -117,7 +118,6 @@ async function processAnswers(answers) {
         answers.name.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 
     const globalName = "jsPsych" + camelCaseName;
-
     const packageFilename = `extension-${answers.name}`;
     const destPath = path.join(answers.destDir, packageFilename);
     const readMePath = (() => {
@@ -127,7 +127,7 @@ async function processAnswers(answers) {
         else {
             return answers.readmePath;
         }
-    })()
+    })();
 
     const templatesDir = path.resolve(__dirname, '../templates');
 
@@ -135,8 +135,8 @@ async function processAnswers(answers) {
         return src(`${templatesDir}/extension-template-${answers.language}/**/*`)
             .pipe(replace("{name}", answers.name))
             .pipe(replace("{full-name}", packageFilename))
-            .pipe(replace("{author}", answers.author))
             .pipe(replace("{description}", answers.description))
+            .pipe(replace("{author}", answers.author))
             .pipe(replace("{authorUrl}", answers.authorUrl))
             .pipe(replace("_globalName_", globalName))
             .pipe(replace("{globalName}", globalName))
