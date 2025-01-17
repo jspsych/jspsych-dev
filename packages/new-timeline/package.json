@@ -1,9 +1,8 @@
 {
-  "name": "@jspsych/new-plugin",
-  "version": "0.0.5",
-  "description": "CLI tool to create new jsPsych plugins",
+  "name": "@jspsych-timelines/new-timeline",
+  "version": "0.2.0",
+  "description": "CLI tool for creating new jsPsych timelines",
   "type": "module",
-  "bin": "./src/cli.js",
   "files": [
     "src",
     "templates"
@@ -18,11 +17,11 @@
     "experiment",
     "cli"
   ],
-  "author": "jsPsych Contributors",
+  "author": "Josh de Leeuw",
   "license": "MIT",
   "dependencies": {
-    "@inquirer/prompts": "^7.2.3",
-    "del": "^8.0.0",
+    "@inquirer/prompts": "^5.3.8",
+    "del": "^7.1.0",
     "gulp": "^5.0.0",
     "gulp-rename": "^2.0.0",
     "gulp-replace": "^1.1.4",

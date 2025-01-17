@@ -46,7 +46,7 @@ async function runPrompts() {
     let destDir = isContrib ? path.join(await getRepoRoot(), 'packages') : process.cwd();
     
     const name = await input({
-        message: "What would you like to call this plugin package?",
+        message: "What would you like to call this extension package?",
         required: true,
         transformer: (input) => {
             // convert to hyphen case
@@ -55,7 +55,7 @@ async function runPrompts() {
         validate: (input) => {
             const fullpackageFilename = `${destDir}/plugin-${formatName(input)}`;
             if (fs.existsSync(fullpackageFilename)) {
-                return "A plugin package with this name already exists. Please choose a different name.";
+                return "A extension package with this name already exists. Please choose a different name.";
             } else {
                 return true;
             }
@@ -63,12 +63,12 @@ async function runPrompts() {
     });
     
     const description = await input({
-        message: "Enter a brief description of the plugin package:",
+        message: "Enter a brief description of the extension package:",
         required: true,
     });
     
     const author = await input({
-        message: "What is the name of the author of this plugin package?",
+        message: "What is the name of the author of this extension package?",
         required: true,
     });
     
@@ -77,7 +77,7 @@ async function runPrompts() {
     });
     
     const language = await select({
-        message: "What language would you like to use for your plugin?",
+        message: "What language would you like to use for your extension?",
         choices: [
             {
                 name: "TypeScript",
@@ -90,14 +90,15 @@ async function runPrompts() {
         ],
         loop: false,
     });
-    
+
     let readmePath = "";
     if (!isContrib) {
         readmePath = await input({
-            message: "Enter the path to the README.md file forthis plugin package [Optional]:"
+            message: "Enter the path to the README.md file for this extension package [Optional]:",
+            default: `${destDir}/README.md`,
         });
     }
-    
+
     return {
         isContrib: isContrib,
         destDir: destDir,
@@ -117,8 +118,7 @@ async function processAnswers(answers) {
         answers.name.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 
     const globalName = "jsPsych" + camelCaseName;
-
-    const packageFilename = `plugin-${answers.name}`;
+    const packageFilename = `extension-${answers.name}`;
     const destPath = path.join(answers.destDir, packageFilename);
     const readMePath = (() => {
         if (answers.isContrib) {
@@ -132,16 +132,16 @@ async function processAnswers(answers) {
     const templatesDir = path.resolve(__dirname, '../templates');
 
     function processTemplate() {
-        return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
+        return src(`${templatesDir}/extension-template-${answers.language}/**/*`)
             .pipe(replace("{name}", answers.name))
             .pipe(replace("{full-name}", packageFilename))
-            .pipe(replace("{author}", answers.author))
             .pipe(replace("{description}", answers.description))
+            .pipe(replace("{author}", answers.author))
             .pipe(replace("{authorUrl}", answers.authorUrl))
             .pipe(replace("_globalName_", globalName))
             .pipe(replace("{globalName}", globalName))
             .pipe(replace("{camelCaseName}", camelCaseName))
-            .pipe(replace("PluginNamePlugin", `${camelCaseName}Plugin`))
+            .pipe(replace("ExtensionNameExtension", `${camelCaseName}Extension`))
             .pipe(replace("{documentation-url}", readMePath))
             .pipe(dest(destPath));
     }
