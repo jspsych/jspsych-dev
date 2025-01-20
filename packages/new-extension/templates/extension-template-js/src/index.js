@@ -7,7 +7,7 @@ var _globalName_ = (function (jspsych) {
    * {description}
    *
    * @author {author}
-   * @see {@link {documentation-url}}
+   * @see {@link {documentationUrl}}
    */
   class ExtensionNameExtension {
     constructor(jsPsych) {

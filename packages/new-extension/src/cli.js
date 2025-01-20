@@ -95,7 +95,7 @@ async function runPrompts() {
     if (!isContrib) {
         readmePath = await input({
             message: "Enter the path to the README.md file for this extension package [Optional]:",
-            default: `${destDir}/README.md`,
+            default: `${destDir}/${name}/README.md`,
         });
     }
 

@@ -38,7 +38,7 @@ type Info = typeof info;
  * {description}
  *
  * @author {author}
- * @see {@link {documentation-url}}}
+ * @see {@link {documentationUrl}}}
  */
 class PluginNamePlugin implements JsPsychPlugin<Info> {
   static info = info;

@@ -15,7 +15,58 @@ const git = simpleGit();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function formatName(input) {
+async function getRepoRoot() {
+  try {
+    const rootDir = await git.revparse(["--show-toplevel"]);
+    return rootDir;
+  } catch (error) {
+    console.error("Not a git repository or no repository root found.");
+    return "";
+  }
+}
+
+async function getRemoteGitRootUrl() {
+  try {
+    const remotes = await git.getRemotes(true);
+    const originRemote = remotes.find((remote) => remote.name === "origin");
+    if (originRemote) {
+      let remoteGitRootUrl = originRemote.refs.fetch;
+      if (remoteGitRootUrl.startsWith("git@github.com:")) {
+        remoteGitRootUrl = remoteGitRootUrl.replace("git@github.com:", "git+https://github.com/");
+      }
+      return remoteGitRootUrl;
+    }
+    console.warn("No remote named 'origin' found.");
+    return "";
+  } catch (error) {
+    console.error("Error getting remote root Git URL:", error);
+    return "";
+  }
+}
+
+async function getRemoteGitUrl() {
+  let remoteGitUrl;
+  const remoteGitRootUrl = await getRemoteGitRootUrl();
+  const repoRoot = await getRepoRoot();
+  if (repoRoot) {
+    const currentDir = process.cwd();
+    const relativePath = path.relative(repoRoot, currentDir);
+    if (relativePath) {
+      remoteGitUrl = `${remoteGitRootUrl}/tree/main/${relativePath}`;
+    }
+    return remoteGitUrl;
+  }
+  console.warn("No Git repository root found.");
+  return "";
+}
+
+function getGitHttpsUrl(gitUrl) {
+  gitUrl = gitUrl.replace("git+", "");
+  gitUrl = gitUrl.replace(".git", "");
+  return gitUrl;
+}
+
+function hyphenateName(input) {
   return input
     .trim()
     .replace(/[\s_]+/g, "-") // Replace all spaces and underscores with hyphens
@@ -24,37 +75,43 @@ function formatName(input) {
     .toLowerCase();
 }
 
-async function getRepoRoot() {
-  try {
-    const rootDir = await git.revparse(['--show-toplevel']);
-    return rootDir;
-  } catch (error) {
-    console.error("Not a git repository or no repository root found.");
-    return null;
+function camelCaseName(input) {
+  return (
+    input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase())
+  );
+}
+
+async function getCwdInfo() {
+  // If current directory is the jspsych-timelines repository
+  if (await git.checkIsRepo()) {
+    const remotes = await git.getRemotes(true);
+    return {
+      isTimelinesRepo: remotes.some((remote) =>
+        remote.refs.fetch.includes("git@github.com:jspsych/jspsych-timelines.git")
+      ),
+      destDir: path.join(await getRepoRoot(), "packages"),
+    };
+  }
+  // If current directory is not the jspsych-timelines repository
+  else {
+    return {
+      isTimelinesRepo: false,
+      destDir: process.cwd(),
+    };
   }
 }
 
-async function runPrompts() {
-  let isGitRepo = await git.checkIsRepo();
-  let isTimelinesRepo = false;
-  if (isGitRepo) {
-    isTimelinesRepo = await git.getRemotes(true).then(remotes => {
-      return remotes.some(remote => remote.refs.fetch.includes('git@github.com:jspsych/jspsych-timelines.git'));
-    });
-  }
-
-  let destDir = isTimelinesRepo ? path.join(await getRepoRoot(), 'packages') : process.cwd();
-
+async function runPrompts(cwdInfo) {
   const name = await input({
     message: "What do you want to call this timeline package?",
     required: true,
     transformer: (input) => {
-      return formatName(input);
+      return hyphenateName(input);
     },
     validate: (input) => {
-      const fullpackageFilename = `${destDir}/timeline-${formatName(input)}`;
-      if (fs.existsSync(fullpackageFilename)) {
-        return "A timeline package with this name already exists. Please choose a different name.";
+      const packagePath = `${cwdInfo.destDir}/timeline-${hyphenateName(input)}`;
+      if (fs.existsSync(packagePath)) {
+        return "A timeline package with this name already exists in this directory. Please choose a different name.";
       } else {
         return true;
       }
@@ -78,62 +135,56 @@ async function runPrompts() {
   const language = await select({
     message: "What language do you want to use?",
     choices: [
-      {
-        name: "TypeScript",
-        value: "ts",
-      },
-      {
-        name: "JavaScript",
-        value: "js",
-      }
+      { name: "TypeScript", value: "ts" },
+      { name: "JavaScript", value: "js" },
     ],
     loop: false,
   });
 
+  // If not in the jspsych-timelines repository, ask for the path to the README.md file
   let readmePath = "";
-  if (!isTimelinesRepo) {
+  if (!cwdInfo.isTimelinesRepo) {
     readmePath = await input({
       message: "Enter the path to the README.md file for this timeline package [Optional]:",
-      default: `${destDir}/${name}/README.md`
+      default: `${getGitHttpsUrl(await getRemoteGitUrl())}/timeline-${name}/README.md`, // '/timeline-${name}/README.md' if not a Git repository
     });
+  } else {
+    readmePath = `https://github.com/jspsych/jspsych-timelines/packages/timeline-${name}/README.md`;
   }
 
   return {
-    isTimelinesRepo: isTimelinesRepo,
-    destDir: destDir,
     name: name,
     description: description,
     author: author,
     authorUrl: authorUrl,
     language: language,
-    readmePath: readmePath
+    readmePath: readmePath,
+    destDir: cwdInfo.destDir,
+    isTimelinesRepo: cwdInfo.isTimelinesRepo,
   };
 }
 
 async function processAnswers(answers) {
-  answers.name = formatName(answers.name);
-  const camelCaseName =
-    answers.name.charAt(0).toUpperCase() +
-    answers.name.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-
-  const globalName = "jsPsychTimeline" + camelCaseName;
-  const packageFilename = `timeline-${answers.name}`;
-  const destPath = path.join(answers.destDir, packageFilename);
-  const readmePath = (() => {
+  answers.name = hyphenateName(answers.name);
+  const globalName = "jsPsychTimeline" + camelCaseName(answers.name);
+  const packageName = `timeline-${answers.name}`;
+  const destPath = path.join(answers.destDir, packageName);
+  const npmPackageName = (() => {
     if (answers.isTimelinesRepo) {
-      return `https://github.com/jspsych/jspsych-timelines/packages/${answers.name}/README.md`
-    }
-    else {
-      return answers.readmePath;
+      return `@jspsych-timelines/${packageName}`;
+    } else {
+      return packageName;
     }
   })();
 
   const templatesDir = path.resolve(__dirname, "../templates");
+  const gitRootUrl = await getRemoteGitRootUrl();
+  const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
     return src(`${templatesDir}/timeline-template-${answers.language}/**/*`)
-      .pipe(replace("{name}", answers.name))
-      .pipe(replace("{full name}", packageFilename))
+      .pipe(replace("{name}", `timeline-${answers.name}`))
+      .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{description}", answers.description))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
@@ -141,7 +192,10 @@ async function processAnswers(answers) {
       .pipe(replace("{globalName}", globalName))
       .pipe(replace("{camelCaseName}", camelCaseName))
       .pipe(replace("ExtensionNameExtension", `${camelCaseName}Extension`))
-      .pipe(replace("{documentation-url}", readmePath))
+      .pipe(replace("{packageName}", packageName))
+      .pipe(replace("{gitRootUrl}", gitRootUrl))
+      .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
+      .pipe(replace("{documentationUrl}", answers.readmePath))
       .pipe(dest(destPath));
   }
 
@@ -163,17 +217,27 @@ async function processAnswers(answers) {
 
   function renameReadmeTemplate() {
     return src(`${destPath}/README.md`)
-        .pipe(
-            replace(
-                `{authorInfo}`,
-                answers.authorUrl ? `[${answers.author}](${answers.authorUrl})` : `${answers.author}`
-            )
+      .pipe(replace(`{npmPackageName}`, npmPackageName))
+      .pipe(
+        replace(
+          `{authorInfo}`,
+          answers.authorUrl ? `[${answers.author}](${answers.authorUrl})` : `${answers.author}`
         )
-        .pipe(dest(destPath));
-}
+      )
+      .pipe(
+        replace(
+          `## Loading`,
+          answers.isTimelinesRepo
+            ? '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```'
+            : `## Loading`
+        )
+      )
+      .pipe(dest(destPath));
+  }
 
   series(processTemplate, renameExampleTemplate, renameDocsTemplate, renameReadmeTemplate)();
 }
 
-const answers = await runPrompts();
+const cwdInfo = await getCwdInfo();
+const answers = await runPrompts(cwdInfo);
 await processAnswers(answers);

@@ -16,7 +16,7 @@ interface OnFinishParameters {}
  * {description}
  *
  * @author {author}
- * @see {@link {documentation-url}}}
+ * @see {@link {documentationUrl}}}
  */
 class ExtensionNameExtension implements JsPsychExtension {
   static info: JsPsychExtensionInfo = {
