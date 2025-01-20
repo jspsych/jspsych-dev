@@ -15,167 +15,228 @@ const git = simpleGit();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function formatName(input) {
-    return input
-        .trim()
-        .replace(/[\s_]+/g, "-") // Replace all spaces and underscores with hyphens
-        .replace(/([a-z])([A-Z])/g, "$1-$2") // Replace camelCase with hyphens
-        .replace(/[^\w-]/g, "") // Remove all non-word characters
-        .toLowerCase();
-}
-
 async function getRepoRoot() {
-    try {
-        const rootDir = await git.revparse(['--show-toplevel']);
-        return rootDir;
-    } catch (error) {
-        console.error("Not a git repository or no repository root found.");
-        return null;
-    }
+  try {
+    const rootDir = await git.revparse(["--show-toplevel"]);
+    return rootDir;
+  } catch (error) {
+    console.error("Not a git repository or no repository root found.");
+    return null;
+  }
 }
 
-async function runPrompts() {
-    let isGitRepo = await git.checkIsRepo();
-    let isContrib = false;
-    if (isGitRepo) {
-        isContrib = await git.getRemotes(true).then(remotes => {
-            return remotes.some(remote => remote.refs.fetch.includes('git@github.com:jspsych/jspsych-contrib.git'));
-        });
+async function getRemoteGitRootUrl() {
+  try {
+    const remotes = await git.getRemotes(true);
+    const originRemote = remotes.find((remote) => remote.name === "origin");
+    if (originRemote) {
+      let remoteGitRootUrl = originRemote.refs.fetch;
+      if (remoteGitRootUrl.startsWith("git@github.com:")) {
+        remoteGitRootUrl = remoteGitRootUrl.replace("git@github.com:", "git+https://github.com/");
+      }
+      return remoteGitRootUrl;
     }
+    console.warn("No remote named 'origin' found.");
+    return "";
+  } catch (error) {
+    console.error("Error getting remote root Git URL:", error);
+    return "";
+  }
+}
 
-    let destDir = isContrib ? path.join(await getRepoRoot(), 'packages') : process.cwd();
-    
-    const name = await input({
-        message: "What would you like to call this plugin package?",
-        required: true,
-        transformer: (input) => {
-            // convert to hyphen case
-            return formatName(input);
-        },
-        validate: (input) => {
-            const fullpackageFilename = `${destDir}/plugin-${formatName(input)}`;
-            if (fs.existsSync(fullpackageFilename)) {
-                return "A plugin package with this name already exists. Please choose a different name.";
-            } else {
-                return true;
-            }
-        },
-    });
-    
-    const description = await input({
-        message: "Enter a brief description of the plugin package:",
-        required: true,
-    });
-    
-    const author = await input({
-        message: "What is the name of the author of this plugin package?",
-        required: true,
-    });
-    
-    const authorUrl = await input({
-        message: "Enter a profile URL for the author, e.g. a link to a GitHub profile [Optional]:",
-    });
-    
-    const language = await select({
-        message: "What language would you like to use for your plugin?",
-        choices: [
-            {
-                name: "TypeScript",
-                value: "ts",
-            },
-            {
-                name: "JavaScript",
-                value: "js",
-            },
-        ],
-        loop: false,
-    });
-    
-    let readmePath = "";
-    if (!isContrib) {
-        readmePath = await input({
-            message: "Enter the path to the README.md file for this plugin package [Optional]:",
-            default: `${destDir}/plugin-${name}/README.md`
-        });
+async function getRemoteGitUrl() {
+  let remoteGitUrl;
+  const remoteGitRootUrl = await getRemoteGitRootUrl();
+  const repoRoot = await getRepoRoot();
+  if (repoRoot) {
+    const currentDir = process.cwd();
+    const relativePath = path.relative(repoRoot, currentDir);
+    if (relativePath) {
+      remoteGitUrl = `${remoteGitRootUrl}/tree/main/${relativePath}`;
     }
-    
+    return remoteGitUrl;
+  }
+  console.warn("No Git repository root found.");
+  return "";
+}
+
+function getGitHttpsUrl(gitUrl) {
+  gitUrl = gitUrl.replace("git+", "");
+  gitUrl = gitUrl.replace(".git", "");
+  return gitUrl;
+}
+
+function hyphenateName(input) {
+  return input
+    .trim()
+    .replace(/[\s_]+/g, "-") // Replace all spaces and underscores with hyphens
+    .replace(/([a-z])([A-Z])/g, "$1-$2") // Replace camelCase with hyphens
+    .replace(/[^\w-]/g, "") // Remove all non-word characters
+    .toLowerCase();
+}
+
+function camelCaseName(input) {
+  return (
+    input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase())
+  );
+}
+
+async function getCwdInfo() {
+  // If current directory is the jspsych-contrib repository
+  if (await git.checkIsRepo()) {
+    const remotes = await git.getRemotes(true);
     return {
-        isContrib: isContrib,
-        destDir: destDir,
-        name: name,
-        description: description,
-        author: author,
-        authorUrl: authorUrl,
-        language: language,
-        readmePath: readmePath
+      isContribRepo: remotes.some((remote) =>
+        remote.refs.fetch.includes("git@github.com:jspsych/jspsych-contrib.git")
+      ),
+      destDir: path.join(await getRepoRoot(), "packages"),
     };
+  }
+  // If current directory is not the jspsych-contrib repository
+  else {
+    return {
+      isContribRepo: false,
+      destDir: process.cwd(),
+    };
+  }
+}
+
+async function runPrompts(cwdInfo) {
+  const name = await input({
+    message: "Enter the name you would like this plugin package to be called:",
+    required: true,
+    transformer: (input) => {
+      return hyphenateName(input);
+    },
+    validate: (input) => {
+      const packagePath = `${cwdInfo.destDir}/plugin-${hyphenateName(input)}`;
+      if (fs.existsSync(packagePath)) {
+        return "A plugin package with this name already exists in this directory. Please choose a different name.";
+      } else {
+        return true;
+      }
+    },
+  });
+
+  const description = await input({
+    message: "Enter a brief description of this plugin package:",
+    required: true,
+  });
+
+  const author = await input({
+    message: "Enter the name of the author of this plugin package:",
+    required: true,
+  });
+
+  const authorUrl = await input({
+    message: "Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:",
+  });
+
+  const language = await select({
+    message: "What language would you like to use for your plugin package?",
+    choices: [
+      { name: "TypeScript", value: "ts" },
+      { name: "JavaScript", value: "js" },
+    ],
+    loop: false,
+  });
+
+  // If not in the jspsych-contrib repository, ask for the path to the README.md file
+  let readmePath;
+  if (!isContrib) {
+    readmePath = await input({
+      message: "Enter the path to the README.md file for this plugin package [Optional]:",
+      default: `${getGitHttpsUrl(await getRemoteGitUrl)}/plugin-${name}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
+    });
+  } else {
+    readmePath = `https://github.com/jspsych/jspsych-contrib/packages/plugin-${name}/README.md`;
+  }
+
+  return {
+    name: name,
+    description: description,
+    author: author,
+    authorUrl: authorUrl,
+    language: language,
+    readmePath: readmePath,
+    destDir: cwdInfo.destDir,
+    isContribRepo: cwdInfo.isContribRepo,
+  };
 }
 
 async function processAnswers(answers) {
-    answers.name = formatName(answers.name);
-    const camelCaseName =
-        answers.name.charAt(0).toUpperCase() +
-        answers.name.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-
-    const globalName = "jsPsych" + camelCaseName;
-
-    const packageFilename = `plugin-${answers.name}`;
-    const destPath = path.join(answers.destDir, packageFilename);
-    const readMePath = (() => {
-        if (answers.isContrib) {
-            return `https://github.com/jspsych/jspsych-contrib/packages/${packageFilename}/README.md`;
-        }
-        else {
-            return answers.readmePath;
-        }
-    })();
-
-    const templatesDir = path.resolve(__dirname, '../templates');
-
-    function processTemplate() {
-        return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
-            .pipe(replace("{name}", answers.name))
-            .pipe(replace("{full-name}", packageFilename))
-            .pipe(replace("{author}", answers.author))
-            .pipe(replace("{description}", answers.description))
-            .pipe(replace("{authorUrl}", answers.authorUrl))
-            .pipe(replace("_globalName_", globalName))
-            .pipe(replace("{globalName}", globalName))
-            .pipe(replace("{camelCaseName}", camelCaseName))
-            .pipe(replace("PluginNamePlugin", `${camelCaseName}Plugin`))
-            .pipe(replace("{documentation-url}", readMePath))
-            .pipe(dest(destPath));
+  answers.name = hyphenateName(answers.name);
+  const globalName = "jsPsychPlugin" + camelCaseName(answers.name);
+  const packageName = `plugin-${answers.name}`;
+  const destPath = path.join(answers.destDir, packageName);
+  const npmPackageName = (() => {
+    if (answers.isContribRepo) {
+      return `@jspsych-contrib/${packageName}`;
+    } else {
+      return packageName;
     }
+  })();
 
-    function renameExampleTemplate() {
-        return src(`${destPath}/examples/index.html`)
-            .pipe(replace("{name}", answers.name))
-            .pipe(replace("{globalName}", globalName))
-            .pipe(dest(`${destPath}/examples`));
-    }
+  const templatesDir = path.resolve(__dirname, "../templates");
+  const gitRootUrl = await getRemoteGitRootUrl();
+  const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
-    function renameDocsTemplate() {
-        return src(`${destPath}/docs/docs-template.md`)
-            .pipe(rename(`${answers.name}.md`))
-            .pipe(dest(`${destPath}/docs`))
-            .on("end", function () {
-                deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
-            });
-    }
+  function processTemplate() {
+    return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
+      .pipe(replace("{name}", `plugin-${answers.name}`))
+      .pipe(replace("{npmPackageName}", npmPackageName))
+      .pipe(replace("{author}", answers.author))
+      .pipe(replace("{authorUrl}", answers.authorUrl))
+      .pipe(replace("{description}", answers.description))
+      .pipe(replace("_globalName_", globalName))
+      .pipe(replace("{globalName}", globalName))
+      .pipe(replace("{camelCaseName}", camelCaseName))
+      .pipe(replace("PluginNamePlugin", `${camelCaseName}Plugin`))
+      .pipe(replace("{gitRootUrl}", gitRootUrl))
+      .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
+      .pipe(replace("{documentationUrl}", answers.readMePath))
+      .pipe(dest(destPath));
+  }
 
-    function renameReadmeTemplate() {
-        return src(`${destPath}/README.md`)
-            .pipe(
-                replace(
-                    `{authorInfo}`,
-                    answers.authorUrl ? `[${answers.author}](${answers.authorUrl})` : `${answers.author}`
-                )
-            )
-            .pipe(dest(destPath));
-    }
+  function renameExampleTemplate() {
+    return src(`${destPath}/examples/index.html`)
+      .pipe(replace("{name}", answers.name))
+      .pipe(replace("{globalName}", globalName))
+      .pipe(dest(`${destPath}/examples`));
+  }
 
-    series(processTemplate, renameExampleTemplate, renameDocsTemplate, renameReadmeTemplate)();
+  function renameDocsTemplate() {
+    return src(`${destPath}/docs/docs-template.md`)
+      .pipe(rename(`${answers.name}.md`))
+      .pipe(dest(`${destPath}/docs`))
+      .on("end", function () {
+        deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
+      });
+  }
+
+  function renameReadmeTemplate() {
+    return src(`${destPath}/README.md`)
+      .pipe(replace(`{npmPackageName}`, npmPackageName))
+      .pipe(
+        replace(
+          `{authorInfo}`,
+          answers.authorUrl ? `[${answers.author}](${answers.authorUrl})` : `${answers.author}`
+        )
+      )
+      .pipe(
+        replace(
+          `## Loading`,
+          answers.isTimelinesRepo
+            ? '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```'
+            : `## Loading`
+        )
+      )
+      .pipe(dest(destPath));
+  }
+
+  series(processTemplate, renameExampleTemplate, renameDocsTemplate, renameReadmeTemplate)();
 }
 
-const answers = await runPrompts();
+const cwdInfo = await getCwdInfo();
+const answers = await runPrompts(cwdInfo);
 await processAnswers(answers);
