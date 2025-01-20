@@ -94,7 +94,8 @@ async function runPrompts() {
     let readmePath = "";
     if (!isContrib) {
         readmePath = await input({
-            message: "Enter the path to the README.md file forthis plugin package [Optional]:"
+            message: "Enter the path to the README.md file for this plugin package [Optional]:",
+            default: `${destDir}/plugin-${name}/README.md`
         });
     }
     
