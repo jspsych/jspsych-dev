@@ -1,5 +1,5 @@
 {
-    "name": "@jspsych-timelines/{name}",
+    "name": "{npmPackageName}",
     "version": "0.0.1",
     "description": "{description}",
     "unpkg": "dist/index.browser.min.js",
@@ -13,7 +13,7 @@
     },
     "repository": {
       "type": "git",
-      "url": "git+https://github.com/jspsych/jspsych-timelines.git",
+      "url": "{gitRootUrl}",
       "directory": "packages/{name}"
     },
     "author": {
@@ -22,9 +22,9 @@
     },
     "license": "MIT",
     "bugs": {
-      "url": "https://github.com/jspsych/jspsych-timelines/issues"
+      "url": "{gitRootHttpsUrl}/issues"
     },
-    "homepage": "https://github.com/jspsych/jspsych-timelines/tree/main/packages/{name}",
+    "homepage": "{documentationUrl}",
     "devDependencies": {
       "@jspsych/config": "^2.0.0",
       "jspsych": "^7.0.0"

@@ -6,25 +6,9 @@
 
 ## Loading
 
-### In browser
-
-```html
-<script src="https://unpkg.com/@jspsych-timelines/{name}">
-```
-
-### Via NPM
-
-```
-npm install @jspsych-timelines/{name}
-```
-
-```js
-import { createTimeline, timelineUnits, utils } from "@jspsych-timelines/{name}"
-```
-
 ## Compatibility
 
-`@jspsych-timelines/{name}` requires jsPsych v7.0.0 or later.
+`{npmPackageName}` requires jsPsych v7.0.0 or later.
 
 ## Documentation
 
