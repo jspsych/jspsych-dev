@@ -1,5 +1,11 @@
 # @jspsych-timelines/new-timeline
 
+## 0.0.2
+
+### Patch Changes
+
+- dbf39bf: This release publishes the @jspsych/new-timeline package on npm. This is a command line tool for creating jsPsych timelines with provided template code.
+
 ## 0.2.1
 
 ### Patch Changes
