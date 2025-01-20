@@ -14,7 +14,7 @@
     "repository": {
       "type": "git",
       "url": "{gitRootUrl}",
-      "directory": "packages/{packageName}"
+      "directory": "{packageDir}"
     },
     "author": {
       "name": "{author}",

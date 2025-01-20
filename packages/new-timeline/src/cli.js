@@ -129,11 +129,11 @@ async function runPrompts(cwdInfo) {
   });
 
   const authorUrl = await input({
-    message: `Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:`,
+    message: "Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:",
   });
 
   const language = await select({
-    message: "What language would you like to use for your timeline package?",
+    message: "Choose a language to use for this timeline package:",
     choices: [
       { name: "TypeScript", value: "ts" },
       { name: "JavaScript", value: "js" },
@@ -196,6 +196,7 @@ async function processAnswers(answers) {
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
       .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{packageDir}", answers.isTimelinesRepo ? `./packages/${packageName}` : "./"))
       .pipe(dest(destPath));
   }
 
@@ -217,7 +218,7 @@ async function processAnswers(answers) {
 
   function renameDocsTemplate() {
     return src(`${destPath}/docs/docs-template.md`)
-      .pipe(rename(`timeline-${answers.name}.md`))
+      .pipe(rename(`${packageName}.md`))
       .pipe(dest(`${destPath}/docs`))
       .on("end", function () {
         deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
@@ -238,7 +239,7 @@ async function processAnswers(answers) {
           `## Loading`,
           answers.isTimelinesRepo
             ? // prettier-ignore
-              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{packageName}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```\n\n```js\nimport { createTimeline, timelineUnits, utils } from "@jspsych-timelines/{packageName}"\n```'
+              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{packageName}">\n```\n\n### Via NPM\n\n```\nnpm install {npmPackageName}\n```\n\n```js\nimport { createTimeline, timelineUnits, utils } from "{npmPackageName}"\n```'
             : `## Loading`
         )
       )

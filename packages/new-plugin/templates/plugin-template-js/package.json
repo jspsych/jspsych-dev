@@ -1,5 +1,5 @@
 {
-  "name": "@jspsych-contrib/plugin-{name}",
+  "name": "{npmPackageName}",
   "version": "0.0.1",
   "description": "{description}",
   "unpkg": "dist/index.browser.min.js",
@@ -13,8 +13,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jspsych/jspsych-contrib.git",
-    "directory": "packages/plugin-{name}"
+    "url": "{gitRootUrl}",
+    "directory": "{packageDir}"
   },
   "author": {
     "name": "{author}",
@@ -22,9 +22,9 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jspsych/jspsych-contrib/issues"
+      "url": "{gitRootHttpsUrl}/issues"
   },
-  "homepage": "https://github.com/jspsych/jspsych-contrib/tree/main/packages/plugin-{name}",
+  "homepage": "{documentationUrl}",
   "dependencies": {
     "@citation-js/core": "^0.7.14",
     "@citation-js/plugin-software-formats": "^0.6.1",

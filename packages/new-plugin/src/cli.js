@@ -21,7 +21,7 @@ async function getRepoRoot() {
     return rootDir;
   } catch (error) {
     console.error("Not a git repository or no repository root found.");
-    return null;
+    return "";
   }
 }
 
@@ -66,7 +66,7 @@ function getGitHttpsUrl(gitUrl) {
   return gitUrl;
 }
 
-function hyphenateName(input) {
+function getHyphenateName(input) {
   return input
     .trim()
     .replace(/[\s_]+/g, "-") // Replace all spaces and underscores with hyphens
@@ -75,30 +75,32 @@ function hyphenateName(input) {
     .toLowerCase();
 }
 
-function camelCaseName(input) {
+function getCamelCaseName(input) {
   return (
     input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase())
   );
 }
 
 async function getCwdInfo() {
-  // If current directory is the jspsych-contrib repository
+  let isContribRepo;
+  // Check if current directory is the jspsych-contrib repository
   if (await git.checkIsRepo()) {
     const remotes = await git.getRemotes(true);
-    return {
-      isContribRepo: remotes.some((remote) =>
-        remote.refs.fetch.includes("git@github.com:jspsych/jspsych-contrib.git")
-      ),
-      destDir: path.join(await getRepoRoot(), "packages"),
-    };
+    isContribRepo = remotes.some((remote) =>
+      remote.refs.fetch.includes("git@github.com:jspsych/jspsych-contrib.git")
+    );
+    if (isContribRepo) {
+      return {
+        isContribRepo: isContribRepo,
+        destDir: path.join(await getRepoRoot(), "packages"),
+      };
+    }
   }
   // If current directory is not the jspsych-contrib repository
-  else {
-    return {
-      isContribRepo: false,
-      destDir: process.cwd(),
-    };
-  }
+  return {
+    isContribRepo: false,
+    destDir: process.cwd(),
+  };
 }
 
 async function runPrompts(cwdInfo) {
@@ -106,10 +108,10 @@ async function runPrompts(cwdInfo) {
     message: "Enter the name you would like this plugin package to be called:",
     required: true,
     transformer: (input) => {
-      return hyphenateName(input);
+      return getHyphenateName(input);
     },
     validate: (input) => {
-      const packagePath = `${cwdInfo.destDir}/plugin-${hyphenateName(input)}`;
+      const packagePath = `${cwdInfo.destDir}/plugin-${getHyphenateName(input)}`;
       if (fs.existsSync(packagePath)) {
         return "A plugin package with this name already exists in this directory. Please choose a different name.";
       } else {
@@ -133,7 +135,7 @@ async function runPrompts(cwdInfo) {
   });
 
   const language = await select({
-    message: "What language would you like to use for your plugin package?",
+    message: "Choose a language to use for this plugin package:",
     choices: [
       { name: "TypeScript", value: "ts" },
       { name: "JavaScript", value: "js" },
@@ -143,10 +145,10 @@ async function runPrompts(cwdInfo) {
 
   // If not in the jspsych-contrib repository, ask for the path to the README.md file
   let readmePath;
-  if (!isContrib) {
+  if (!cwdInfo.isContribRepo) {
     readmePath = await input({
       message: "Enter the path to the README.md file for this plugin package [Optional]:",
-      default: `${getGitHttpsUrl(await getRemoteGitUrl)}/plugin-${name}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
+      default: `${getGitHttpsUrl(await getRemoteGitUrl())}/plugin-${name}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
     });
   } else {
     readmePath = `https://github.com/jspsych/jspsych-contrib/packages/plugin-${name}/README.md`;
@@ -165,8 +167,9 @@ async function runPrompts(cwdInfo) {
 }
 
 async function processAnswers(answers) {
-  answers.name = hyphenateName(answers.name);
-  const globalName = "jsPsychPlugin" + camelCaseName(answers.name);
+  answers.name = getHyphenateName(answers.name);
+  const camelCaseName = getCamelCaseName(answers.name);
+  const globalName = "jsPsychPlugin" + camelCaseName;
   const packageName = `plugin-${answers.name}`;
   const destPath = path.join(answers.destDir, packageName);
   const npmPackageName = (() => {
@@ -178,6 +181,8 @@ async function processAnswers(answers) {
   })();
 
   const templatesDir = path.resolve(__dirname, "../templates");
+  let repoRoot = await getRepoRoot();
+  let packageDir = repoRoot ? path.relative(repoRoot, process.cwd()) : "./";
   const gitRootUrl = await getRemoteGitRootUrl();
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
@@ -192,22 +197,42 @@ async function processAnswers(answers) {
       .pipe(replace("{globalName}", globalName))
       .pipe(replace("{camelCaseName}", camelCaseName))
       .pipe(replace("PluginNamePlugin", `${camelCaseName}Plugin`))
+      .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
-      .pipe(replace("{documentationUrl}", answers.readMePath))
+      .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{packageDir}", packageDir))
       .pipe(dest(destPath));
   }
 
   function renameExampleTemplate() {
     return src(`${destPath}/examples/index.html`)
-      .pipe(replace("{name}", answers.name))
       .pipe(replace("{globalName}", globalName))
+      .pipe(
+        replace(
+          "{publishingComment}\n",
+          answers.isContribRepo
+            ? // prettier-ignore
+              '<!-- Once this plugin package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-contrib/{packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n'
+            : '<!-- Load the published plugin package here, e.g.\n<script src="https://unpkg.com/{packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n'
+        )
+      )
+      .pipe(replace("{packageName}", packageName))
       .pipe(dest(`${destPath}/examples`));
   }
 
   function renameDocsTemplate() {
     return src(`${destPath}/docs/docs-template.md`)
-      .pipe(rename(`${answers.name}.md`))
+      .pipe(rename(`${packageName}.md`))
+      .pipe(
+        replace(
+          "## Install",
+          answers.isContribRepo
+            ? // prettier-ignore
+              '## Install\n\nUsing the CDN-hosted JavaScript file:\n\n```js\n<script src="https://unpkg.com/@jspsych-contrib/{packageName}"></script>\n```\n\nUsing the JavaScript file downloaded from a GitHub release dist archive:\n\n```js\n<script src="jspsych/plugin-{name}.js"></script>\n```\n\nUsing NPM:\n\n```\nnpm install {npmPackageName}\n```\n\n```js\nimport {camelCaseName} from "{npmPackageName}";\n```\n'
+            : "## Install\n\nEnter instructions for installing the plugin package here."
+        )
+      )
       .pipe(dest(`${destPath}/docs`))
       .on("end", function () {
         deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
@@ -226,11 +251,13 @@ async function processAnswers(answers) {
       .pipe(
         replace(
           `## Loading`,
-          answers.isTimelinesRepo
-            ? '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```'
-            : `## Loading`
+          answers.isContribRepo
+            ? // prettier-ignore
+              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-contrib/{packageName}">\n```\n\n### Via NPM\n\n```\nnpm install {npmPackageName}\n```'
+            : `## Loading\n\nEnter instructions for loading the plugin package here.`
         )
       )
+      .pipe(replace("{packageName}", packageName))
       .pipe(dest(destPath));
   }
 

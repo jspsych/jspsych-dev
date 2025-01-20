@@ -2,7 +2,7 @@ var _globalName_ = (function (jspsych) {
   "use strict";
 
   const info = {
-    name: "{name}",
+    name: "{packageName}",
     version: "1.0.0", // When working in a Javascript environment with no build, you will need to manually put set the version information. This is used for metadata purposes and publishing.
     parameters: {
       /** Provide a clear description of the parameter_name that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
@@ -35,7 +35,7 @@ var _globalName_ = (function (jspsych) {
    * {description}
    *
    * @author {author}
-   * @see {@link {documentation-url}}
+   * @see {@link {documentationUrl}}
    */
   class PluginNamePlugin {
     constructor(jsPsych) {
