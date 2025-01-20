@@ -201,14 +201,23 @@ async function processAnswers(answers) {
 
   function renameExampleTemplate() {
     return src(`${destPath}/examples/index.html`)
-      .pipe(replace("{name}", answers.name))
       .pipe(replace("{globalName}", globalName))
+      .pipe(
+        replace(
+          "{publishingComment}\n",
+          answers.isTimelinesRepo
+            ? // prettier-ignore
+              '<!-- Once this timeline package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-timelines/{name}"></script> -->\n'
+            : ""
+        )
+      )
+      .pipe(replace("{name}", answers.name))
       .pipe(dest(`${destPath}/examples`));
   }
 
   function renameDocsTemplate() {
     return src(`${destPath}/docs/docs-template.md`)
-      .pipe(rename(`${answers.name}.md`))
+      .pipe(rename(`timeline-${answers.name}.md`))
       .pipe(dest(`${destPath}/docs`))
       .on("end", function () {
         deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
@@ -228,7 +237,8 @@ async function processAnswers(answers) {
         replace(
           `## Loading`,
           answers.isTimelinesRepo
-            ? '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```'
+            ? // prettier-ignore
+              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```\n\n```js\nimport { createTimeline, timelineUnits, utils } from "@jspsych-timelines/{name}\n"```'
             : `## Loading`
         )
       )
