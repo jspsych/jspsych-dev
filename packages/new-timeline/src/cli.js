@@ -103,7 +103,7 @@ async function getCwdInfo() {
 
 async function runPrompts(cwdInfo) {
   const name = await input({
-    message: "What do you want to call this timeline package?",
+    message: "Enter the name you would like this timeline package to be called:",
     required: true,
     transformer: (input) => {
       return hyphenateName(input);
@@ -119,21 +119,21 @@ async function runPrompts(cwdInfo) {
   });
 
   const description = await input({
-    message: "Enter a brief description of the timeline",
+    message: "Enter a brief description of this timeline package:",
     required: true,
   });
 
   const author = await input({
-    message: "Who is the author of this timeline?",
+    message: "Enter the name of the author of this timeline package:",
     required: true,
   });
 
   const authorUrl = await input({
-    message: `Enter a profile URL for the author, e.g. a link to a GitHub profile [Optional]:`,
+    message: `Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:`,
   });
 
   const language = await select({
-    message: "What language do you want to use?",
+    message: "What language would you like to use for your timeline package?",
     choices: [
       { name: "TypeScript", value: "ts" },
       { name: "JavaScript", value: "js" },
@@ -142,7 +142,7 @@ async function runPrompts(cwdInfo) {
   });
 
   // If not in the jspsych-timelines repository, ask for the path to the README.md file
-  let readmePath = "";
+  let readmePath;
   if (!cwdInfo.isTimelinesRepo) {
     readmePath = await input({
       message: "Enter the path to the README.md file for this timeline package [Optional]:",
@@ -185,9 +185,9 @@ async function processAnswers(answers) {
     return src(`${templatesDir}/timeline-template-${answers.language}/**/*`)
       .pipe(replace("{name}", `timeline-${answers.name}`))
       .pipe(replace("{npmPackageName}", npmPackageName))
-      .pipe(replace("{description}", answers.description))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
+      .pipe(replace("{description}", answers.description))
       .pipe(replace("_globalName_", globalName))
       .pipe(replace("{globalName}", globalName))
       .pipe(replace("{camelCaseName}", camelCaseName))
