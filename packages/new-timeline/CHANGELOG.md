@@ -1,5 +1,12 @@
 # @jspsych-timelines/new-timeline
 
+## 0.0.3
+
+### Patch Changes
+
+- f4ef2d5: This patch adds an executable to the new-timeline package so that it can be run via npx; fixes new-timeline js template to accomodate for non-jspsych-timelines uses.
+- 8317d5b: This release publishes the @jspsych/new-timeline package on npm. This is a command line tool for creating jsPsych timelines with provided template code. All prompts have been standardized to be of the form "Enter...:"
+
 ## 0.0.2
 
 ### Patch Changes
