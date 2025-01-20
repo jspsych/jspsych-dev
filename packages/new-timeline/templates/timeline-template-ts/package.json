@@ -11,7 +11,8 @@
     },
     "repository": {
       "type": "git",
-      "url": "{gitRootUrl}"
+      "url": "{gitRootUrl}",
+      "directory": "packages/{packageName}"
     },
     "keywords": [
       "jsPsych"

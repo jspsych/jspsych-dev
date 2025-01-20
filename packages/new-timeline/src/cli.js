@@ -207,11 +207,11 @@ async function processAnswers(answers) {
           "{publishingComment}\n",
           answers.isTimelinesRepo
             ? // prettier-ignore
-              '<!-- Once this timeline package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-timelines/{name}"></script> -->\n'
+              '<!-- Once this timeline package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-timelines/{packageName}"></script> -->\n'
             : ""
         )
       )
-      .pipe(replace("{name}", answers.name))
+      .pipe(replace("{packageName}", packageName))
       .pipe(dest(`${destPath}/examples`));
   }
 
@@ -238,10 +238,11 @@ async function processAnswers(answers) {
           `## Loading`,
           answers.isTimelinesRepo
             ? // prettier-ignore
-              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```\n\n```js\nimport { createTimeline, timelineUnits, utils } from "@jspsych-timelines/{name}\n"```'
+              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{packageName}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```\n\n```js\nimport { createTimeline, timelineUnits, utils } from "@jspsych-timelines/{packageName}"\n```'
             : `## Loading`
         )
       )
+      .pipe(replace('{packageName}', packageName))
       .pipe(dest(destPath));
   }
 
