@@ -242,11 +242,8 @@ async function processAnswers(answers) {
   }
 
   function renameReadmeTemplate() {
-    const packageJson = JSON.parse(fs.readFileSync("./package.json"));
-    const jsPsychVersion = packageJson.version;
     return src(`${destPath}/README.md`)
       .pipe(replace(`{npmPackageName}`, npmPackageName))
-      .pipe(replace(`{jsPsychVersion}`, jsPsychVersion))
       .pipe(
         replace(
           `{authorInfo}`,
