@@ -2,7 +2,7 @@ var _globalName_ = (function (jspsych) {
   "use strict";
 
   /**
-   * **{name}**
+   * **{packageName}**
    *
    * {description}
    *
@@ -33,7 +33,7 @@ var _globalName_ = (function (jspsych) {
   }
 
   ExtensionNameExtension.info = {
-    name: "{name}",
+    name: "{packageName}",
     version: "0.0.1", // When working in a Javascript environment with no build, you will need to manually put set the version information. This is used for metadata purposes and publishing.
     data: {
       /** Provide a clear description of the data1 that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
@@ -45,7 +45,11 @@ var _globalName_ = (function (jspsych) {
         type: ParameterType.STRING,
       },
     },
-    citations: '__CITATIONS__'
+    // When working in a Javascript environment with no build, you will need to manually put the citations information.
+    // You may find it useful to fill in the CITATION.cff file generated with this package and use this script to generate your citations:
+    // https://github.com/jspsych/jsPsych/blob/main/packages/config/generateCitations.js
+    // This is helpful for users of your plugin to easily cite it.
+    citations: '__CITATIONS__', // prettier-ignore
   };
 
   return ExtensionNameExtension;

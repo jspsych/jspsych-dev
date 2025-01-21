@@ -1,4 +1,4 @@
-# {name}
+# {packageName}
 
 ## Overview
 
@@ -8,7 +8,7 @@
 
 ## Compatibility
 
-`{npmPackageName}` requires jsPsych v7.0.0 or later.
+`{npmPackageName}` requires jsPsych v8.0.0 or later.
 
 ## Documentation
 

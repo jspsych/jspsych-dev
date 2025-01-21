@@ -66,7 +66,7 @@ function getGitHttpsUrl(gitUrl) {
   return gitUrl;
 }
 
-function hyphenateName(input) {
+function getHyphenateName(input) {
   return input
     .trim()
     .replace(/[\s_]+/g, "-") // Replace all spaces and underscores with hyphens
@@ -75,30 +75,32 @@ function hyphenateName(input) {
     .toLowerCase();
 }
 
-function camelCaseName(input) {
+function getCamelCaseName(input) {
   return (
     input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase())
   );
 }
 
 async function getCwdInfo() {
-  // If current directory is the jspsych-timelines repository
+  let isTimelinesRepo;
+  // Check if current directory is the jspsych-timelines repository
   if (await git.checkIsRepo()) {
     const remotes = await git.getRemotes(true);
-    return {
-      isTimelinesRepo: remotes.some((remote) =>
-        remote.refs.fetch.includes("git@github.com:jspsych/jspsych-timelines.git")
-      ),
-      destDir: path.join(await getRepoRoot(), "packages"),
-    };
+    isTimelinesRepo = remotes.some((remote) =>
+      remote.refs.fetch.includes("git@github.com:jspsych/jspsych-timelines.git")
+    );
+    if (isTimelinesRepo) {
+      return {
+        isTimelinesRepo: isTimelinesRepo,
+        destDir: path.join(await getRepoRoot(), "packages"),
+      };
+    }
   }
   // If current directory is not the jspsych-timelines repository
-  else {
-    return {
-      isTimelinesRepo: false,
-      destDir: process.cwd(),
-    };
-  }
+  return {
+    isTimelinesRepo: false,
+    destDir: process.cwd(),
+  };
 }
 
 async function runPrompts(cwdInfo) {
@@ -106,10 +108,10 @@ async function runPrompts(cwdInfo) {
     message: "Enter the name you would like this timeline package to be called:",
     required: true,
     transformer: (input) => {
-      return hyphenateName(input);
+      return getHyphenateName(input);
     },
     validate: (input) => {
-      const packagePath = `${cwdInfo.destDir}/timeline-${hyphenateName(input)}`;
+      const packagePath = `${cwdInfo.destDir}/timeline-${getHyphenateName(input)}`;
       if (fs.existsSync(packagePath)) {
         return "A timeline package with this name already exists in this directory. Please choose a different name.";
       } else {
@@ -129,11 +131,11 @@ async function runPrompts(cwdInfo) {
   });
 
   const authorUrl = await input({
-    message: `Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:`,
+    message: "Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:",
   });
 
   const language = await select({
-    message: "What language would you like to use for your timeline package?",
+    message: "Choose a language to use for this timeline package:",
     choices: [
       { name: "TypeScript", value: "ts" },
       { name: "JavaScript", value: "js" },
@@ -165,8 +167,9 @@ async function runPrompts(cwdInfo) {
 }
 
 async function processAnswers(answers) {
-  answers.name = hyphenateName(answers.name);
-  const globalName = "jsPsychTimeline" + camelCaseName(answers.name);
+  answers.name = getHyphenateName(answers.name);
+  const camelCaseName = getCamelCaseName(answers.name);
+  const globalName = "jsPsychTimeline" + camelCaseName;
   const packageName = `timeline-${answers.name}`;
   const destPath = path.join(answers.destDir, packageName);
   const npmPackageName = (() => {
@@ -178,12 +181,17 @@ async function processAnswers(answers) {
   })();
 
   const templatesDir = path.resolve(__dirname, "../templates");
+  let repoRoot = await getRepoRoot();
+  let packageDir = answers.isTimelinesRepo
+    ? "packages"
+    : repoRoot
+    ? path.relative(repoRoot, process.cwd())
+    : "./";
   const gitRootUrl = await getRemoteGitRootUrl();
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
     return src(`${templatesDir}/timeline-template-${answers.language}/**/*`)
-      .pipe(replace("{name}", `timeline-${answers.name}`))
       .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
@@ -191,11 +199,11 @@ async function processAnswers(answers) {
       .pipe(replace("_globalName_", globalName))
       .pipe(replace("{globalName}", globalName))
       .pipe(replace("{camelCaseName}", camelCaseName))
-      .pipe(replace("ExtensionNameExtension", `${camelCaseName}Extension`))
       .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
       .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{packageDir}", packageDir))
       .pipe(dest(destPath));
   }
 
@@ -207,17 +215,16 @@ async function processAnswers(answers) {
           "{publishingComment}\n",
           answers.isTimelinesRepo
             ? // prettier-ignore
-              '<!-- Once this timeline package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-timelines/{name}"></script> -->\n'
-            : ""
+              `<!-- Once this timeline package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-timelines/${packageName}"></script> -->\n`
+            : `<!-- Load the published timeline package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n`
         )
       )
-      .pipe(replace("{name}", answers.name))
       .pipe(dest(`${destPath}/examples`));
   }
 
   function renameDocsTemplate() {
     return src(`${destPath}/docs/docs-template.md`)
-      .pipe(rename(`timeline-${answers.name}.md`))
+      .pipe(rename(`${packageName}.md`))
       .pipe(dest(`${destPath}/docs`))
       .on("end", function () {
         deleteSync(`${destPath}/docs/docs-template.md`, { force: true });
@@ -238,8 +245,8 @@ async function processAnswers(answers) {
           `## Loading`,
           answers.isTimelinesRepo
             ? // prettier-ignore
-              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-timelines/{name}">\n```\n\n### Via NPM\n\n```\nnpm install @jspsych-timelines/{name}\n```\n\n```js\nimport { createTimeline, timelineUnits, utils } from "@jspsych-timelines/{name}\n"```'
-            : `## Loading`
+              `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-timelines/${packageName}">\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport { createTimeline, timelineUnits, utils } from "${npmPackageName}"\n\`\`\``
+            : `## Loading\n\n*Enter instructions for loading the timeline package here.*`
         )
       )
       .pipe(dest(destPath));

@@ -11,7 +11,7 @@ interface OnLoadParameters {}
 interface OnFinishParameters {}
 
 /**
- * **{name}**
+ * **{packageName}**
  *
  * {description}
  *
@@ -20,7 +20,7 @@ interface OnFinishParameters {}
  */
 class ExtensionNameExtension implements JsPsychExtension {
   static info: JsPsychExtensionInfo = {
-    name: "{name}",
+    name: "{packageName}",
     version: version,
     data: {
       /** Provide a clear description of the data1 that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
@@ -32,6 +32,7 @@ class ExtensionNameExtension implements JsPsychExtension {
         type: ParameterType.STRING,
       },
     },
+    // When you run build on your extension, citations will be generated here based on the information in the CITATION.cff file.
     citations: '__CITATIONS__',
   };
 

@@ -1,4 +1,4 @@
-# {name}
+# {packageName}
 
 ## Overview
 
@@ -6,19 +6,13 @@
 
 ## Loading
 
-### In browser
-
-```js
-<script src="https://unpkg.com/@jspsych-contrib/{full-name}@1.0.0"></script>
-```
-
 ## Compatibility
 
-jsPsych 7.0.0
+`{npmPackageName}` requires jsPsych v8.0.0 or later.
 
 ## Documentation
 
-See [documentation](https://github.com/jspsych/jspsych-contrib/blob/main/packages/{full-name}/docs/{name}.md)
+See [documentation]({documentationUrl})
 
 ## Author / Citation
 

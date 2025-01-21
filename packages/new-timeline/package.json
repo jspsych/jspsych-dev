@@ -18,10 +18,10 @@
     "experiment",
     "cli"
   ],
-  "author": "Josh de Leeuw",
+  "author": "jsPsych Contributors",
   "license": "MIT",
   "dependencies": {
-    "@inquirer/prompts": "^5.3.8",
+    "@inquirer/prompts": "^7.2.3",
     "del": "^8.0.0",
     "gulp": "^5.0.0",
     "gulp-rename": "^2.0.0",

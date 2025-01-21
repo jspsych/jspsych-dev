@@ -14,8 +14,11 @@
     "repository": {
       "type": "git",
       "url": "{gitRootUrl}",
-      "directory": "packages/{name}"
+      "directory": "{packageDir}"
     },
+    "keywords": [
+      "jsPsych"
+    ],
     "author": {
       "name": "{author}",
       "url": "{authorUrl}"
@@ -27,7 +30,6 @@
     "homepage": "{documentationUrl}",
     "devDependencies": {
       "@jspsych/config": "^2.0.0",
-      "jspsych": "^7.0.0"
+      "jspsych": "^8.0.0"
     }
   }
-  
