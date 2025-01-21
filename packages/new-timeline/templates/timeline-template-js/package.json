@@ -16,6 +16,9 @@
       "url": "{gitRootUrl}",
       "directory": "{packageDir}"
     },
+    "keywords": [
+      "jsPsych"
+    ],
     "author": {
       "name": "{author}",
       "url": "{authorUrl}"
@@ -30,4 +33,3 @@
       "jspsych": "^7.0.0"
     }
   }
-  

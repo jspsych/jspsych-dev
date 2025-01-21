@@ -1,4 +1,4 @@
-# {name}
+# {packageName}
 
 ## Overview
 
@@ -32,4 +32,3 @@ The following parameters can be specified in the **options** parameter.
 ## Author / Citation
 
 {author}
-

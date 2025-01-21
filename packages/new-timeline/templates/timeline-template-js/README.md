@@ -1,4 +1,4 @@
-# {name}
+# {packageName}
 
 ## Overview
 

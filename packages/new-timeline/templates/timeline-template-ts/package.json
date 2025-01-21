@@ -12,7 +12,7 @@
     "repository": {
       "type": "git",
       "url": "{gitRootUrl}",
-      "directory": "packages/{packageName}"
+      "directory": "{packageDir}"
     },
     "keywords": [
       "jsPsych"
@@ -26,12 +26,9 @@
       "url": "{gitRootHttpsUrl}/issues"
     },
     "homepage": "{documentationUrl}",
-    "peerDependencies": {
-      "jspsych": "^8.0.1"
-    },
-    "dependencies": {
-    },
     "devDependencies": {
+      "jspsych": "^7.0.0",
+      "@jspsych/config": "^2.0.0",
       "tsup": "^6.7.0",
       "typescript": "^5.0.2"
     }

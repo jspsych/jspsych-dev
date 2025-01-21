@@ -8,7 +8,7 @@
 
 ## Compatibility
 
-jsPsych ^7.0.0
+`{npmPackageName}` requires jsPsych v7.0.0 or later.
 
 ## Documentation
 

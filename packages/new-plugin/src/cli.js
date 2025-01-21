@@ -182,7 +182,11 @@ async function processAnswers(answers) {
 
   const templatesDir = path.resolve(__dirname, "../templates");
   let repoRoot = await getRepoRoot();
-  let packageDir = repoRoot ? path.relative(repoRoot, process.cwd()) : "./";
+  let packageDir = answers.isContribRepo
+    ? "packages"
+    : repoRoot
+    ? path.relative(repoRoot, process.cwd())
+    : "./";
   const gitRootUrl = await getRemoteGitRootUrl();
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
