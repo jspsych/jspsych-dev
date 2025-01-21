@@ -3,7 +3,7 @@ import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
 import { version } from "../package.json";
 
 const info = <const>{
-  name: "{name}",
+  name: "{packageName}",
   version: version,
   parameters: {
     /** Provide a clear description of the parameter_name that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
@@ -27,6 +27,7 @@ const info = <const>{
       type: ParameterType.STRING,
     },
   },
+  // When you run build on your plugin, citations will be generated here based on the information in the CITATION.cff file.
   citations: '__CITATIONS__',
 };
 
@@ -51,7 +52,6 @@ class PluginNamePlugin implements JsPsychPlugin<Info> {
       data1: 99, // Make sure this type and name matches the information for data1 in the data object contained within the info const.
       data2: "hello world!", // Make sure this type and name matches the information for data2 in the data object contained within the info const.
     };
-
     // end trial
     this.jsPsych.finishTrial(trial_data);
   }

@@ -25,7 +25,11 @@ var _globalName_ = (function (jspsych) {
       data2: {
         type: ParameterType.STRING,
       },
-      citations: '__CITATIONS__',
+      // When working in a Javascript environment with no build, you will need to manually put the citations information.
+      // You may find it useful to fill in the CITATION.cff file generated with this package and use this script to generate your citations:
+      // https://github.com/jspsych/jsPsych/blob/main/packages/config/generateCitations.js
+      // This is helpful for users of your plugin to easily cite it.
+      citations: '__CITATIONS__', 
     },
   };
 

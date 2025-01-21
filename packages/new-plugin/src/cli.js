@@ -213,11 +213,10 @@ async function processAnswers(answers) {
           "{publishingComment}\n",
           answers.isContribRepo
             ? // prettier-ignore
-              '<!-- Once this plugin package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-contrib/{packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n'
-            : '<!-- Load the published plugin package here, e.g.\n<script src="https://unpkg.com/{packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n'
+              `<!-- Once this plugin package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n`
+            : `<!-- Load the published plugin package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n`
         )
       )
-      .pipe(replace("{packageName}", packageName))
       .pipe(dest(`${destPath}/examples`));
   }
 
@@ -229,8 +228,8 @@ async function processAnswers(answers) {
           "## Install",
           answers.isContribRepo
             ? // prettier-ignore
-              '## Install\n\nUsing the CDN-hosted JavaScript file:\n\n```js\n<script src="https://unpkg.com/@jspsych-contrib/{packageName}"></script>\n```\n\nUsing the JavaScript file downloaded from a GitHub release dist archive:\n\n```js\n<script src="jspsych/plugin-{name}.js"></script>\n```\n\nUsing NPM:\n\n```\nnpm install {npmPackageName}\n```\n\n```js\nimport {camelCaseName} from "{npmPackageName}";\n```\n'
-            : "## Install\n\nEnter instructions for installing the plugin package here."
+              `## Install\n\nUsing the CDN-hosted JavaScript file:\n\n\`\`\`js\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n\`\`\`\n\nUsing the JavaScript file downloaded from a GitHub release dist archive:\n\n\`\`\`js\n<script src="jspsych/${packageName}.js"></script>\n\`\`\`\n\nUsing NPM:\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${camelCaseName} from "${npmPackageName}";\n\`\`\`\n`
+            : "## Install\n\n*Enter instructions for installing the plugin package here.*"
         )
       )
       .pipe(dest(`${destPath}/docs`))
@@ -253,11 +252,13 @@ async function processAnswers(answers) {
           `## Loading`,
           answers.isContribRepo
             ? // prettier-ignore
-              '## Loading\n\n### In browser\n\n```html\n<script src="https://unpkg.com/@jspsych-contrib/{packageName}">\n```\n\n### Via NPM\n\n```\nnpm install {npmPackageName}\n```'
-            : `## Loading\n\nEnter instructions for loading the plugin package here.`
+              answers.language == "ts"
+              ? // prettier-ignore
+                `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}">\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${globalName} from "${packageName}";\n\`\`\``
+              : `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}">\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\``
+            : `## Loading\n\n*Enter instructions for loading the plugin package here.*`
         )
       )
-      .pipe(replace("{packageName}", packageName))
       .pipe(dest(destPath));
   }
 

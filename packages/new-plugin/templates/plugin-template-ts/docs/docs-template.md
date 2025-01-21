@@ -20,28 +20,6 @@ In addition to the [default data collected by all plugins](https://jspsych.org/l
 
 ## Install
 
-Using the CDN-hosted JavaScript file:
-
-```js
-<script src="https://unpkg.com/@jspsych-contrib/plugin-{name}"></script>
-```
-
-Using the JavaScript file downloaded from a GitHub release dist archive:
-
-```js
-<script src="jspsych/plugin-{name}.js"></script>
-```
-
-Using NPM:
-
-```
-npm install @jspsych-contrib/plugin-{name}
-```
-
-```js
-import {camelCaseName} from '@jspsych-contrib/plugin-{name}';
-```
-
 ## Examples
 
 ### Title of Example
