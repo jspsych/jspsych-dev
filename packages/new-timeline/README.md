@@ -3,6 +3,7 @@ This package allows you to start building a timeline in any directory by simply 
 
 You will be prompted to enter a name for your timeline, a description, the name of the author, an optional link to the author's GitHub profile, the preferred language (TypeScript or JavaScript) for your timeline, and an optional link to a `README.md` file for your timeline. Your template package containing boilerplate code will then be automatically generated in your current working directory.
 
+
 > [!NOTE]
 > If you are running this command in the jspsych-timelines repository, you will not be prompted to enter a `README.md` link. It will be generated automatically, and your template package will also be automatically generated under the `./packages` folder.
 

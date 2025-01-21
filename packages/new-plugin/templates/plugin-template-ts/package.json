@@ -27,6 +27,9 @@
     "url": "{gitRootUrl}",
     "directory": "{packageDir}"
   },
+  "keywords": [
+    "jsPsych"
+  ],
   "author": {
     "name": "{author}",
     "url": "{authorUrl}"
@@ -37,6 +40,7 @@
   },
   "homepage": "{documentationUrl}",
   "dependencies": {
+    "jspsych": "^8.0.0",
     "@citation-js/core": "^0.7.14",
     "@citation-js/plugin-software-formats": "^0.6.1",
     "@citation-js/plugin-bibtex": "^0.7.14",
@@ -44,7 +48,6 @@
   },
   "devDependencies": {
     "@jspsych/config": "^2.0.0",
-    "@jspsych/test-utils": "^1.0.0",
-    "jspsych": "^7.0.0"
+    "@jspsych/test-utils": "^1.0.0"
   }
 }

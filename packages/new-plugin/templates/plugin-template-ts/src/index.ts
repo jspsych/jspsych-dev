@@ -34,7 +34,7 @@ const info = <const>{
 type Info = typeof info;
 
 /**
- * **{name}**
+ * **{packageName}**
  *
  * {description}
  *

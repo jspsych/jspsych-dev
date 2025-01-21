@@ -3,7 +3,7 @@ var _globalName_ = (function (jspsych) {
 
   const info = {
     name: "{packageName}",
-    version: "1.0.0", // When working in a Javascript environment with no build, you will need to manually put set the version information. This is used for metadata purposes and publishing.
+    version: "0.0.1", // When working in a Javascript environment with no build, you will need to manually put set the version information. This is used for metadata purposes and publishing.
     parameters: {
       /** Provide a clear description of the parameter_name that could be used as documentation. We will eventually use these comments to automatically build documentation and produce metadata. */
       parameter_name: {
@@ -29,12 +29,12 @@ var _globalName_ = (function (jspsych) {
       // You may find it useful to fill in the CITATION.cff file generated with this package and use this script to generate your citations:
       // https://github.com/jspsych/jsPsych/blob/main/packages/config/generateCitations.js
       // This is helpful for users of your plugin to easily cite it.
-      citations: '__CITATIONS__', 
+      citations: '__CITATIONS__', // prettier-ignore
     },
   };
 
   /**
-   * **{name}**
+   * **{packageName}**
    *
    * {description}
    *

@@ -192,7 +192,6 @@ async function processAnswers(answers) {
 
   function processTemplate() {
     return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
-      .pipe(replace("{name}", `plugin-${answers.name}`))
       .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
@@ -243,8 +242,11 @@ async function processAnswers(answers) {
   }
 
   function renameReadmeTemplate() {
+    const packageJson = JSON.parse(fs.readFileSync("./package.json"));
+    const jsPsychVersion = packageJson.version;
     return src(`${destPath}/README.md`)
       .pipe(replace(`{npmPackageName}`, npmPackageName))
+      .pipe(replace(`{jsPsychVersion}`, jsPsychVersion))
       .pipe(
         replace(
           `{authorInfo}`,
