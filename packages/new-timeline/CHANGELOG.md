@@ -1,5 +1,11 @@
 # @jspsych-timelines/new-timeline
 
+## 0.1.0
+
+### Minor Changes
+
+- b8f6266: Updates @jspsych/config to 3.2.2. This is the first beta release of the tools.
+
 ## 0.0.4
 
 ### Patch Changes
