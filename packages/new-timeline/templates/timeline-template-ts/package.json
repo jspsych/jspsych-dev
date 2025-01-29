@@ -28,7 +28,7 @@
     "homepage": "{documentationUrl}",
     "devDependencies": {
       "jspsych": "^8.0.0",
-      "@jspsych/config": "^2.0.0",
+      "@jspsych/config": "^3.2.2",
       "tsup": "^6.7.0",
       "typescript": "^5.0.2"
     }

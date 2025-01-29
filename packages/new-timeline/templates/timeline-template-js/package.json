@@ -29,7 +29,7 @@
     },
     "homepage": "{documentationUrl}",
     "devDependencies": {
-      "@jspsych/config": "^2.0.0",
+      "@jspsych/config": "^3.2.2",
       "jspsych": "^8.0.0"
     }
   }
