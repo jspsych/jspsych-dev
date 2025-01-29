@@ -1,5 +1,11 @@
 # @jspsych/new-extension
 
+## 0.1.0
+
+### Minor Changes
+
+- b8f6266: Updates @jspsych/config to 3.2.2. This is the first beta release of the tools.
+
 ## 0.0.3
 
 ### Patch Changes
