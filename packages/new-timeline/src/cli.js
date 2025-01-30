@@ -145,10 +145,11 @@ async function runPrompts(cwdInfo) {
 
   // If not in the jspsych-timelines repository, ask for the path to the README.md file
   let readmePath;
+  const remoteGitUrl = await getRemoteGitUrl();
   if (!cwdInfo.isTimelinesRepo) {
     readmePath = await input({
       message: "Enter the path to the README.md file for this timeline package [Optional]:",
-      default: `${getGitHttpsUrl(await getRemoteGitUrl())}/timeline-${name}/README.md`, // '/timeline-${name}/README.md' if not a Git repository
+      default: `${getGitHttpsUrl(remoteGitUrl)}/timeline-${name}/README.md`, // '/timeline-${name}/README.md' if not a Git repository
     });
   } else {
     readmePath = `https://github.com/jspsych/jspsych-timelines/packages/timeline-${name}/README.md`;

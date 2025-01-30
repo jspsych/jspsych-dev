@@ -146,9 +146,10 @@ async function runPrompts(cwdInfo) {
   // If not in the jspsych-contrib repository, ask for the path to the README.md file
   let readmePath;
   if (!cwdInfo.isContribRepo) {
+    const remoteGitUrl = await getRemoteGitUrl();
     readmePath = await input({
       message: "Enter the path to the README.md file for this extension package [Optional]:",
-      default: `${getGitHttpsUrl(await getRemoteGitUrl())}/extension-${name}/README.md`, // '/extension-${name}/README.md' if not a Git repository
+      default: `${getGitHttpsUrl(remoteGitUrl)}/extension-${name}/README.md`, // '/extension-${name}/README.md' if not a Git repository
     });
   } else {
     readmePath = `https://github.com/jspsych/jspsych-contrib/packages/extension-${name}/README.md`;
