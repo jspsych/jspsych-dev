@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.1.1
+
+### Patch Changes
+
+- ec57500: This patch fixes the getGitHttpsUrl(await getRemoteGitUrl()) call in cli.js of the new-plugin, new-extension and new-timeline packages so that this line does not crash from calling getGitHttpsUrl() on a promise.
+
 ## 0.1.0
 
 ### Minor Changes
