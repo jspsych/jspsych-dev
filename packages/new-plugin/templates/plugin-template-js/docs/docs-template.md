@@ -12,7 +12,7 @@ In addition to the [parameters available in all plugins](https://www.jspsych.org
 
 ## Data Generated
 
-In addition to the [default data collected by all plugins](https://jspsych.org/latest/overview/plugins.md#data-collected-by-all-plugins), this plugin collects the following data for each trial.
+In addition to the [default data collected by all plugins](https://www.jspsych.org/latest/overview/plugins#data-collected-by-all-plugins), this plugin collects the following data for each trial.
 
 | Name      | Type    | Value                                    |
 | --------- | ------- | ---------------------------------------- |
