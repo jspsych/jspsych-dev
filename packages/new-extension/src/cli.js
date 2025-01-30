@@ -27,7 +27,7 @@ async function getRepoRoot() {
 async function getRemoteGitRootUrl() {
   if (await git.checkIsRepo()) {
     try {
-      const remotes = await git.getRemotes(false);
+      const remotes = await git.getRemotes(true);
       const originRemote = remotes.find((remote) => remote.name === "origin");
       if (originRemote) {
         let remoteGitRootUrl = originRemote.refs.fetch;
@@ -87,7 +87,7 @@ async function getCwdInfo() {
   let isContribRepo;
   // Check if current directory is the jspsych-contrib repository
   if (isRepo) {
-    const remotes = await git.getRemotes(false);
+    const remotes = await git.getRemotes(true);
     isContribRepo = remotes.some((remote) =>
       remote.refs.fetch.includes("git@github.com:jspsych/jspsych-contrib.git")
     );
@@ -153,10 +153,10 @@ async function runPrompts(cwdInfo) {
     const remoteGitUrl = await getRemoteGitUrl();
     readmePath = await input({
       message: "Enter the path to the README.md file for this extension package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/extension-${name}/README.md`, // '/extension-${name}/README.md' if not a Git repository
+      default: `${getGitHttpsUrl(remoteGitUrl)}/extension-${getHyphenateName(name)}/README.md`, // '/extension-${name}/README.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/jspsych/jspsych-contrib/packages/extension-${name}/README.md`;
+    readmePath = `https://github.com/jspsych/jspsych-contrib/packages/extension-${getHyphenateName(name)}/README.md`;
   }
 
   return {

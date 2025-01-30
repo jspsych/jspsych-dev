@@ -27,7 +27,7 @@ async function getRepoRoot() {
 async function getRemoteGitRootUrl() {
   if (await git.checkIsRepo()) {
     try {
-      const remotes = await git.getRemotes(false);
+      const remotes = await git.getRemotes(true);
       const originRemote = remotes.find((remote) => remote.name === "origin");
       if (originRemote) {
         let remoteGitRootUrl = originRemote.refs.fetch;
@@ -87,7 +87,7 @@ async function getCwdInfo() {
   let isTimelinesRepo;
   // Check if current directory is the jspsych-timelines repository
   if (isRepo) {
-    const remotes = await git.getRemotes(false);
+    const remotes = await git.getRemotes(true);
     isTimelinesRepo = remotes.some((remote) =>
       remote.refs.fetch.includes("git@github.com:jspsych/jspsych-timelines.git")
     );
@@ -149,14 +149,14 @@ async function runPrompts(cwdInfo) {
 
   // If not in the jspsych-timelines repository, ask for the path to the README.md file
   let readmePath;
-  const remoteGitUrl = await getRemoteGitUrl();
   if (!cwdInfo.isTimelinesRepo) {
+    const remoteGitUrl = await getRemoteGitUrl();
     readmePath = await input({
       message: "Enter the path to the README.md file for this timeline package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/timeline-${name}/README.md`, // '/timeline-${name}/README.md' if not a Git repository
+      default: `${getGitHttpsUrl(remoteGitUrl)}/timeline-${getHyphenateName(name)}/README.md`, // '/timeline-${name}/README.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/jspsych/jspsych-timelines/packages/timeline-${name}/README.md`;
+    readmePath = `https://github.com/jspsych/jspsych-timelines/packages/timeline-${getHyphenateName(name)}/README.md`;
   }
 
   return {
