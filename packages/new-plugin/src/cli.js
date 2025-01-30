@@ -60,7 +60,8 @@ async function getRemoteGitUrl() {
   return "";
 }
 
-function getGitHttpsUrl(gitUrl) {
+async function getGitHttpsUrl(gitUrl) {
+  gitUrl = await gitUrl;
   gitUrl = gitUrl.replace("git+", "");
   gitUrl = gitUrl.replace(".git", "");
   return gitUrl;
@@ -148,7 +149,7 @@ async function runPrompts(cwdInfo) {
   if (!cwdInfo.isContribRepo) {
     readmePath = await input({
       message: "Enter the path to the README.md file for this plugin package [Optional]:",
-      default: `${getGitHttpsUrl(await getRemoteGitUrl())}/plugin-${name}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
+      default: `${ await getGitHttpsUrl(await getRemoteGitUrl())}/plugin-${name}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
     });
   } else {
     readmePath = `https://github.com/jspsych/jspsych-contrib/packages/plugin-${name}/README.md`;
@@ -188,7 +189,7 @@ async function processAnswers(answers) {
     ? path.relative(repoRoot, process.cwd())
     : "./";
   const gitRootUrl = await getRemoteGitRootUrl();
-  const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
+  const gitRootHttpsUrl = await getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
     return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
