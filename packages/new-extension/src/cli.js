@@ -20,28 +20,30 @@ async function getRepoRoot() {
     const rootDir = await git.revparse(["--show-toplevel"]);
     return rootDir;
   } catch (error) {
-    console.error("Not a git repository or no repository root found.");
     return "";
   }
 }
 
 async function getRemoteGitRootUrl() {
-  try {
-    const remotes = await git.getRemotes(true);
-    const originRemote = remotes.find((remote) => remote.name === "origin");
-    if (originRemote) {
-      let remoteGitRootUrl = originRemote.refs.fetch;
-      if (remoteGitRootUrl.startsWith("git@github.com:")) {
-        remoteGitRootUrl = remoteGitRootUrl.replace("git@github.com:", "git+https://github.com/");
+  if (await git.checkIsRepo()) {
+    try {
+      const remotes = await git.getRemotes(false);
+      const originRemote = remotes.find((remote) => remote.name === "origin");
+      if (originRemote) {
+        let remoteGitRootUrl = originRemote.refs.fetch;
+        if (remoteGitRootUrl.startsWith("git@github.com:")) {
+          remoteGitRootUrl = remoteGitRootUrl.replace("git@github.com:", "git+https://github.com/");
+        }
+        return remoteGitRootUrl;
       }
-      return remoteGitRootUrl;
+      console.warn("No remote named 'origin' found.");
+      return "";
+    } catch (error) {
+      console.error("Error getting remote root Git URL:", error);
+      return "";
     }
-    console.warn("No remote named 'origin' found.");
-    return "";
-  } catch (error) {
-    console.error("Error getting remote root Git URL:", error);
-    return "";
   }
+  return "";
 }
 
 async function getRemoteGitUrl() {
@@ -56,7 +58,6 @@ async function getRemoteGitUrl() {
     }
     return remoteGitUrl;
   }
-  console.warn("No Git repository root found.");
   return "";
 }
 
@@ -82,15 +83,17 @@ function getCamelCaseName(input) {
 }
 
 async function getCwdInfo() {
+  const isRepo = await git.checkIsRepo();
   let isContribRepo;
   // Check if current directory is the jspsych-contrib repository
-  if (await git.checkIsRepo()) {
-    const remotes = await git.getRemotes(true);
+  if (isRepo) {
+    const remotes = await git.getRemotes(false);
     isContribRepo = remotes.some((remote) =>
       remote.refs.fetch.includes("git@github.com:jspsych/jspsych-contrib.git")
     );
     if (isContribRepo) {
       return {
+        isRepo: isRepo,
         isContribRepo: isContribRepo,
         destDir: path.join(await getRepoRoot(), "packages"),
       };
@@ -98,6 +101,7 @@ async function getCwdInfo() {
   }
   // If current directory is not the jspsych-contrib repository
   return {
+    isRepo: isRepo,
     isContribRepo: false,
     destDir: process.cwd(),
   };
