@@ -77,9 +77,9 @@ function getHyphenateName(input) {
 }
 
 function getCamelCaseName(input) {
-  return (
-    input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase())
-  );
+  input = input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+  input = input.replace(/[^a-zA-Z0-9]/g, "")
+  return input;
 }
 
 async function getCwdInfo() {
@@ -111,9 +111,6 @@ async function runPrompts(cwdInfo) {
   const name = await input({
     message: "Enter the name you would like this plugin package to be called:",
     required: true,
-    transformer: (input) => {
-      return getHyphenateName(input);
-    },
     validate: (input) => {
       const packagePath = `${cwdInfo.destDir}/plugin-${getHyphenateName(input)}`;
       if (fs.existsSync(packagePath)) {
@@ -172,10 +169,17 @@ async function runPrompts(cwdInfo) {
 }
 
 async function processAnswers(answers) {
+  Object.keys(answers).forEach((key) => {
+    if (typeof answers[key] === "string" && !key == "language") {
+      answers[key] = JSON.stringify({a: answers[key]});
+      answers[key] = JSON.parse(answers[key].a);
+    }
+  })
   answers.name = getHyphenateName(answers.name);
   const camelCaseName = getCamelCaseName(answers.name);
   const globalName = "jsPsychPlugin" + camelCaseName;
   const packageName = `plugin-${answers.name}`;
+  
   const destPath = path.join(answers.destDir, packageName);
   const npmPackageName = (() => {
     if (answers.isContribRepo) {
