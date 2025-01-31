@@ -1,5 +1,11 @@
 # @jspsych/new-extension
 
+## 0.1.2
+
+### Patch Changes
+
+- 64776d9: This patch hides the error logging when using the cli tool in a non-git repo.
+
 ## 0.1.1
 
 ### Patch Changes
