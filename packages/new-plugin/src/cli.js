@@ -179,7 +179,6 @@ async function processAnswers(answers) {
   const camelCaseName = getCamelCaseName(answers.name);
   const globalName = "jsPsychPlugin" + camelCaseName;
   const packageName = `plugin-${answers.name}`;
-  
   const destPath = path.join(answers.destDir, packageName);
   const npmPackageName = (() => {
     if (answers.isContribRepo) {
