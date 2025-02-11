@@ -72,14 +72,14 @@ function getHyphenateName(input) {
     .trim()
     .replace(/[\s_]+/g, "-") // Replace all spaces and underscores with hyphens
     .replace(/([a-z])([A-Z])/g, "$1-$2") // Replace camelCase with hyphens
-    .replace(/[^\w-]/g, "") // Remove all non-word characters
+    .replace(/[^a-zA-Z0-9-]/g, "") // Remove all non-alphanumeric characters
     .toLowerCase();
 }
 
 function getCamelCaseName(input) {
-  return (
-    input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase())
-  );
+  input = input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+  input = input.replace(/[^a-zA-Z0-9]/g, "") // Remove all non-alphanumeric characters
+  return input;
 }
 
 async function getCwdInfo() {
@@ -111,9 +111,6 @@ async function runPrompts(cwdInfo) {
   const name = await input({
     message: "Enter the name you would like this timeline package to be called:",
     required: true,
-    transformer: (input) => {
-      return getHyphenateName(input);
-    },
     validate: (input) => {
       const packagePath = `${cwdInfo.destDir}/timeline-${getHyphenateName(input)}`;
       if (fs.existsSync(packagePath)) {
@@ -172,6 +169,12 @@ async function runPrompts(cwdInfo) {
 }
 
 async function processAnswers(answers) {
+  Object.keys(answers).forEach((key) => {
+    if (typeof answers[key] === "string" && key != "language") {
+      answers[key] = JSON.stringify(answers[key]); // Properly escape for JSON
+      answers[key] = answers[key].slice(1, -1); // Remove outer quotes
+    }
+  })
   answers.name = getHyphenateName(answers.name);
   const camelCaseName = getCamelCaseName(answers.name);
   const globalName = "jsPsychTimeline" + camelCaseName;
