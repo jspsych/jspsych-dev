@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.1.3
+
+### Patch Changes
+
+- 297193f: This patch properly escapes special characters in the user input for injection into the generated files. This patch also removes any string replacement enforcings during user input, processing the input strings in the backend after all prompts have been answered.
+
 ## 0.1.2
 
 ### Patch Changes
