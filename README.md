@@ -6,9 +6,7 @@ This repository is for jsPsych users who would like to develop their own plugins
 - [`@jspsych/new-extension`](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-extension)
 - [`@jspsych/new-timeline`](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline)
 
-Each tool can be run directly using `npx`, e.g. running `npx @jspsych/new-plugin` in the terminal. This will prompt you through the process of creating a new plugin, extension or timeline. The tool will then create a new directory in your current working directory with the appropriate files and names. 
-
-You may want to read the jsPsych documentation on [plugin development](https://www.jspsych.org/latest/developers/plugin-development/) to understand how to work with the `index.ts`file (for TypeScript development) and `index.js` file (for JavaScript development).
+Each tool can be run directly using `npx`, e.g. running `npx @jspsych/new-plugin` in the terminal. This will prompt you through the process of creating a new plugin, extension or timeline. The tool will then create a new directory in your current working directory with the appropriate files and names. More detailed instructions can be found in the `README.md` files in each of these packages.
 
 ## Contributing to jspsych-contrib or jspsych-timelines
 
