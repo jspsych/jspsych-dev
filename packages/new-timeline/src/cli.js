@@ -112,7 +112,7 @@ async function runPrompts(cwdInfo) {
     message: "Enter the name you would like this timeline package to be called:",
     required: true,
     validate: (input) => {
-      const packagePath = `${cwdInfo.destDir}/timeline-${getHyphenateName(input)}`;
+      const packagePath = `${cwdInfo.destDir}/${getHyphenateName(input)}`;
       if (fs.existsSync(packagePath)) {
         return "A timeline package with this name already exists in this directory. Please choose a different name.";
       } else {
@@ -150,10 +150,10 @@ async function runPrompts(cwdInfo) {
     const remoteGitUrl = await getRemoteGitUrl();
     readmePath = await input({
       message: "Enter the path to the README.md file for this timeline package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/timeline-${getHyphenateName(name)}/README.md`, // '/timeline-${name}/README.md' if not a Git repository
+      default: `${getGitHttpsUrl(remoteGitUrl)}/${getHyphenateName(name)}/README.md`, // '/${name}/README.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/jspsych/jspsych-timelines/packages/timeline-${getHyphenateName(name)}/README.md`;
+    readmePath = `https://github.com/jspsych/jspsych-timelines/packages/${getHyphenateName(name)}/README.md`;
   }
 
   return {
@@ -178,7 +178,7 @@ async function processAnswers(answers) {
   answers.name = getHyphenateName(answers.name);
   const camelCaseName = getCamelCaseName(answers.name);
   const globalName = "jsPsychTimeline" + camelCaseName;
-  const packageName = `timeline-${answers.name}`;
+  const packageName = answers.name;
   const destPath = path.join(answers.destDir, packageName);
   const npmPackageName = (() => {
     if (answers.isTimelinesRepo) {
