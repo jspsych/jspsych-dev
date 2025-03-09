@@ -1,5 +1,11 @@
 # @jspsych-timelines/new-timeline
 
+## 0.1.4
+
+### Patch Changes
+
+- ca505f7: Fix bug in detecting whether repo has jspsych-timelines as a remote
+
 ## 0.1.3
 
 ### Patch Changes
