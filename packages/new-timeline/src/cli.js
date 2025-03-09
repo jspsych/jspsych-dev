@@ -62,9 +62,28 @@ async function getRemoteGitUrl() {
 }
 
 function getGitHttpsUrl(gitUrl) {
-  gitUrl = gitUrl.replace("git+", "");
-  gitUrl = gitUrl.replace(".git", "");
-  return gitUrl;
+  if (!gitUrl || typeof gitUrl !== 'string') {
+    return '';
+  }
+  
+  let httpsUrl = gitUrl.trim();
+
+  // Handle git+https:// format
+  httpsUrl = httpsUrl.replace(/^git\+https:\/\//, 'https://');
+  
+  // Handle git:// format
+  httpsUrl = httpsUrl.replace(/^git:\/\/(.+)$/, 'https://$1');
+  
+  // Handle ssh://git@host.com/user/repo format
+  httpsUrl = httpsUrl.replace(/^ssh:\/\/git@([^\/]+)\/(.+)$/, 'https://$1/$2');
+  
+  // Handle git@github.com:user/repo format (standard SSH URL format)
+  httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, 'https://$1/$2');
+  
+  // Remove trailing .git
+  httpsUrl = httpsUrl.replace(/\.git$/, '');
+
+  return httpsUrl;
 }
 
 function getHyphenateName(input) {
@@ -88,9 +107,11 @@ async function getCwdInfo() {
   // Check if current directory is the jspsych-timelines repository
   if (isRepo) {
     const remotes = await git.getRemotes(true);
-    isTimelinesRepo = remotes.some((remote) =>
-      remote.refs.fetch.includes("git@github.com:jspsych/jspsych-timelines.git")
-    );
+    isTimelinesRepo = remotes.some((remote) => {
+      const remoteUrl = remote.refs.fetch;
+      const httpsUrl = getGitHttpsUrl(remoteUrl);
+      return httpsUrl.includes("github.com/jspsych/jspsych-timelines");
+    });
     if (isTimelinesRepo) {
       return {
         isRepo: isRepo,
