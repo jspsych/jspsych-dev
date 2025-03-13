@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.2.0
+
+### Minor Changes
+
+- 1ff8581: This patch adds an import line for the index script in the example index.html for the new-plugin and new-timeline ts templates
+
 ## 0.1.3
 
 ### Patch Changes
