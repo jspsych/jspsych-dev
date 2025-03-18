@@ -1,0 +1,15 @@
+{
+    "entryPoints": ["src/index.ts"],
+    "plugin": ["typedoc-plugin-markdown"],
+    "hideBreadcrumbs": true,
+    "readme": "none",
+    "mergeReadme": false,
+    "enumMembersFormat": "table",
+    "parametersFormat": "table",
+    "propertiesFormat": "table",
+    "typeDeclarationFormat": "table",
+    "indexFormat": "table",
+    "disableSources": true,
+    "outputFileStrategy": "modules",
+    "gitRevision": "main"
+  }
