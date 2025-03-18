@@ -1,15 +1,15 @@
 {
     "entryPoints": ["src/index.ts"],
+    "entryFileName": "README.md",
+    "router": "kind-structure",
     "plugin": ["typedoc-plugin-markdown"],
     "hideBreadcrumbs": true,
-    "readme": "none",
-    "mergeReadme": false,
     "enumMembersFormat": "table",
     "parametersFormat": "table",
     "propertiesFormat": "table",
     "typeDeclarationFormat": "table",
     "indexFormat": "table",
+    "sort": ["source-order"],
     "disableSources": true,
-    "outputFileStrategy": "modules",
     "gitRevision": "main"
-  }
+}
