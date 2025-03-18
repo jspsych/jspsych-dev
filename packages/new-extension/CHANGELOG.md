@@ -1,5 +1,11 @@
 # @jspsych/new-extension
 
+## 0.1.4
+
+### Patch Changes
+
+- 4ae65d7: Fix remote detection for new-plugin and new-extension.
+
 ## 0.1.3
 
 ### Patch Changes
