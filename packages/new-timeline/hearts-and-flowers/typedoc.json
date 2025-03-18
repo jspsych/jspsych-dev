@@ -7,9 +7,14 @@
     "enumMembersFormat": "table",
     "parametersFormat": "table",
     "propertiesFormat": "table",
-    "typeDeclarationFormat": "table",
+    "typeDeclarationFormat": "list",
     "indexFormat": "table",
     "sort": ["source-order"],
+    "expandObjects": true,
+    "expandParameters": true,
     "disableSources": true,
-    "gitRevision": "main"
+    "gitRevision": "main",
+    "excludeExternals": false,
+    "excludePrivate": true,
+    "excludeProtected": true
 }
