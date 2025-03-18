@@ -1,0 +1,20 @@
+{
+    "entryPoints": ["src/index.ts"],
+    "entryFileName": "README.md",
+    "router": "kind-structure",
+    "plugin": ["typedoc-plugin-markdown"],
+    "hideBreadcrumbs": true,
+    "enumMembersFormat": "table",
+    "parametersFormat": "table",
+    "propertiesFormat": "table",
+    "typeDeclarationFormat": "list",
+    "indexFormat": "table",
+    "sort": ["source-order"],
+    "expandObjects": true,
+    "expandParameters": true,
+    "disableSources": true,
+    "gitRevision": "main",
+    "excludeExternals": false,
+    "excludePrivate": true,
+    "excludeProtected": true
+}
