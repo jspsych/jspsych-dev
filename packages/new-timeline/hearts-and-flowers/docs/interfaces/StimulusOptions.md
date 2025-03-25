@@ -1,8 +1,6 @@
-[**@jspsych-timelines/hearts-and-flowers**](../README.md)
-
-***
-
 # Interface: StimulusOptions
+
+Define and export the interface for the `stimulus_options` property in [CreateTimelineOptions](CreateTimelineOptions.md).
 
 ## Properties
 

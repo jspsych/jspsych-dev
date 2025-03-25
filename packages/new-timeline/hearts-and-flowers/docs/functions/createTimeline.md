@@ -6,7 +6,12 @@
 
 > **createTimeline**(`jsPsych`, `options`): `object`
 
-Creates the main timeline.
+This timeline shows a sequence of hearts and flowers trials. In each trial,
+participants are shown a stimulus on one side of the screen. There are only
+two types of stimuli, and participants are taught and expected to respond to
+one type by pressing the button on the same side as it (traditionally a
+heart), and to the other by pressing the button on the opposite side
+(traditionally a flower), as quickly as possible.
 
 ## Parameters
 
@@ -21,6 +26,6 @@ Creates the main timeline.
 
 The main timeline object.
 
-| Name | Type | Default value |
-| ------ | ------ | ------ |
-| `timeline` | `any`[] | heartsAndFlowersTimeline |
+### timeline
+
+> **timeline**: `any`[] = `heartsAndFlowersTimeline`

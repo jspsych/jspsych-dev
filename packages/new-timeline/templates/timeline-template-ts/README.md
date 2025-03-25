@@ -15,7 +15,7 @@
 ### createTimeline
 
 #### {globalName}.createTimeline(jsPsych, { *options* }) ⇒ <code>timeline</code>
-Description of the timeline that this plugin generates
+_Description of the main experiment timeline that this package exports._
 
 The following parameters can be specified in the **options** parameter.
 

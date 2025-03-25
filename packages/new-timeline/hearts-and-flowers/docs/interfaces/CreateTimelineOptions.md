@@ -1,8 +1,6 @@
-[**@jspsych-timelines/hearts-and-flowers**](../README.md)
-
-***
-
 # Interface: CreateTimelineOptions
+
+Define and export the interface for the `options` parameter in [createTimeline](../functions/createTimeline.md).
 
 ## Properties
 
