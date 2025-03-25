@@ -1,9 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-const docsTimelinePath = path.join(new URL('./docs/functions', import.meta.url).pathname, 'createTimeline.md');
-const content = fs.readFileSync(docsTimelinePath, 'utf-8');
-
 function filterCreateTimelineDocs(content) {
   function filterParametersTable(content) {
     const startMarker = '# Function: createTimeline()';
@@ -44,21 +41,39 @@ function filterCreateTimelineDocs(content) {
   return filterParametersTable(content) + '\n\n' + filterReturnsTable(content);
 }
 
+const docsTimelinePath = path.join(new URL('./docs/functions', import.meta.url).pathname, 'createTimeline.md');
+const content = fs.readFileSync(docsTimelinePath, 'utf-8');
 const filteredTimelineDocs = filterCreateTimelineDocs(content);
 if (filteredTimelineDocs) {
-  fs.writeFileSync(docsTimelinePath, filteredTimelineDocs);
+  // Adjust all markdown headings in filteredTimelineDocs so that the top levels start from ##
+  const headingAdjustmentRegex = /^#+\s/gm;
+  const headingLevelsInDocs = filteredTimelineDocs.match(headingAdjustmentRegex) || [];
+  const minHeadingLevel = Math.min(...headingLevelsInDocs.map(h => h.trim().length));
+  const adjustedFilteredTimelineDocs = filteredTimelineDocs.replace(headingAdjustmentRegex, (match) => {
+    const adjustedLevel = match.trim().length - minHeadingLevel + 2; // Adjust to start from ##
+    return '#'.repeat(adjustedLevel) + ' ';
+  });
+
+  fs.writeFileSync(docsTimelinePath, adjustedFilteredTimelineDocs);
 
   // Read the filtered content again
-  const updatedContent = fs.readFileSync(docsTimelinePath, 'utf-8');
+  const filteredContent = fs.readFileSync(docsTimelinePath, 'utf-8');
   const interfaceLinkRegex = /\.\.\/interfaces\/([\w-]+\.md)/g;
   let match;
   let appendedContent = '';
 
   // Find all links to files under ./docs/interfaces
-  while ((match = interfaceLinkRegex.exec(updatedContent)) !== null) {
+  while ((match = interfaceLinkRegex.exec(filteredContent)) !== null) {
     const interfaceFilePath = path.join(new URL('./docs/interfaces', import.meta.url).pathname, match[1]);
     if (fs.existsSync(interfaceFilePath)) {
-      const interfaceFileContent = fs.readFileSync(interfaceFilePath, 'utf-8');
+      let interfaceFileContent = fs.readFileSync(interfaceFilePath, 'utf-8');
+      // Adjust all markdown headings in interfaceFileContent so that the top levels start from ###
+      const headingLevelsInInterface = interfaceFileContent.match(headingAdjustmentRegex) || [];
+      const minHeadingLevelInterface = Math.min(...headingLevelsInInterface.map(h => h.trim().length));
+      interfaceFileContent = interfaceFileContent.replace(headingAdjustmentRegex, (match) => {
+        const adjustedLevel = match.trim().length - minHeadingLevelInterface + 3; // Adjust to start from ###
+        return '#'.repeat(adjustedLevel) + ' ';
+      });
       appendedContent += `\n\n---\n\n${interfaceFileContent}`;
     }
   }
