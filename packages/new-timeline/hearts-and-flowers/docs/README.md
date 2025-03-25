@@ -8,7 +8,7 @@
 
 | Interface | Description |
 | ------ | ------ |
-| [IStimulusInfo](interfaces/IStimulusInfo.md) | Interface for the stimulus information object that describes the name and source of the stimulus for both target sides. |
+| [StimulusInfo](interfaces/StimulusInfo.md) | Interface for the stimulus information object that describes the name and source of the stimulus for both target sides. |
 | [CreateTrialsSubTimelineOptions](interfaces/CreateTrialsSubTimelineOptions.md) | Interface for the options parameter in [createTrialsSubTimeline](variables/timelineUnits.md#createtrialssubtimeline). |
 | [CreateTimelineOptions](interfaces/CreateTimelineOptions.md) | Define and export the interface for the `options` parameter in [createTimeline](functions/createTimeline.md). |
 | [StimulusOptions](interfaces/StimulusOptions.md) | Define and export the interface for the `stimulus_options` property in [CreateTimelineOptions](interfaces/CreateTimelineOptions.md). |
