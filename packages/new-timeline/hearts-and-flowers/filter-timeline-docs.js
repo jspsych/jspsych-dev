@@ -47,5 +47,25 @@ function filterCreateTimelineDocs(content) {
 const filteredTimelineDocs = filterCreateTimelineDocs(content);
 if (filteredTimelineDocs) {
   fs.writeFileSync(docsTimelinePath, filteredTimelineDocs);
+
+  // Read the filtered content again
+  const updatedContent = fs.readFileSync(docsTimelinePath, 'utf-8');
+  const interfaceLinkRegex = /\.\.\/interfaces\/([\w-]+\.md)/g;
+  let match;
+  let appendedContent = '';
+
+  // Find all links to files under ./docs/interfaces
+  while ((match = interfaceLinkRegex.exec(updatedContent)) !== null) {
+    const interfaceFilePath = path.join(new URL('./docs/interfaces', import.meta.url).pathname, match[1]);
+    if (fs.existsSync(interfaceFilePath)) {
+      const interfaceFileContent = fs.readFileSync(interfaceFilePath, 'utf-8');
+      appendedContent += `\n\n---\n\n${interfaceFileContent}`;
+    }
+  }
+
+  // Append the contents of the linked files to the end of docsTimelinePath
+  if (appendedContent) {
+    fs.appendFileSync(docsTimelinePath, appendedContent);
+  }
 }
 // If filtered content returns nothing, keep the original content
