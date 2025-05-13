@@ -62,26 +62,26 @@ async function getRemoteGitUrl() {
 }
 
 function getGitHttpsUrl(gitUrl) {
-  if (!gitUrl || typeof gitUrl !== 'string') {
-    return '';
+  if (!gitUrl || typeof gitUrl !== "string") {
+    return "";
   }
-  
+
   let httpsUrl = gitUrl.trim();
 
   // Handle git+https:// format
-  httpsUrl = httpsUrl.replace(/^git\+https:\/\//, 'https://');
-  
+  httpsUrl = httpsUrl.replace(/^git\+https:\/\//, "https://");
+
   // Handle git:// format
-  httpsUrl = httpsUrl.replace(/^git:\/\/(.+)$/, 'https://$1');
-  
+  httpsUrl = httpsUrl.replace(/^git:\/\/(.+)$/, "https://$1");
+
   // Handle ssh://git@host.com/user/repo format
-  httpsUrl = httpsUrl.replace(/^ssh:\/\/git@([^\/]+)\/(.+)$/, 'https://$1/$2');
-  
+  httpsUrl = httpsUrl.replace(/^ssh:\/\/git@([^\/]+)\/(.+)$/, "https://$1/$2");
+
   // Handle git@github.com:user/repo format (standard SSH URL format)
-  httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, 'https://$1/$2');
-  
+  httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, "https://$1/$2");
+
   // Remove trailing .git
-  httpsUrl = httpsUrl.replace(/\.git$/, '');
+  httpsUrl = httpsUrl.replace(/\.git$/, "");
 
   return httpsUrl;
 }
@@ -96,9 +96,31 @@ function getHyphenateName(input) {
 }
 
 function getCamelCaseName(input) {
-  input = input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-  input = input.replace(/[^a-zA-Z0-9]/g, "") // Remove all non-alphanumeric characters
+  input =
+    input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+  input = input.replace(/[^a-zA-Z0-9]/g, ""); // Remove all non-alphanumeric characters
   return input;
+}
+
+async function isOfficialOrForkOfJsPsychContrib(repoUrl) {
+  const regex =
+    /(?:git@|https:\/\/|git:\/\/)?github\.com[/:]([^\/]+)\/(jspsych-contrib)(?:\.git)?$/i;
+  const match = repoUrl.match(regex);
+  if (!match) return false; // Not a GitHub URL
+
+  const [_, owner, repo] = match;
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
+
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) return false;
+    const data = await response.json();
+    if (data.full_name === "jspsych/jspsych-contrib") return true; // original contrib repo
+    return data.fork && data.parent?.full_name === "jspsych/jspsych-contrib"; // fork of contrib repo
+  } catch (error) {
+    console.error("GitHub API error:", error);
+    return false;
+  }
 }
 
 async function getCwdInfo() {
@@ -110,7 +132,7 @@ async function getCwdInfo() {
     isContribRepo = remotes.some((remote) => {
       const remoteUrl = remote.refs.fetch;
       const httpsUrl = getGitHttpsUrl(remoteUrl);
-      return httpsUrl.includes("github.com/jspsych/jspsych-contrib");
+      return isOfficialOrForkOfJsPsychContrib(httpsUrl);
     });
     if (isContribRepo) {
       return {
@@ -174,7 +196,9 @@ async function runPrompts(cwdInfo) {
       default: `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/jspsych/jspsych-contrib/packages/plugin-${getHyphenateName(name)}/README.md`;
+    readmePath = `https://github.com/jspsych/jspsych-contrib/packages/plugin-${getHyphenateName(
+      name
+    )}/README.md`;
   }
 
   return {
@@ -195,7 +219,7 @@ async function processAnswers(answers) {
       answers[key] = JSON.stringify(answers[key]); // Properly escape for JSON
       answers[key] = answers[key].slice(1, -1); // Remove outer quotes
     }
-  })
+  });
   answers.name = getHyphenateName(answers.name);
   const camelCaseName = getCamelCaseName(answers.name);
   const globalName = "jsPsychPlugin" + camelCaseName;
