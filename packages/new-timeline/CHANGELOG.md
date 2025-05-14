@@ -1,5 +1,11 @@
 # @jspsych-timelines/new-timeline
 
+## 0.2.1
+
+### Patch Changes
+
+- 3a0568c: Change the strategy for detecting when commands are run inside the official repos
+
 ## 0.2.0
 
 ### Minor Changes

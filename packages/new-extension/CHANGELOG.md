@@ -1,5 +1,11 @@
 # @jspsych/new-extension
 
+## 0.1.5
+
+### Patch Changes
+
+- 3a0568c: Change the strategy for detecting when commands are run inside the official repos
+
 ## 0.1.4
 
 ### Patch Changes

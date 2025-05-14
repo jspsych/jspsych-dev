@@ -1,5 +1,12 @@
 # @jspsych/new-plugin
 
+## 0.2.2
+
+### Patch Changes
+
+- 3a0568c: Change the strategy for detecting when commands are run inside the official repos
+- bb5dd01: Fix example template to import `index.browser.js` instead of `index.global.js`
+
 ## 0.2.1
 
 ### Patch Changes
