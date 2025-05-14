@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "babel index.js --presets @babel/preset-env,minify --source-maps --out-file dist/index.browser.min.js",
+    "build": "esbuild src/index.js --bundle --minify --sourcemap --outfile=dist/index.browser.min.js",
     "build:watch": "npm run build -- --watch"
   },
   "repository": {
@@ -36,6 +36,7 @@
     "@citation-js/plugin-cff": "^0.6.1"
   },
   "devDependencies": {
-    "@jspsych/config": "^3.2.2"
+    "@jspsych/config": "^3.2.2",
+    "esbuild": "0.23.1"
   }
 }
