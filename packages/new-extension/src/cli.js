@@ -101,17 +101,37 @@ function getCamelCaseName(input) {
   return input;
 }
 
+async function detectContribRepo() {
+  const repoRoot = await getRepoRoot();
+  if (repoRoot) {
+    const packageJsonPath = path.join(repoRoot, "package.json");
+
+    // If package.json doesn't exist at the root, it cannot be the contrib repo.
+    if (!fs.existsSync(packageJsonPath)) {
+      return false;
+    }
+
+    // If package.json exists, try to read and parse it.
+    try {
+      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf-8");
+      const packageJson = JSON.parse(packageJsonContent);
+      return packageJson.name === "@jspsych/jspsych-contrib";
+    } catch (error) {
+      // Log an error if reading or parsing an existing package.json fails.
+      console.error("Error reading or parsing package.json:", error);
+      return false;
+    }
+  }
+  // Return false if not in a git repo or repoRoot couldn't be determined.
+  return false;
+}
+
 async function getCwdInfo() {
   const isRepo = await git.checkIsRepo();
   let isContribRepo;
   // Check if current directory is the jspsych-contrib repository
   if (isRepo) {
-    const remotes = await git.getRemotes(true);
-    isContribRepo = remotes.some((remote) => {
-      const remoteUrl = remote.refs.fetch;
-      const httpsUrl = getGitHttpsUrl(remoteUrl);
-      return httpsUrl.includes("github.com/jspsych/jspsych-contrib");
-    });
+    isContribRepo = await detectContribRepo();
     if (isContribRepo) {
       return {
         isRepo: isRepo,
