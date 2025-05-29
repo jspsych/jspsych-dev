@@ -45,12 +45,12 @@ const docsTimelinePath = path.join(new URL('./docs/functions', import.meta.url).
 const content = fs.readFileSync(docsTimelinePath, 'utf-8');
 const filteredTimelineDocs = filterCreateTimelineDocs(content);
 if (filteredTimelineDocs) {
-  // Adjust all markdown headings in filteredTimelineDocs so that the top levels start from ##
+  // Adjust all markdown headings in filteredTimelineDocs so that the top levels start from ###
   const headingAdjustmentRegex = /^#+\s/gm;
   const headingLevelsInDocs = filteredTimelineDocs.match(headingAdjustmentRegex) || [];
   const minHeadingLevel = Math.min(...headingLevelsInDocs.map(h => h.trim().length));
   const adjustedFilteredTimelineDocs = filteredTimelineDocs.replace(headingAdjustmentRegex, (match) => {
-    const adjustedLevel = match.trim().length - minHeadingLevel + 2; // Adjust to start from ##
+    const adjustedLevel = match.trim().length - minHeadingLevel + 3; // Adjust to start from ###
     return '#'.repeat(adjustedLevel) + ' ';
   });
 
@@ -67,11 +67,11 @@ if (filteredTimelineDocs) {
     const interfaceFilePath = path.join(new URL('./docs/interfaces', import.meta.url).pathname, match[1]);
     if (fs.existsSync(interfaceFilePath)) {
       let interfaceFileContent = fs.readFileSync(interfaceFilePath, 'utf-8');
-      // Adjust all markdown headings in interfaceFileContent so that the top levels start from ###
+      // Adjust all markdown headings in interfaceFileContent so that the top levels start from ####
       const headingLevelsInInterface = interfaceFileContent.match(headingAdjustmentRegex) || [];
       const minHeadingLevelInterface = Math.min(...headingLevelsInInterface.map(h => h.trim().length));
       interfaceFileContent = interfaceFileContent.replace(headingAdjustmentRegex, (match) => {
-        const adjustedLevel = match.trim().length - minHeadingLevelInterface + 3; // Adjust to start from ###
+        const adjustedLevel = match.trim().length - minHeadingLevelInterface + 4; // Adjust to start from #### (changed from +3 to +4)
         return '#'.repeat(adjustedLevel) + ' ';
       });
       appendedContent += `\n\n---\n\n${interfaceFileContent}`;

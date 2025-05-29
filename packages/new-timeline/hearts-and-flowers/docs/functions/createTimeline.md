@@ -1,4 +1,4 @@
-## Function: createTimeline()
+### Function: createTimeline()
 
 > **createTimeline**(`jsPsych`, `options`): `object`
 
@@ -9,14 +9,14 @@ one type by pressing the button on the same side as it (traditionally a
 heart), and to the other by pressing the button on the opposite side
 (traditionally a flower), as quickly as possible.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `jsPsych` | `JsPsych` | The jsPsych object that runs the experiment. |
 | `options` | `Partial`\<[`CreateTimelineOptions`](../interfaces/CreateTimelineOptions.md)\> | The options object that includes the number of trials, the weights for how often each type of stimulus appears, the weights for how often the stimulus appears on each side, the stimulus information containing the name and source of each stimulus type, whether to include a demo section or not, and the instruction text at the beginning and end of the experiment. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -24,11 +24,11 @@ The main timeline object.
 
 ---
 
-### Interface: CreateTimelineOptions
+#### Interface: CreateTimelineOptions
 
 Define and export the interface for the `options` parameter in [createTimeline](../functions/createTimeline.md).
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -43,11 +43,11 @@ Define and export the interface for the `options` parameter in [createTimeline](
 
 ---
 
-### Interface: StimulusOptions
+#### Interface: StimulusOptions
 
 Define and export the interface for the `stimulus_options` property in [CreateTimelineOptions](CreateTimelineOptions.md).
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
