@@ -15,7 +15,7 @@ function removeTypeDeclaration(content) {
   return content;
 }
 
-function filterUtilsDocs(content) {
+function filterTimelineUnitsDocs(content) {
   const headingLevels = content.match(/^#+\s/gm) || []; // Find all headings
   const topLevel = Math.min(...headingLevels.map((h) => h.trim().length)); // Determine the smallest heading level
   const topLevelHeadingRegex = new RegExp(`^#{${topLevel}}\\s`, "m"); // Match only the top-level headings
@@ -47,28 +47,28 @@ function filterUtilsDocs(content) {
     // Append the filtered content for the current section
     let currentSection = remainingContent.slice(startIndex, sliceEnd).trim();
 
-    // Adjust all markdown headings in currentSection so that the top levels start from ##
+    // Adjust all markdown headings in currentSection so that the top levels start from ###
     const headingAdjustmentRegex = /^#+\s/gm;
     const headingLevelsInSection = currentSection.match(headingAdjustmentRegex) || [];
     const minHeadingLevel = Math.min(...headingLevelsInSection.map(h => h.trim().length));
     currentSection = currentSection.replace(headingAdjustmentRegex, (match) => {
-        const adjustedLevel = match.trim().length - minHeadingLevel + 2; // Adjust to start from ##
+        const adjustedLevel = match.trim().length - minHeadingLevel + 3; // Adjust to start from ###
         return '#'.repeat(adjustedLevel) + ' ';
     });
 
-    // Find all links to files under ./docs/interfaces
+    // Find all links to files under ../docs/interfaces
     const interfaceLinkRegex = /\.\.\/interfaces\/([\w-]+\.md)/g;
     let match;
     let appendedContent = '';
     while ((match = interfaceLinkRegex.exec(currentSection)) !== null) {
-        const interfaceFilePath = path.join(new URL('./docs/interfaces', import.meta.url).pathname, match[1]);
+        const interfaceFilePath = path.join(new URL('../docs/interfaces', import.meta.url).pathname, match[1]);
         if (fs.existsSync(interfaceFilePath)) {
             let interfaceFileContent = fs.readFileSync(interfaceFilePath, 'utf-8');
             // Adjust all markdown headings in interfaceFileContent so that the top levels start from ###
             const headingLevelsInInterface = interfaceFileContent.match(headingAdjustmentRegex) || [];
             const minHeadingLevelInterface = Math.min(...headingLevelsInInterface.map(h => h.trim().length));
             interfaceFileContent = interfaceFileContent.replace(headingAdjustmentRegex, (match) => {
-                const adjustedLevel = match.trim().length - minHeadingLevelInterface + 3; // Adjust to start from ###
+                const adjustedLevel = match.trim().length - minHeadingLevelInterface + 4; // Adjust to start from ####
                 return '#'.repeat(adjustedLevel) + ' ';
             });
             appendedContent += `\n\n---\n\n${interfaceFileContent}`;
@@ -86,13 +86,13 @@ function filterUtilsDocs(content) {
   return result.trim();
 }
 
-// Apply removeTypeDeclaration to the content and write it back to docsUtilsPath
-const docsUtilsPath = path.join(
-    new URL("./docs/variables", import.meta.url).pathname,
-    "utils.md"
+// Apply removeTypeDeclaration to the content and write it back to docsTimelineUnitsPath
+const docsTimelineUnitsPath = path.join(
+    new URL("../docs/variables", import.meta.url).pathname,
+    "timelineUnits.md"
   );
-const content = fs.readFileSync(docsUtilsPath, "utf-8");
-const filteredUtilsDocs = filterUtilsDocs(removeTypeDeclaration(content));
-if (filteredUtilsDocs) {
-  fs.writeFileSync(docsUtilsPath, filteredUtilsDocs);
+const content = fs.readFileSync(docsTimelineUnitsPath, "utf-8");
+const filteredTimelineUnitsDocs = filterTimelineUnitsDocs(removeTypeDeclaration(content));
+if (filteredTimelineUnitsDocs) {
+  fs.writeFileSync(docsTimelineUnitsPath, filteredTimelineUnitsDocs);
 }

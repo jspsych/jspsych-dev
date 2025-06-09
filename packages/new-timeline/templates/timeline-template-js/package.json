@@ -9,7 +9,8 @@
     ],
     "scripts": {
       "build": "babel index.js --presets @babel/preset-env,minify --source-maps --out-file dist/index.browser.min.js",
-      "build:watch": "npm run build -- --watch"
+      "build:watch": "npm run build -- --watch",
+      "update-readme": "node readme-scripts/generate-docs.js && node readme-scripts/filter-interfaces-docs.js && node readme-scripts/filter-timeline-docs.js && node readme-scripts/filter-timelineUnits-docs.js && node readme-scripts/filter-utils-docs.js && node readme-scripts/update-readme.js"
     },
     "repository": {
       "type": "git",

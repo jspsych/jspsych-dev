@@ -41,7 +41,7 @@ function filterCreateTimelineDocs(content) {
   return filterParametersTable(content) + '\n\n' + filterReturnsTable(content);
 }
 
-const docsTimelinePath = path.join(new URL('./docs/functions', import.meta.url).pathname, 'createTimeline.md');
+const docsTimelinePath = path.join(new URL('../docs/functions', import.meta.url).pathname, 'createTimeline.md');
 const content = fs.readFileSync(docsTimelinePath, 'utf-8');
 const filteredTimelineDocs = filterCreateTimelineDocs(content);
 if (filteredTimelineDocs) {
@@ -62,9 +62,9 @@ if (filteredTimelineDocs) {
   let match;
   let appendedContent = '';
 
-  // Find all links to files under ./docs/interfaces
+  // Find all links to files under ../docs/interfaces
   while ((match = interfaceLinkRegex.exec(filteredContent)) !== null) {
-    const interfaceFilePath = path.join(new URL('./docs/interfaces', import.meta.url).pathname, match[1]);
+    const interfaceFilePath = path.join(new URL('../docs/interfaces', import.meta.url).pathname, match[1]);
     if (fs.existsSync(interfaceFilePath)) {
       let interfaceFileContent = fs.readFileSync(interfaceFilePath, 'utf-8');
       // Adjust all markdown headings in interfaceFileContent so that the top levels start from ####

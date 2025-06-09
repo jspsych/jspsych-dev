@@ -1,12 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { rmSync } from 'fs';
 
 // Define paths
-const baseDir = new URL('.', import.meta.url).pathname;
+const baseDir = new URL('..', import.meta.url).pathname;
 const docsDir = path.join(baseDir, 'docs');
 const readmePath = path.join(baseDir, 'README.md');
 
-// Update createTimeline placeholder
+// Update placeholders for createTimeline, timelineUnits, and utils
 function updatePlaceholder(fpFromDocs, placeholder) {
   const fp = path.join(docsDir, fpFromDocs);
   console.log(fp)
@@ -29,11 +30,25 @@ function updatePlaceholder(fpFromDocs, placeholder) {
   }
 }
 
+// Function to delete the docs folder
+function deleteDocs() {
+  const docsDirectory = path.join(baseDir, '.', 'docs');
+  console.log("docsDirectory: ", docsDirectory)
+  try {
+    rmSync(docsDirectory, { recursive: true, force: true });
+    console.log('Successfully deleted docs folder');
+  } catch (error) {
+    console.error('Error deleting docs folder:', error);
+  }
+}
+
 // Main function
 function updateReadmePlaceholders() {
   updatePlaceholder('functions/createTimeline.md', '<!-- createTimeline documentation -->');
   updatePlaceholder('variables/timelineUnits.md', '<!-- timelineUnits documentation -->');
   updatePlaceholder('variables/utils.md', '<!-- utils documentation -->');
+  
+  deleteDocs();
 }
 
 // Run the updates

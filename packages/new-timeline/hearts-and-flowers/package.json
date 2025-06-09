@@ -8,7 +8,7 @@
     "unpkg": "dist/index.browser.min.js",
     "scripts": {
         "build": "tsup src/index.ts --format esm,iife --sourcemap --dts --treeshake --clean --global-name jsPsychTimelineHeartsAndFlowers",
-        "update-readme": "node generate-docs.js && node filter-interfaces-docs.js && node filter-timeline-docs.js && node filter-timelineUnits-docs.js && node filter-utils-docs.js && node update-readme.js"
+        "update-readme": "node readme-scripts/generate-docs.js && node readme-scripts/filter-interfaces-docs.js && node readme-scripts/filter-timeline-docs.js && node readme-scripts/filter-timelineUnits-docs.js && node readme-scripts/filter-utils-docs.js && node readme-scripts/update-readme.js"
     },
     "repository": {
         "type": "git",

@@ -90,19 +90,19 @@ Define and export the interface for the `stimulus_options` property in [CreateTi
 | <a id="opposite_side_stimulus_src"></a> `opposite_side_stimulus_src` | `string` | `flowerIconSvg` | The source of the stimulus to be displayed when the target side is the opposite side. |
 
 ## timelineUnits Documentation
-## createGametypeTrial()
+### createGametypeTrial()
 
 > **createGametypeTrial**: (`stimulusName`) => `object`
 
 Trial that announces the demo game type.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `stimulusName` | `string` | The name of the stimulus to be demoed. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -110,13 +110,13 @@ Plugin object displaying the name of the stimulus to be demoed.
 
 ***
 
-## createTrial()
+### createTrial()
 
 > **createTrial**: (`jsPsych`, `stimulusInfo`, `instruction`) => `object`
 
 Trial that shows the stimulus and collects the response.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -124,7 +124,7 @@ Trial that shows the stimulus and collects the response.
 | `stimulusInfo` | [`StimulusInfo`](../interfaces/StimulusInfo.md) | `undefined` | The stimulus information object that describes the name of the stimulus and its source. |
 | `instruction` | `boolean` | `false` | Whether to include instruction text teaching participants how to respond or not. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -132,11 +132,11 @@ Plugin object displaying the stimulus and collecting the response.
 
 ---
 
-### Interface: StimulusInfo
+#### Interface: StimulusInfo
 
 Interface for the stimulus information object that describes the name and source of the stimulus for both target sides.
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -145,19 +145,19 @@ Interface for the stimulus information object that describes the name and source
 
 ***
 
-## createFeedbackTrial()
+### createFeedbackTrial()
 
 > **createFeedbackTrial**: (`jsPsych`) => `object`
 
 Trial that shows feedback after each demo trial.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `jsPsych` | `JsPsych` | The jsPsych object that runs the experiment. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -165,20 +165,20 @@ jsPsychHtmlKeyboardResponse object displaying feedback after each demo trial tha
 
 ***
 
-## createFixationTrial()
+### createFixationTrial()
 
 > **createFixationTrial**: (`jsPsych`, `fixationDurationFunction`) => `object`
 
 Trial that shows a fixation cross.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `jsPsych` | `JsPsych` | The jsPsych object that runs the experiment. |
 | `fixationDurationFunction` | () => `number` | The function that returns a random fixation duration from a list of possible durations. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -186,13 +186,13 @@ Plugin object displaying a fixation cross for a random duration.
 
 ***
 
-## createDemoSubTimeline()
+### createDemoSubTimeline()
 
 > **createDemoSubTimeline**: (`jsPsych`, `targetSide`, `stimulusInfo`) => `object`
 
 Creates a demo subtimeline.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
@@ -200,7 +200,7 @@ Creates a demo subtimeline.
 | `targetSide` | keyof StimulusInfo \| `"both"` | The side of the target stimulus. |
 | `stimulusInfo` | [`StimulusInfo`](../interfaces/StimulusInfo.md) | The stimulus information object that describes the name of the stimulus and its source. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -208,11 +208,11 @@ A subtimeline that includes a demo trial with stimulus on the left, a demo trial
 
 ---
 
-### Interface: StimulusInfo
+#### Interface: StimulusInfo
 
 Interface for the stimulus information object that describes the name and source of the stimulus for both target sides.
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -221,20 +221,20 @@ Interface for the stimulus information object that describes the name and source
 
 ***
 
-## createTrialsSubTimeline()
+### createTrialsSubTimeline()
 
 > **createTrialsSubTimeline**: (`jsPsych`, `options`) => `object`
 
 Creates a subtimeline with a set number of trials.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `jsPsych` | `JsPsych` | The jsPsych object that runs the experiment. |
 | `options` | `Partial`\<[`CreateTrialsSubTimelineOptions`](../interfaces/CreateTrialsSubTimelineOptions.md)\> | The options object that includes what kinds of trials to include [same|opposte|both], the number of trials, the weights for how often each type of stimulus appears, the weights for how often the stimulus appears on each side, and the stimulus information containing the name and source of each stimulus type. |
 
-### Returns
+#### Returns
 
 `object`
 
@@ -242,11 +242,11 @@ A subtimeline with a set number of trials with the specified options.
 
 ---
 
-### Interface: CreateTrialsSubTimelineOptions
+#### Interface: CreateTrialsSubTimelineOptions
 
 Interface for the options parameter in [createTrialsSubTimeline](../variables/timelineUnits.md#createtrialssubtimeline).
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -259,11 +259,11 @@ Interface for the options parameter in [createTrialsSubTimeline](../variables/ti
 
 ---
 
-### Interface: StimulusInfo
+#### Interface: StimulusInfo
 
 Interface for the stimulus information object that describes the name and source of the stimulus for both target sides.
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -273,13 +273,13 @@ Interface for the stimulus information object that describes the name and source
 ***
 
 ## utils Documentation
-## generateStimulus()
+### generateStimulus()
 
 > **generateStimulus**: (`targetSide`, `stimulusSide`, `stimulusInfo`, `instruction`?) => `string`
 
 Generates the stimulus HTML for a given trial.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -288,7 +288,7 @@ Generates the stimulus HTML for a given trial.
 | `stimulusInfo` | [`StimulusInfo`](../interfaces/StimulusInfo.md) | `undefined` | The stimulus information object that describes the name and source of the stimulus. |
 | `instruction`? | `boolean` | `false` | Whether to include instruction text teaching participants how to respond. |
 
-### Returns
+#### Returns
 
 `string`
 
@@ -296,11 +296,11 @@ HTML string representing the stimulus.
 
 ---
 
-### Interface: StimulusInfo
+#### Interface: StimulusInfo
 
 Interface for the stimulus information object that describes the name and source of the stimulus for both target sides.
 
-#### Properties
+##### Properties
 
 | Property | Type | Default value | Description |
 | ------ | ------ | ------ | ------ |
@@ -309,20 +309,20 @@ Interface for the stimulus information object that describes the name and source
 
 ***
 
-## getCorrectResponse()
+### getCorrectResponse()
 
 > **getCorrectResponse**: (`targetSide`, `stimulusSide`) => `"left"` \| `"right"`
 
 Computes the correct response index.
 
-### Parameters
+#### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `targetSide` | `"same"` \| `"opposite"` | The side of the target stimulus [same\|opposite]. |
 | `stimulusSide` | `"left"` \| `"right"` | The side of the stimulus to be displayed [left\|right]. |
 
-### Returns
+#### Returns
 
 `"left"` \| `"right"`
 

@@ -3,7 +3,7 @@ import path from "path";
 
 function filterInterfaceDocs(filename) {
   const docsInterfacePath = path.join(
-    new URL("./docs/interfaces", import.meta.url).pathname,
+    new URL("../docs/interfaces", import.meta.url).pathname,
     `${filename}.md`
   );
   const content = fs.readFileSync(docsInterfacePath, "utf-8");
@@ -21,8 +21,8 @@ function filterInterfaceDocs(filename) {
   // If filtered content returns nothing, keep the original content
 }
 
-// Apply filterInterfaceDocs to all .md files in ./docs/interfaces
-const docsInterfacesDir = new URL("./docs/interfaces", import.meta.url).pathname;
+// Apply filterInterfaceDocs to all .md files in ../docs/interfaces
+const docsInterfacesDir = new URL("../docs/interfaces", import.meta.url).pathname;
 const mdFiles = fs.readdirSync(docsInterfacesDir).filter((file) => file.endsWith(".md"));
 
 mdFiles.forEach((file) => {
