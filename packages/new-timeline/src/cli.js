@@ -220,7 +220,10 @@ async function processAnswers(answers) {
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
-    return src(`${templatesDir}/timeline-template-${answers.language}/**/*`)
+    return src(`${templatesDir}/timeline-template-${answers.language}/**/*`, { 
+      dot: true,   // Includes hidden files too
+      nodir: false // Includes directories
+    })
       .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
