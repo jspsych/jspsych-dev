@@ -11,10 +11,10 @@
 `{npmPackageName}` requires jsPsych v8.0.0 or later.
 
 ## createTimeline() Documentation
-<!-- createTimeline documentation -->
+<!-- Insert or autogenerate documentation for createTimeline() here. -->
 
 ## timelineUnits Documentation
-<!-- timelineUnits documentation -->
+<!-- Insert or autogenerate documentation for timelineUnits here. -->
 
 ## utils Documentation
-<!-- utils documentation -->
+<!-- Insert or autogenerate documentation for utils here. -->

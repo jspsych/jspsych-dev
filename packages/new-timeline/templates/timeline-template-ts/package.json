@@ -8,7 +8,7 @@
     "unpkg": "dist/index.browser.min.js",
     "scripts": {
       "build": "tsup src/index.ts --format esm,iife --sourcemap --dts --treeshake --clean --global-name {globalName}",
-      "update-readme": "node readme-scripts/generate-docs.js && node readme-scripts/filter-interfaces-docs.js && node readme-scripts/filter-timeline-docs.js && node readme-scripts/filter-timelineUnits-docs.js && node readme-scripts/filter-utils-docs.js && node readme-scripts/update-readme.js"
+      "update-readme": "generate-timeline-docs"
     },
     "repository": {
       "type": "git",
@@ -31,6 +31,7 @@
       "jspsych": "^8.0.0",
       "@jspsych/config": "^3.2.2",
       "tsup": "^6.7.0",
-      "typescript": "^5.0.2"
+      "typescript": "^5.0.2",
+      "@jspsych/generate-timeline-docs": "^0.0.1"
     }
   }

@@ -1,0 +1,46 @@
+{
+  "name": "@jspsych-dev/generate-timeline-docs",
+  "version": "0.0.1",
+  "description": "Package for automatically generating documentation and updating README.md in timeline packages.",
+  "type": "module",
+  "bin": {
+    "generate-timeline-docs": "src/generate-docs.js"
+  },
+  "scripts": {
+    "generate-docs": "node src/generate-docs.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jspsych/jspsych-dev.git",
+    "directory": "packages"
+  },
+  "keywords": [
+    "jsPsych"
+  ],
+  "author": {
+    "name": "Cherrie Chang",
+    "url": "https://github.com/cherriechang"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jspsych/jspsych-dev/issues"
+  },
+  "homepage": "https://github.com/jspsych/jspsych-dev/packages/generate-timeline-docs/README.md",
+  "devDependencies": {
+    "jest": "^29.6.2"
+  },
+  "dependencies": {
+    "jsdoc-plugin-typescript": "^3.2.0",
+    "jsdoc-to-markdown": "^9.1.1",
+    "typedoc": "^0.28.0",
+    "typedoc-plugin-markdown": "^4.5.0",
+    "typescript": "^5.0.2",
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=14.16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
