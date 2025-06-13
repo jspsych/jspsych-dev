@@ -29,6 +29,7 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
     console.log(`\nGenerating TypeDoc documentation...`);
     const typedocConfigPath = path.join(__dirname, "..", "typedoc.json");
     const toolDir = path.join(__dirname, "..");
+    const rootDir = path.resolve(__dirname, "..", "..");
 
     // Look for src/index.ts as entry point
     const srcDir = path.join(packageDir, "src");
@@ -52,10 +53,10 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
     // REVIEW: is this good practice?
     execSync(`npx typedoc --options ${typedocConfigPath} --out ${docsDir} ${entryPointsArg}`, {
       stdio: "inherit",
-      cwd: packageDir,
+      cwd: toolDir,
       env: {
         ...process.env,
-        NODE_PATH: path.join(toolDir, "node_modules"),
+        NODE_PATH: [path.join(toolDir, "node_modules"), path.join(rootDir, "node_modules")].join(path.delimiter),
       },
     });
 
@@ -101,16 +102,20 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
  * in the current working directory.
  */
 
-if (process.argv[1].includes('generate-timeline-docs') || process.argv[1] === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1].includes("generate-timeline-docs") ||
+  process.argv[1] === fileURLToPath(import.meta.url)
+) {
   // Get the directory of the documentation tool
   const toolDir = path.resolve(__dirname, ".."); // Root directory of the tool
+  const rootDir = path.resolve(__dirname, "..", ".."); // Parent directory of the tool
   const packageDir = process.cwd(); // Package directory
 
   console.info(`Using package directory: ${packageDir}`);
   console.info(`Documentation tool directory: ${toolDir}`);
 
   // Set up the NODE_PATH environment variable to help find modules
-  process.env.NODE_PATH = path.join(toolDir, "node_modules");
+  process.env.NODE_PATH = [path.join(toolDir, "node_modules"), path.join(rootDir, "node_modules")].join(path.delimiter);
 
   generateDocumentation(packageDir)
     .then((success) => {

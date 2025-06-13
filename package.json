@@ -1,45 +1,40 @@
 {
-    "private": true,
-    "type": "module",
-    "workspaces": [
-        "packages/*"
-    ],
-    "scripts": {
-        "prepare": "husky install",
-        "changeset": "changeset",
-        "changeset:version": "changeset version",
-        "changeset:publish": "changeset publish"
-    },
-    "devDependencies": {
-        "@changesets/changelog-github": "^0.4.0",
-        "@changesets/cli": "^2.16.0",
-        "@jspsych/config": "^3.2.2",
-        "husky": "^7.0.1",
-        "import-sort-style-module": "^6.0.0",
-        "jsdoc": "^4.0.4",
-        "jsdoc-plugin-typescript": "^3.2.0",
-        "jsdoc-to-markdown": "^9.1.1",
-        "lint-staged": "^11.1.2",
-        "prettier": "^2.3.2",
-        "prettier-plugin-import-sort": "^0.0.7"
-    },
-    "prettier": {
-        "printWidth": 100
-    },
-    "importSort": {
-        ".ts, .js, .mjs, .cjs": {
-            "style": "module",
-            "parser": "typescript"
-        }
-    },
-    "lint-staged": {
-        "*.{ts,js,mjs,cjs}": "prettier --write"
-    },
-    "jest": {
-        "projects": [
-            "<rootDir>/packages/*"
-        ]
-    },
-    "name": "",
-    "version": ""
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "husky install",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.4.0",
+    "@changesets/cli": "^2.16.0",
+    "@jspsych/config": "^3.2.2",
+    "husky": "^7.0.1",
+    "import-sort-style-module": "^6.0.0",
+    "lint-staged": "^11.1.2",
+    "prettier": "^2.3.2",
+    "prettier-plugin-import-sort": "^0.0.7"
+  },
+  "prettier": {
+    "printWidth": 100
+  },
+  "importSort": {
+    ".ts, .js, .mjs, .cjs": {
+      "style": "module",
+      "parser": "typescript"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,js,mjs,cjs}": "prettier --write"
+  },
+  "jest": {
+    "projects": [
+      "<rootDir>/packages/*"
+    ]
+  }
 }
