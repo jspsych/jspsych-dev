@@ -10,25 +10,11 @@
 
 `{npmPackageName}` requires jsPsych v8.0.0 or later.
 
-## Documentation
+## createTimeline() Documentation
+<!-- Insert or autogenerate documentation for createTimeline() here. -->
 
-### createTimeline
+## timelineUnits Documentation
+<!-- Insert or autogenerate documentation for timelineUnits here. -->
 
-#### {globalName}.createTimeline(jsPsych, { *options* }) ⇒ <code>timeline</code>
-Description of the timeline that this plugin generates
-
-The following parameters can be specified in the **options** parameter.
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| parameter | type | default | description |
-
-
-### timelineUnits
-
-
-### utils
-
-## Author / Citation
-
-{author}
+## utils Documentation
+<!-- Insert or autogenerate documentation for utils here. -->

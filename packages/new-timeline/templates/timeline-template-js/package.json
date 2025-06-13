@@ -9,7 +9,8 @@
     ],
     "scripts": {
       "build": "babel index.js --presets @babel/preset-env,minify --source-maps --out-file dist/index.browser.min.js",
-      "build:watch": "npm run build -- --watch"
+      "build:watch": "npm run build -- --watch",
+      "update-readme": "generate-timeline-docs"
     },
     "repository": {
       "type": "git",
@@ -30,6 +31,7 @@
     "homepage": "{documentationUrl}",
     "devDependencies": {
       "@jspsych/config": "^3.2.2",
-      "jspsych": "^8.0.0"
+      "jspsych": "^8.0.0",
+      "@jspsych-dev/generate-timeline-docs": "^0.0.1"
     }
   }

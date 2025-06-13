@@ -240,7 +240,10 @@ async function processAnswers(answers) {
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
-    return src(`${templatesDir}/extension-template-${answers.language}/**/*`)
+    return src(`${templatesDir}/extension-template-${answers.language}/**/*`, { 
+      dot: true,   // Includes hidden files too
+      nodir: false // Includes directories
+    })
       .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
@@ -265,8 +268,8 @@ async function processAnswers(answers) {
           "{publishingComment}\n",
           answers.isContribRepo
             ? // prettier-ignore
-              `<!-- Once this extension package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n`
-            : `<!-- Load the published extension package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n`
+              `<!-- Once this extension package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n<script src="../dist/index.browser.js"></script> -->\n`
+            : `<!-- Load the published extension package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.browser.js"></script> -->\n`
         )
       )
       .pipe(dest(`${destPath}/examples`));
