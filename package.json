@@ -1,4 +1,5 @@
 {
+  "name": "@jspsych/jspsych-dev",
   "private": true,
   "type": "module",
   "workspaces": [
