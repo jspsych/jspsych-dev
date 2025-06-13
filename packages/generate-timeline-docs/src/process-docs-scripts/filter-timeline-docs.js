@@ -43,12 +43,11 @@ function filterTimelineDoc(timelinePath) {
 }
 
 export default function filterTimelineDocs(packageDir) {
-  console.log(`\n\tProcessing createTimeline() documentation for ${packageDir}...`);
   const docsCreateTimelinePath = path.join(packageDir, "docs", "functions", "createTimeline.md");
 
   // Step 1: Check if createTimeline() documentation exists
   if (!fs.existsSync(docsCreateTimelinePath)) {
-    console.error(`\tcreateTimeline() documentation file not found: ${docsCreateTimelinePath}`);
+    console.error(`createTimeline() documentation file not found: ${docsCreateTimelinePath}`);
     return false;
   }
 
@@ -78,7 +77,6 @@ export default function filterTimelineDocs(packageDir) {
     let appendedContent = "";
 
     // Step 4: Find all links to files under interfaces directory and append them
-    console.log("\t\tLooking for interface links to append...");
     while ((match = interfaceLinkRegex.exec(filteredContent)) !== null) {
       const interfaceFilePath = path.join(packageDir, "docs", "interfaces", match[1]);
 
@@ -94,20 +92,18 @@ export default function filterTimelineDocs(packageDir) {
           return "#".repeat(adjustedLevel) + " ";
         });
         appendedContent += `\n\n---\n\n${interfaceFileContent}`;
-        console.log(`\t\t\tAdded interface content from: ${interfaceFilePath}`);
       } else {
-        console.warn(`\t\t\tInterface file not found: ${interfaceFilePath}`);
+        console.warn(`Interface file not found: ${interfaceFilePath}`);
       }
     }
 
     // Append the contents of the linked files to the end of docsCreateTimelinePath
     if (appendedContent) {
       fs.appendFileSync(docsCreateTimelinePath, appendedContent);
-      console.log("\t\tAppended interface contents to createTimeline docs");
     }
   }
 
-  console.log(`\tComplete processing createTimeline() documentation for ${packageDir}!`);
+  console.log(`✔️ Complete processing createTimeline() documentation for ${packageDir}!`);
   return true;
 }
 

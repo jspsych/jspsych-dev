@@ -16,12 +16,11 @@ function removeTypeDeclaration(content) {
 }
 
 export default function filterUtilsDocs(packageDir) {
-  console.log(`\n\tProcessing utils documentation for ${packageDir}...`);
   const docsUtilsPath = path.join(packageDir, "docs", "variables", "utils.md");
 
   // Step 1: Check if utils documentation file exists
   if (!fs.existsSync(docsUtilsPath)) {
-    console.error(`\tutils documentation not found: ${docsUtilsPath}`);
+    console.error(`utils documentation not found: ${docsUtilsPath}`);
     return false;
   }
 
@@ -60,7 +59,6 @@ export default function filterUtilsDocs(packageDir) {
     let currentSection = remainingContent.slice(startIndex, sliceEnd).trim();
 
     // Step 3: Adjust all markdown headings in currentSection so that the top levels start from ###
-    console.log(`\t\tAdjusting headings at ${startIndex}...`);
     const headingAdjustmentRegex = /^#+\s/gm;
     const headingLevelsInSection = currentSection.match(headingAdjustmentRegex) || [];
     const minHeadingLevel = Math.min(...headingLevelsInSection.map((h) => h.trim().length));
@@ -70,7 +68,6 @@ export default function filterUtilsDocs(packageDir) {
     });
 
     // Step 4: Find all links to files under interfaces directory
-    console.log(`\t\tFinding interface links in current section...`);
     const interfaceLinkRegex = /\.\.\/interfaces\/([\w-]+\.md)/g;
     let match;
     let appendedContent = "";
@@ -89,9 +86,7 @@ export default function filterUtilsDocs(packageDir) {
           return "#".repeat(adjustedLevel) + " ";
         });
         appendedContent += `\n\n---\n\n${interfaceFileContent}`;
-        console.log(`\t\t\tAdded interface content from: ${interfaceFilePath}`);
       } else {
-        console.warn(`\t\t\tInterface file not found: ${interfaceFilePath}`);
       }
     }
     // Append the contents of the linked files to the end of current section
@@ -107,7 +102,7 @@ export default function filterUtilsDocs(packageDir) {
     fs.writeFileSync(docsUtilsPath, result.trim());
   }
 
-  console.log(`\tComplete processing utils documentation for ${packageDir}!`);
+  console.log(`✔️ Complete processing utils documentation for ${packageDir}!`);
   return true;
 }
 

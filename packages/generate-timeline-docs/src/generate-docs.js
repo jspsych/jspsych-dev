@@ -26,7 +26,7 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
 
   try {
     // Step 1: Generate documentation with TypeDoc
-    console.log(`Generating TypeDoc documentation...`);
+    console.log(`\nGenerating TypeDoc documentation...`);
     const typedocConfigPath = path.join(__dirname, "..", "typedoc.json");
     const toolDir = path.join(__dirname, "..");
 
@@ -49,10 +49,8 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
       return false;
     }
 
-    // Use local installation paths
     // REVIEW: is this good practice?
-    const typedocPath = path.join(toolDir, "node_modules", ".bin", "typedoc");
-    execSync(`${typedocPath} --options ${typedocConfigPath} --out ${docsDir} ${entryPointsArg}`, {
+    execSync(`npx typedoc --options ${typedocConfigPath} --out ${docsDir} ${entryPointsArg}`, {
       stdio: "inherit",
       cwd: packageDir,
       env: {
@@ -64,7 +62,7 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
     console.log("☑️ Finished generating TypeDoc documentation.");
 
     // Step 2: Process each generated documentation file
-    console.log(`Processing documentation files...`);
+    console.log(`\nProcessing documentation files...`);
     filterInterfacesDocs(packageDir);
     filterTimelineDocs(packageDir);
     filterTimelineUnitsDocs(packageDir);
@@ -72,7 +70,7 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
     console.log("☑️ Finished processing documentation files.");
 
     // Step 3: Update README with processed documentation
-    console.log(`Updating README with processed documentation...`);
+    console.log(`\nUpdating README with processed documentation...`);
     updateReadme(
       packageDir,
       readmePath,
@@ -103,13 +101,13 @@ async function generateDocumentation(packageDir, options = { skipCleanup: false 
  * in the current working directory.
  */
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1].includes('generate-timeline-docs') || process.argv[1] === fileURLToPath(import.meta.url)) {
   // Get the directory of the documentation tool
   const toolDir = path.resolve(__dirname, ".."); // Root directory of the tool
   const packageDir = process.cwd(); // Package directory
 
-  console.log(`Using package directory: ${packageDir}`);
-  console.log(`Documentation tool directory: ${toolDir}`);
+  console.info(`Using package directory: ${packageDir}`);
+  console.info(`Documentation tool directory: ${toolDir}`);
 
   // Set up the NODE_PATH environment variable to help find modules
   process.env.NODE_PATH = path.join(toolDir, "node_modules");

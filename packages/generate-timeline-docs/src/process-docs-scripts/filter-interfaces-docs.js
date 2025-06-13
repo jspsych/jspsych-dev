@@ -18,12 +18,11 @@ function filterInterfaceDoc(interfacePath) {
 }
 
 export default function filterInterfaceDocs(packageDir) {
-  console.log(`\n\tProcessing interface documentation for ${packageDir}...`);
   const docsInterfacesDir = path.join(packageDir, "docs", "interfaces");
 
   // Step 1: Check if interfaces directory exists
   if (!fs.existsSync(docsInterfacesDir)) {
-    console.error(`\tInterfaces directory not found: ${docsInterfacesDir}`);
+    console.error(`Interfaces directory not found: ${docsInterfacesDir}`);
     return false;
   }
 
@@ -31,15 +30,12 @@ export default function filterInterfaceDocs(packageDir) {
   const mdFiles = fs.readdirSync(docsInterfacesDir).filter((file) => file.endsWith(".md"));
 
   mdFiles.forEach((file) => {
-    console.log(`\t\tProcessing interface: ${file}`);
     const interfacePath = path.join(packageDir, "docs", "interfaces", `${file}`);
     filterInterfaceDoc(interfacePath);
-    console.log(`\t\tFiltered interface documentation: ${file}`);
   });
 
   // Step 3: After processing all files, append linked file contents and update links
   mdFiles.forEach((file) => {
-    console.log(`\t\tProcessing internal links in: ${file}`);
     const currentFilePath = path.join(docsInterfacesDir, file);
     let content = fs.readFileSync(currentFilePath, "utf-8");
 
@@ -64,11 +60,10 @@ export default function filterInterfaceDocs(packageDir) {
     // Write the updated content back to the current file
     if (appendedContent) {
       fs.writeFileSync(currentFilePath, content + appendedContent);
-      console.log(`\t\tAppended linked interfaces in: ${file}`);
     }
   });
 
-  console.log(`\tComplete processing interface documentation for ${packageDir}!`);
+  console.log(`✔️ Complete processing interface documentation for ${packageDir}!`);
   return true;
 }
 

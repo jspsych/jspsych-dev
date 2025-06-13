@@ -16,17 +16,15 @@ function removeTypeDeclaration(content) {
 }
 
 export default function filterTimelineUnitsDocs(packageDir) {
-  console.log(`\n\tProcessing timelineUnits documentation for ${packageDir}...`);
   const docsTimelineUnitsPath = path.join(packageDir, "docs", "variables", "timelineUnits.md");
 
   // Step 1: Check if timelineUnits documentation file exists
   if (!fs.existsSync(docsTimelineUnitsPath)) {
-    console.error(`\tTimeline units documentation not found: ${docsTimelineUnitsPath}`);
+    console.error(`Timeline units documentation not found: ${docsTimelineUnitsPath}`);
     return false;
   }
 
   // Step 2: Read and filter the timelineUnits documentation
-  console.log(`\t\tReading and filtering timelineUnits documentation...`);
   let content = fs.readFileSync(docsTimelineUnitsPath, "utf-8");
   content = removeTypeDeclaration(content);
   const headingLevels = content.match(/^#+\s/gm) || []; // Find all headings
@@ -61,7 +59,6 @@ export default function filterTimelineUnitsDocs(packageDir) {
     let currentSection = remainingContent.slice(startIndex, sliceEnd).trim();
 
     // Step 3: Adjust all markdown headings in currentSection so that the top levels start from ###
-    console.log(`\t\tAdjusting headings at ${startIndex}...`);
     const headingAdjustmentRegex = /^#+\s/gm;
     const headingLevelsInSection = currentSection.match(headingAdjustmentRegex) || [];
     const minHeadingLevel = Math.min(...headingLevelsInSection.map((h) => h.trim().length));
@@ -71,7 +68,6 @@ export default function filterTimelineUnitsDocs(packageDir) {
     });
 
     // Step 4: Find all links to files under interfaces directory
-    console.log(`\t\tFinding interface links in current section...`);
     const interfaceLinkRegex = /\.\.\/interfaces\/([\w-]+\.md)/g;
     let match;
     let appendedContent = "";
@@ -90,9 +86,8 @@ export default function filterTimelineUnitsDocs(packageDir) {
           return "#".repeat(adjustedLevel) + " ";
         });
         appendedContent += `\n\n---\n\n${interfaceFileContent}`;
-        console.log(`\t\t\tAdded interface content from: ${interfaceFilePath}`);
       } else {
-        console.warn(`\t\t\tInterface file not found: ${interfaceFilePath}`);
+        console.warn(`Interface file not found: ${interfaceFilePath}`);
       }
     }
     // Append the contents of the linked files to the end of current section
@@ -108,7 +103,7 @@ export default function filterTimelineUnitsDocs(packageDir) {
     fs.writeFileSync(docsTimelineUnitsPath, result.trim());
   }
 
-  console.log(`\tComplete processing timelineUnits documentation for ${packageDir}!`);
+  console.log(`✔️ Complete processing timelineUnits documentation for ${packageDir}!`);
   return true;
 }
 

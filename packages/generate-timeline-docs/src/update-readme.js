@@ -30,16 +30,15 @@ function updateSectionBetweenHeadings(readmeContent, startHeading, endHeading, c
 function updateContentFromFile(docsDir, readmePath, filePath, startHeading, endHeading = null) {
   // Full path to the documentation file
   const fullPath = path.join(docsDir, filePath);
-  console.log(`\t\tCopying over documentation from: docs/${filePath}`);
   
   try {
     // Check if files exist
     if (!fs.existsSync(fullPath)) {
-      console.error(`\t\tFile not found: docs/${filePath}`);
+      console.error(`File not found: docs/${filePath}`);
       return null;
     }
     if (!fs.existsSync(readmePath)) {
-      console.error(`\t\tREADME not found: ${readmePath}`);
+      console.error(`README not found: ${readmePath}`);
       return null;
     }
 
@@ -52,27 +51,26 @@ function updateContentFromFile(docsDir, readmePath, filePath, startHeading, endH
     
     // Write updated README
     fs.writeFileSync(readmePath, updatedReadme);
-    console.log(`\t\tSuccessfully updated ${startHeading} section in README.md`);
     return updatedReadme;
     
   } catch (error) {
-    console.error(`\t\tError updating ${startHeading} section:`, error);
+    console.error(`Error updating ${startHeading} section:`, error);
     return null;
   }
 }
 
 // Function to delete the docs folder
 function deleteDocs(docsDir) {
-  console.log(`\t\tDeleting docs directory: ${docsDir}`);
+  console.log(`Deleting docs directory: ${docsDir}`);
   try {
     if (fs.existsSync(docsDir)) {
       rmSync(docsDir, { recursive: true, force: true });
-      console.log("\t\tSuccessfully deleted docs folder");
+      console.log("✔️ Successfully deleted docs folder");
     } else {
-      console.log("\t\tDocs folder not found, nothing to delete");
+      console.log("Docs folder not found, nothing to delete");
     }
   } catch (error) {
-    console.error("\t\tError deleting docs folder:", error);
+    console.error("Error deleting docs folder:", error);
   }
 }
 
@@ -84,12 +82,6 @@ export default function updateReadme(packageDir, readmePath) {
     const timelineDocsFp = "functions/createTimeline.md";
     const timelineUnitsDocsFp = "variables/timelineUnits.md";
     const utilsDocsFp = "variables/utils.md";
-    
-    // Log file existence checks
-    console.log(`\tChecking for files in ${docsDir}:`);
-    console.log(`\t\tcreateTimeline docs: ${fs.existsSync(path.join(docsDir, timelineDocsFp))}`);
-    console.log(`\t\ttimelineUnits docs: ${fs.existsSync(path.join(docsDir, timelineUnitsDocsFp))}`);
-    console.log(`\t\tutils docs: ${fs.existsSync(path.join(docsDir, utilsDocsFp))}`);
     
     // Update each section between headings
     let currentReadme = updateContentFromFile(
@@ -105,7 +97,7 @@ export default function updateReadme(packageDir, readmePath) {
       fs.writeFileSync(readmePath, currentReadme);
     }
     else {
-      console.error("\tNo updated content found for timeline Documentation.");
+      console.error("No updated content found for timeline Documentation.");
     }
 
     currentReadme = updateContentFromFile(
@@ -120,7 +112,7 @@ export default function updateReadme(packageDir, readmePath) {
       fs.writeFileSync(readmePath, currentReadme);
     }
     else {
-      console.error("\tNo updated content found for timelineUnits Documentation.");
+      console.error("No updated content found for timelineUnits Documentation.");
     }
 
     // For the last section, there's no ending heading
@@ -135,10 +127,10 @@ export default function updateReadme(packageDir, readmePath) {
       fs.writeFileSync(readmePath, currentReadme);
     }
     else {
-      console.error("\tNo updated content found for utils Documentation.");
+      console.error("No updated content found for utils Documentation.");
     }
   } catch (error) {
-    console.error("\tError updating README sections:", error);
+    console.error("Error updating README sections:", error);
   }
 
   deleteDocs(docsDir);
