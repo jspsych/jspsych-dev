@@ -52,7 +52,7 @@ export default function filterInterfaceDocs(packageDir) {
         appendedContent += `\n\n---\n\n${linkedFileContent}`;
 
         // Update the link in the current file to point to the appended content
-        const updatedLink = `#${linkedFileName.replace(".md", "")}`;
+        const updatedLink = `#interface-${linkedFileName.replace(".md", "")}`;
         content = content.replace(match[0], updatedLink);
       }
     }
