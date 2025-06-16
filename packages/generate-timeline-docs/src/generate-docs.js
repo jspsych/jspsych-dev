@@ -117,7 +117,7 @@ if (
   // Set up the NODE_PATH environment variable to help find modules
   process.env.NODE_PATH = [path.join(toolDir, "node_modules"), path.join(rootDir, "node_modules")].join(path.delimiter);
 
-  generateDocumentation(packageDir, { skipCleanup: true })
+  generateDocumentation(packageDir)
     .then((success) => {
       process.exit(success ? 0 : 1);
     })
