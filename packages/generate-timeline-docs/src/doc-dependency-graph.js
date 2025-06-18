@@ -1,21 +1,28 @@
+import fs from "fs";
+import path from "path";
+
 import { DepGraph } from "dependency-graph";
 
 /**
  * Recursively loops through all files in docs/ and registers them in dependency graph.
- * @param {object} depGraph - The dependency graph instance
- * @param {string} docsDir - The docs directory path
+ * @param {string} dir - The starting directory path
+ * @param {DocDependencyGraph} depGraph - The document dependency graph instance
  */
-export function loopThroughFiles(docsDir, depGraph) {
-  const files = fs.readdirSync(docsDir);
+export function addDocsInDirAsNodes(dir, depGraph) {
+  const files = fs.readdirSync(dir);
 
   files.forEach((file) => {
-    const fullPath = path.join(docsDir, file); // Full path of the file/directory
+    const fullPath = path.join(dir, file); // Full path of the file/directory
     const stats = fs.statSync(fullPath);
     if (stats.isDirectory()) {
-      loopThroughFiles(depGraph, fullPath);
-    } else if (stats.isFile()) {
-      // If it's a file, call the callback with the file path
-      depGraph.extractDependencies(fullPath);
+      addDocsInDirAsNodes(fullPath, depGraph);
+    } else if (stats.isFile() && file.endsWith(".md")) {
+      // If it's a markdown file, add it as a node in the dependency graph
+      try {
+        depGraph.graph.addNode(fullPath, fs.readFileSync(fullPath, "utf-8"));
+      } catch (error) {
+        console.warn(`Error processing file ${fullPath}: ${error.message}`);
+      }
     }
   });
 }
@@ -23,23 +30,6 @@ export function loopThroughFiles(docsDir, depGraph) {
 class DocDependencyGraph {
   constructor() {
     this.graph = new DepGraph({ circular: true });
-    this.processedFiles = new Set();
-    this.fileContents = new Map(); // Cache file contents
-  }
-
-  /**
-   * Add a file to the dependency graph
-   * @param {string} filePath - Path to the file
-   * @param {string} content - File content
-   */
-  addFile(filePath, content) {
-    if (!this.graph.hasNode(filePath)) {
-      this.graph.addNode(filePath);
-      this.fileContents.set(filePath, content);
-
-      // Parse content for dependencies
-      this.extractDependencies(filePath, content);
-    }
   }
 
   /**
@@ -47,80 +37,97 @@ class DocDependencyGraph {
    * @param {string} filePath - Path to the file
    * @param {string} content - File content
    */
-  extractDependencies(filePath, content) {
-    // If this file has already been processed, skip it
-    if (this.isProcessed(filePath)) {
-      return;
-    }
-    // If the file is not in the graph, add it
-    if (!this.graph.hasNode(filePath)) {
-      this.graph.addNode(filePath);
-    }
+  extractDependencies(filePath) {
+    const content = this.graph.getNodeData(filePath);
+
     // Find all markdown link references to other files
     const linkRegex = /\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md)(?:#([^\)]+))?\)/g;
     let match;
 
     while ((match = linkRegex.exec(content)) !== null) {
-      const [fullMatch, linkText, linkedPath, fragment] = match;
+      let [fullMatch, linkText, linkedPath, fragment] = match;
       linkedPath = linkedPath + (fragment ? "#" + fragment : ""); // Include fragment if present
 
-      if (linkedPath !== filePath) {
+      if (linkedPath !== filePath && !filePath.includes(linkedPath)) {
         // Avoid self-references
-        if (!this.graph.hasNode(linkedPath)) {
-          this.graph.addNode(linkedPath);
-        }
         this.graph.addDependency(filePath, linkedPath);
       }
     }
-    this.markProcessed(filePath);
+  }
+
+  extractAllDependencies() {
+    // Loop through all nodes and extract dependencies
+    for (const node of this.graph.nodes.keys()) {
+      this.extractDependencies(node);
+    }
   }
 
   /**
-   * Get all files that need to be processed in dependency order
+   * Get all files that need to be processed in dependency order,
+   * prioritizing specific files and their dependencies
    * @returns {Array<{name: string, content: string}>} - Ordered array of files
    */
   getOrderedFiles() {
     try {
-      // Get ordered list of files
-      const nodeOrder = this.graph.overallOrder();
+      // Create empty result array
+      const result = [];
+      const added = new Set();
 
-      return nodeOrder
-        .filter((name) => this.fileContents.has(name))
-        .map((name) => ({
-          name,
-          content: this.fileContents.get(name),
-        }));
-    } catch (error) {
-      if (error.message.includes("circular")) {
-        console.warn(
-          "Circular dependencies detected in documentation. Processing may be incomplete."
+      // Helper function to add a node and its dependencies in depth-first order
+      const addNodeAndDependencies = (node) => {
+        if (added.has(node)) return; // Skip if already added
+
+        // Add the node itself
+        added.add(node);
+        result.push({
+          name: node,
+          content: this.graph.getNodeData(node),
+        });
+
+        // Add all dependencies recursively (depth-first)
+        if (this.graph.hasNode(node)) {
+          const dependencies = this.graph.directDependenciesOf(node);
+          for (const dep of dependencies) {
+            addNodeAndDependencies(dep);
+          }
+        }
+      };
+
+      // Helper to find nodes containing a specific string
+      const findNodesByPattern = (pattern) => {
+        // Using this.graph.nodes instead of this.nodes
+        return Array.from(this.graph.nodes.keys()).filter((node) =>
+          node.toLowerCase().includes(pattern.toLowerCase())
         );
-        // Return files in some order, handling the circular dependency as best we can
-        return [...this.fileContents.keys()].map((name) => ({
-          name,
-          content: this.fileContents.get(name),
-        }));
+      };
+
+      // 1. Start with createTimeline and its dependencies
+      const createTimelineNodes = findNodesByPattern("createTimeline");
+      for (const node of createTimelineNodes) {
+        addNodeAndDependencies(node);
       }
-      // If not a circular dependency error, rethrow
-      throw error;
+
+      // 2. Next add timelineUnits and its dependencies
+      const timelineUnitsNodes = findNodesByPattern("timelineUnits");
+      for (const node of timelineUnitsNodes) {
+        addNodeAndDependencies(node);
+      }
+
+      // 3. Finally add utils and its dependencies
+      const utilsNodes = findNodesByPattern("utils");
+      for (const node of utilsNodes) {
+        addNodeAndDependencies(node);
+      }
+
+      return result;
+    } catch (error) {
+      console.warn(`Error ordering files: ${error.message}`);
+      // Fall back to unordered files
+      return [...this.graph.nodes.keys()].map((name) => ({
+        name,
+        content: this.graph.getNodeData(name),
+      }));
     }
-  }
-
-  /**
-   * Mark a file as processed to avoid duplication
-   * @param {string} filePath - Path to the file
-   */
-  markProcessed(fileName) {
-    this.processedFiles.add(fileName);
-  }
-
-  /**
-   * Check if file has been processed
-   * @param {string} fileName - The file name
-   * @returns {boolean} - Whether the file has been processed
-   */
-  isProcessed(fileName) {
-    return this.processedFiles.has(fileName);
   }
 }
 
