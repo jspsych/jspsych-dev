@@ -14,17 +14,15 @@ function filterInterfaceDoc(interfacePath) {
   const startMarker = /^# Interface.*/m;
 
   const startIndex = content.search(startMarker);
-  if (startIndex === -1) return ""; // Return empty string if startMarker is not found
+  if (startIndex === -1) {
+    console.warn(`No interface documentation found at ${interfacePath}.`);
+    return content; // Return original content if startMarker is not found
+  }
 
   // Return content starting from startMarker to the end
   let filteredInterfaceDocs = content.slice(startIndex).trim();
-  filteredInterfaceDocs = filteredInterfaceDocs + "\n***";
-
-  if (filteredInterfaceDocs) {
-    return filteredInterfaceDocs;
-  } else {
-    return content;
-  }
+  filteredInterfaceDocs = filteredInterfaceDocs;
+  return filteredInterfaceDocs;
 }
 
 /**
