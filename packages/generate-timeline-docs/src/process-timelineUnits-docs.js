@@ -15,7 +15,7 @@ function removeTypeDeclaration(content) {
   return content;
 }
 
-export default function filterTimelineUnitsDocs(packageDir) {
+export default function processTimelineUnitsDocs(packageDir) {
   const docsTimelineUnitsPath = path.join(packageDir, "docs", "variables", "timelineUnits.md");
 
   // Step 1: Check if timelineUnits documentation file exists
@@ -67,33 +67,31 @@ export default function filterTimelineUnitsDocs(packageDir) {
       return "#".repeat(adjustedLevel) + " ";
     });
 
-    // Step 4: Find all links to files under interfaces directory
-    const interfaceLinkRegex = /\.\.\/interfaces\/([\w-]+\.md)/g;
-    let match;
-    let appendedContent = "";
-    while ((match = interfaceLinkRegex.exec(currentSection)) !== null) {
-      const interfaceFilePath = path.join(packageDir, "docs", "interfaces", match[1]);
+    // Step 4: Update all internal links to absolute paths
+    console.log("Updating interface links to absolute paths...");
+    const linkRegex = /\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md)(?:#([^)]+))?\)/g;
+    currentSection = currentSection.replace(linkRegex, (match, linkText, linkPath, fragment) => {
+      // Get the current file's directory
+      const currentFileDir = path.dirname(docsTimelineUnitsPath);
 
-      if (fs.existsSync(interfaceFilePath)) {
-        let interfaceFileContent = fs.readFileSync(interfaceFilePath, "utf-8");
-        // Adjust all markdown headings in interfaceFileContent so that the top levels start from ####
-        const headingLevelsInInterface = interfaceFileContent.match(headingAdjustmentRegex) || [];
-        const minHeadingLevelInterface = Math.min(
-          ...headingLevelsInInterface.map((h) => h.trim().length)
-        );
-        interfaceFileContent = interfaceFileContent.replace(headingAdjustmentRegex, (match) => {
-          const adjustedLevel = match.trim().length - minHeadingLevelInterface + 4; // Adjust to start from ####
-          return "#".repeat(adjustedLevel) + " ";
-        });
-        appendedContent += `\n\n---\n\n${interfaceFileContent}`;
-      } else {
-        console.warn(`Interface file not found: ${interfaceFilePath}`);
-      }
-    }
-    // Append the contents of the linked files to the end of current section
-    if (appendedContent) {
-      currentSection += appendedContent;
-    }
+      // Resolve the target file's absolute path
+      const targetAbsolutePath = path.resolve(currentFileDir, linkPath);
+
+      // Get the docs directory absolute path
+      const docsDir = path.join(packageDir, "docs");
+
+      // Calculate path relative to docs directory
+      const docsRelativePath = path.relative(docsDir, targetAbsolutePath);
+
+      // Keep any fragments
+      const fragmentSuffix = fragment ? `#${fragment}` : "";
+
+      // Normalize separators for web
+      const normalizedPath = docsRelativePath.replace(/\\/g, "/");
+
+      console.log(`Converting: ${linkPath} -> ${normalizedPath}`);
+      return `[${linkText}](${normalizedPath}${fragmentSuffix})`;
+    });
 
     result += currentSection + "\n\n***\n\n";
     remainingContent = remainingContent.slice(sliceEnd);
@@ -113,7 +111,7 @@ export default function filterTimelineUnitsDocs(packageDir) {
  */
 function runAsScript() {
   const targetDir = process.cwd();
-  filterTimelineUnitsDocs(targetDir);
+  processTimelineUnitsDocs(targetDir);
 }
 
 if (import.meta.url === import.meta.main) {

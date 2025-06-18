@@ -4,10 +4,10 @@
   "description": "Package for automatically generating documentation and updating README.md in timeline packages.",
   "type": "module",
   "bin": {
-    "generate-timeline-docs": "./src/generate-docs.js"
+    "generate-timeline-docs": "./src/index.js"
   },
   "scripts": {
-    "generate-docs": "node src/generate-docs.js"
+    "generate-timeline-docs": "node src/index.js"
   },
   "repository": {
     "type": "git",
