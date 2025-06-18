@@ -27,6 +27,42 @@ export function addDocsInDirAsNodes(dir, depGraph) {
   });
 }
 
+function sliceDocsFragmentContent(linkedPath, fragment) {
+  let nodeContent = "";
+  // Try to read the content of the linked file
+  try {
+    if (fs.existsSync(linkedPath)) {
+      const fullContent = fs.readFileSync(linkedPath, "utf-8");
+
+      // Convert fragment to a heading that could appear in markdown
+      // e.g., "some-heading" becomes a regex for "# Some Heading" (case insensitive)
+      const headingText = fragment
+        .replace(/-/g, " ")
+        .replace(/^\w|\s\w/g, (match) => match.toUpperCase());
+
+      // Create regex to find the heading
+      const headingRegex = new RegExp(`^#+\\s+${headingText}`, "mi");
+
+      const headingMatch = fullContent.match(headingRegex);
+      if (headingMatch) {
+        const headingStart = headingMatch.index;
+        // Find the next separator or end of file
+        const sectionEnd = fullContent.indexOf("***", headingStart);
+
+        // Extract just the section needed
+        if (sectionEnd !== -1) {
+          nodeContent = fullContent.substring(headingStart, sectionEnd).trim();
+        } else {
+          nodeContent = fullContent.substring(headingStart).trim();
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`Error reading linked file ${linkedPath}: ${error.message}`);
+  }
+  return nodeContent;
+}
+
 class DocDependencyGraph {
   constructor() {
     this.graph = new DepGraph({ circular: true });
@@ -35,7 +71,6 @@ class DocDependencyGraph {
   /**
    * Extract dependencies from file content
    * @param {string} filePath - Path to the file
-   * @param {string} content - File content
    */
   extractDependencies(filePath) {
     const content = this.graph.getNodeData(filePath);
@@ -46,11 +81,23 @@ class DocDependencyGraph {
 
     while ((match = linkRegex.exec(content)) !== null) {
       let [fullMatch, linkText, linkedPath, fragment] = match;
-      linkedPath = linkedPath + (fragment ? "#" + fragment : ""); // Include fragment if present
-
       if (linkedPath !== filePath && !filePath.includes(linkedPath)) {
         // Avoid self-references
-        this.graph.addDependency(filePath, linkedPath);
+        if (fragment) {
+          const nodeContent = sliceDocsFragmentContent(linkedPath, fragment);
+          // Add the linked file as a node with the extracted content
+          if (nodeContent) {
+            this.graph.addNode(linkedPath + "#" + fragment, nodeContent);
+            this.graph.addDependency(filePath, linkedPath + "#" + fragment);
+          } else {
+            console.warn(
+              `Fragment "${fragment}" in link "${fullMatch}" not found in file ${linkedPath}`
+            );
+            continue; // Skip if fragment content is not found
+          }
+        } else {
+          this.graph.addDependency(filePath, linkedPath);
+        }
       }
     }
   }

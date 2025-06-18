@@ -4,7 +4,7 @@ import generateTypedocDocs from "./generate-typedoc-docs.js";
 import filterInterfacesDocs from "./filter-interfaces-docs.js";
 import filterFunctionsDocs from "./filter-function-docs.js";
 import filterVariablesDocs from "./filter-variables-docs.js";
-// import docGraph, { loopThroughFiles } from "./doc-dependency-graph.js";
+import {docGraph, addDocsInDirAsNodes } from "./doc-dependency-graph.js";
 // import updateReadme from "./update-readme.js";
 import path from "path";
 import fs from "fs";
@@ -28,7 +28,13 @@ export default async function generateDocumentation(packageDir, options = { skip
       console.error("TypeDoc documentation generation failed.");
       return false;
     }
-    
+
+    // Step 2: Delete README.md from docs
+    if (fs.existsSync(path.join(packageDir, "docs", "README.md"))) {
+      fs.rmSync(path.join(packageDir, "docs", "README.md"));
+      console.log("Deleted README.md from docs directory.");
+    }
+
     // Step 2: Process interface documentation files
     console.log(`\n2️⃣ Processing interfaces documentation...`);
     filterInterfacesDocs(packageDir);
@@ -41,9 +47,12 @@ export default async function generateDocumentation(packageDir, options = { skip
     console.log(`\n4️⃣ Processing variables documentation...`);
     filterVariablesDocs(packageDir);
 
-    // // Step 6: Loop through docs to build dependency graph
-    // console.log(`\n6️⃣ Building documentation dependency graph...`);
-    // loopThroughFiles(path.join(packageDir, "docs"), docGraph);
+    // Step 5: Loop through docs to build dependency graph
+    console.log(`\n5️⃣ Building documentation dependency graph...`);
+    addDocsInDirAsNodes(path.join(packageDir, "docs"), docGraph);
+    docGraph.extractAllDependencies();
+    console.log(docGraph.graph.nodes.keys());
+    console.log(docGraph.getOrderedFiles().map(file => file.name));
 
 
     // // Step 6: Update README with processed documentation

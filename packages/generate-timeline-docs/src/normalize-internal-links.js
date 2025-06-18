@@ -31,9 +31,14 @@ export default function normalizeInternalLinks(content, filePath, baseDir) {
     
     const currentFileDir = path.dirname(filePath);
     const targetAbsolutePath = path.resolve(currentFileDir, linkPath);
-    const docsRelativePath = path.relative(baseDir, targetAbsolutePath);
+    
+    // Instead of making path relative to baseDir, use the absolute path
+    // by simply using the resolved path directly
+    const absolutePath = targetAbsolutePath;
     const fragmentSuffix = fragment ? `#${fragment}` : "";
-    const normalizedPath = docsRelativePath.replace(/\\/g, "/");
+    
+    // Normalize path separators for cross-platform compatibility
+    const normalizedPath = absolutePath.replace(/\\/g, "/");
 
     return `[${linkText}](${normalizedPath}${fragmentSuffix})`;
   });
