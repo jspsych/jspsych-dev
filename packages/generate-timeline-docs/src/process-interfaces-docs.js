@@ -46,10 +46,10 @@ export default function filterInterfaceDocs(packageDir) {
     const interfacePath = path.join(docsInterfacesDir, `${file}`);
     let filteredContent = filterInterfaceDoc(interfacePath);
     filteredContent = normalizeInternalLinks(filteredContent);
-    fs.writeFileSync(interfacePath, filteredContent + "\n***\n");
+    fs.writeFileSync(interfacePath, filteredContent + "\n***\n", "utf-8");
   });
 
-  console.log(`☑️ Complete processing interface documentation for ${packageDir}!`);
+  console.log(`☑️ Complete processing interface documentation for ${packageDir}.`);
   return true;
 }
 
