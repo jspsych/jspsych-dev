@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 import generateTypedocDocs from "./generate-typedoc-docs.js";
-import processInterfacesDocs from "./process-interfaces-docs.js";
-import processTimelineDocs from "./process-timeline-docs.js";
-import processTimelineUnitsDocs from "./process-timelineUnits-docs.js";
-import processUtilsDocs from "./process-utils-docs.js";
-import resolveInternalLinks from "./resolve-internal-links.js";
-import updateReadme from "./update-readme.js";
+import filterInterfacesDocs from "./filter-interfaces-docs.js";
+import filterFunctionsDocs from "./filter-function-docs.js";
+import filterVariablesDocs from "./filter-variables-docs.js";
+// import docGraph, { loopThroughFiles } from "./doc-dependency-graph.js";
+// import updateReadme from "./update-readme.js";
 import path from "path";
 import fs from "fs";
+
 
 /**
  * Runs the complete documentation generation pipeline
@@ -19,10 +19,10 @@ import fs from "fs";
  */
 export default async function generateDocumentation(packageDir, options = { skipCleanup: false }) {
   const readmePath = path.join(packageDir, "README.md");
+  console.log(`\n1️⃣ Generating TypeDoc documentation...`);
   
   try {
     // Step 1: Generate TypeDoc documentation
-    console.log(`\n1️⃣ Generating TypeDoc documentation...`);
     const typedocSuccess = await generateTypedocDocs(packageDir);
     if (!typedocSuccess) {
       console.error("TypeDoc documentation generation failed.");
@@ -30,28 +30,29 @@ export default async function generateDocumentation(packageDir, options = { skip
     }
     
     // Step 2: Process interface documentation files
-    console.log(`\n2️⃣ Processing interface documentation...`);
-    processInterfacesDocs(packageDir);
+    console.log(`\n2️⃣ Processing interfaces documentation...`);
+    filterInterfacesDocs(packageDir);
 
-    // Step 3: Process timeline documentation files
-    console.log(`\n3️⃣ Processing timeline documentation...`);
-    processTimelineDocs(packageDir);
+    // Step 3: Process functions documentation files
+    console.log(`\n3️⃣ Processing functions documentation...`);
+    filterFunctionsDocs(packageDir);
 
-    // Step 4: Process timelineUnits documentation files
-    console.log(`\n4️⃣ Processing timelineUnits documentation...`);
-    processTimelineUnitsDocs(packageDir);
+    // Step 4: Process variables documentation files
+    console.log(`\n4️⃣ Processing variables documentation...`);
+    filterVariablesDocs(packageDir);
 
-    // Step 5: Process utils documentation files
-    console.log(`\n5️⃣ Processing utils documentation...`);
-    processUtilsDocs(packageDir);
+    // // Step 6: Loop through docs to build dependency graph
+    // console.log(`\n6️⃣ Building documentation dependency graph...`);
+    // loopThroughFiles(path.join(packageDir, "docs"), docGraph);
 
-    // Step 6: Update README with processed documentation
-    console.log(`\n6️⃣ Updating README with processed documentation...`);
-    await updateReadme(packageDir, readmePath);
+
+    // // Step 6: Update README with processed documentation
+    // console.log(`\n6️⃣ Updating README with processed documentation...`);
+    // await updateReadme(packageDir, readmePath);
     
-    // // Add a new final step to resolve all internal links
-    // console.log(`\n7️⃣ Resolving internal links in README...`);
-    // await resolveInternalLinks(packageDir, readmePath);
+    // // // Add a new final step to resolve all internal links
+    // // console.log(`\n7️⃣ Resolving internal links in README...`);
+    // // await resolveInternalLinks(packageDir, readmePath);
     
     console.log("\n✅ Documentation generation completed successfully!");
     return true;
@@ -61,8 +62,11 @@ export default async function generateDocumentation(packageDir, options = { skip
   }
 }
 
-// Make this more robust for different execution methods
-// This will run regardless of how the script is executed
+/** 
+ * @dev
+ * Make this more robust for different execution methods
+ * This will run regardless of how the script is executed
+ */
 const isDirectExecution = process.argv[1] && 
                           (process.argv[1].endsWith('index.js') || 
                            process.argv[1].includes('generate-timeline-docs'));

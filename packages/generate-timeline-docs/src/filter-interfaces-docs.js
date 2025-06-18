@@ -1,7 +1,5 @@
 import fs from "fs";
 import path from "path";
-
-import { docGraph } from "../doc-dependency-graph.js";
 import normalizeInternalLinks from "./normalize-internal-links.js";
 
 /**
@@ -31,21 +29,22 @@ function filterInterfaceDoc(interfacePath) {
  * @returns {boolean} - Whether the filtering process was successful.
  */
 export default function filterInterfacesDocs(packageDir) {
-  const docsInterfacesDir = path.join(packageDir, "docs", "interfaces");
+  const docsPath = path.join(packageDir, "docs");
+  const docsInterfacesPath = path.join(packageDir, "docs", "interfaces");
 
   // Check if interfaces directory exists
-  if (!fs.existsSync(docsInterfacesDir)) {
-    console.warn(`Interfaces directory not found: ${docsInterfacesDir}`);
+  if (!fs.existsSync(docsInterfacesPath)) {
+    console.warn(`Interfaces directory not found: ${docsInterfacesPath}`);
     return false;
   }
 
   // Process each interface file
-  const mdFiles = fs.readdirSync(docsInterfacesDir).filter((file) => file.endsWith(".md"));
+  const mdFiles = fs.readdirSync(docsInterfacesPath).filter((file) => file.endsWith(".md"));
 
   mdFiles.forEach((file) => {
-    const interfacePath = path.join(docsInterfacesDir, `${file}`);
+    const interfacePath = path.join(docsInterfacesPath, `${file}`);
     let filteredContent = filterInterfaceDoc(interfacePath);
-    filteredContent = normalizeInternalLinks(filteredContent);
+    filteredContent = normalizeInternalLinks(filteredContent, interfacePath, docsPath);
     fs.writeFileSync(interfacePath, filteredContent + "\n***\n", "utf-8");
   });
 

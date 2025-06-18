@@ -5,7 +5,7 @@ import { DepGraph } from "dependency-graph";
  * @param {object} depGraph - The dependency graph instance
  * @param {string} docsDir - The docs directory path
  */
-export function loopThroughFiles(depGraph, docsDir) {
+export function loopThroughFiles(docsDir, depGraph) {
   const files = fs.readdirSync(docsDir);
 
   files.forEach((file) => {

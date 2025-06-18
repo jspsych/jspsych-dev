@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import normalizeInternalLinks from "./normalize-internal-links";
+import normalizeInternalLinks from "./normalize-internal-links.js";
 
 /**
  * Filters the function documentation to keep only the relevant sections.
@@ -58,6 +58,7 @@ function filterFunctionDoc(functionPath) {
  * @returns {boolean} - Whether the processing was successful.
  */
 export default function filterFunctionsDocs(packageDir) {
+  const docsPath = path.join(packageDir, "docs");
   const docsFunctionsPath = path.join(packageDir, "docs", "functions");
 
   if (!fs.existsSync(docsFunctionsPath)) {
@@ -71,7 +72,7 @@ export default function filterFunctionsDocs(packageDir) {
   for (const functionFile of functionFiles) {
     const functionPath = path.join(docsFunctionsPath, functionFile);
     let filteredDoc = filterFunctionDoc(functionPath);
-    filteredDoc = normalizeInternalLinks(filteredDoc);
+    filteredDoc = normalizeInternalLinks(filteredDoc, functionPath, docsPath);
     fs.writeFileSync(functionPath, filteredDoc + "\n***\n", "utf-8");
   }
 

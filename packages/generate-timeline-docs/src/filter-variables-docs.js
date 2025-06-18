@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import normalizeInternalLinks from "./normalize-internal-links";
+import normalizeInternalLinks from "./normalize-internal-links.js";
 
 function removeTypeDeclaration(content) {
   const typeDeclarationMarker = "## Type declaration";
@@ -69,6 +69,7 @@ function filterVariableDoc(variablePath) {
  * @returns {boolean} - Whether the processing was successful.
  */
 export default function filterVariablesDocs(packageDir) {
+  const docsPath = path.join(packageDir, "docs");
   const docsVariablesPath = path.join(packageDir, "docs", "variables");
 
   if (!fs.existsSync(docsVariablesPath)) {
@@ -81,8 +82,8 @@ export default function filterVariablesDocs(packageDir) {
   for (const variableFile of variableFiles) {
     const variablePath = path.join(docsVariablesPath, variableFile);
     let filteredDoc = filterVariableDoc(variablePath);
-    filteredDoc = normalizeInternalLinks(filteredDoc);
-    fs.writeFileSync(variablePath, filteredDoc + "\n***\n", "utf-8");
+    filteredDoc = normalizeInternalLinks(filteredDoc, variablePath, docsPath);
+    fs.writeFileSync(variablePath, filteredDoc, "utf-8");
   }
 
   console.log(`✔️ Complete processing variables documentation for ${packageDir}!`);
