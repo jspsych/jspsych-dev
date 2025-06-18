@@ -70,7 +70,7 @@ export default function filterFunctionsDocs(packageDir) {
 
   for (const functionFile of functionFiles) {
     const functionPath = path.join(docsFunctionsPath, functionFile);
-    const filteredDoc = filterFunctionDoc(functionPath);
+    let filteredDoc = filterFunctionDoc(functionPath);
     filteredDoc = normalizeInternalLinks(filteredDoc);
     fs.writeFileSync(functionPath, filteredDoc + "\n***\n", "utf-8");
   }

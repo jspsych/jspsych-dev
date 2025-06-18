@@ -30,7 +30,7 @@ function filterInterfaceDoc(interfacePath) {
  * @param {string} packageDir - The root directory of the package.
  * @returns {boolean} - Whether the filtering process was successful.
  */
-export default function filterInterfaceDocs(packageDir) {
+export default function filterInterfacesDocs(packageDir) {
   const docsInterfacesDir = path.join(packageDir, "docs", "interfaces");
 
   // Check if interfaces directory exists
@@ -59,7 +59,7 @@ export default function filterInterfaceDocs(packageDir) {
  */
 function runAsScript() {
   const targetDir = process.cwd();
-  filterInterfaceDocs(targetDir);
+  filterInterfacesDocs(targetDir);
 }
 
 if (import.meta.url === import.meta.main) {
