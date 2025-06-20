@@ -19,13 +19,13 @@ program
     "Generate documentation for your jsPsych timeline package and optionally update the README.md"
   )
   .version("0.0.1")
+  .argument("[package-directory]", "Path to the timeline package directory", process.cwd()) // Default to current directory if not provided
   .option("--skip-cleanup", "Keep the docs/ directory TypeDoc generates", false)
   .option(
     "--skip-update-readme",
     "Don't update package README.md file with generated documentation", false
   )
-  .option("--help", "Show this help message")
-  .argument("[package-directory]", "Path to the timeline package directory", process.cwd()) // Default to current directory if not provided
+  .option("--doc-marker <marker>", "Marker to identify where to insert the documentation in README.md", "## `createTimeline()` Documentation")
   .action(async (packageDir, options) => {
     console.log(`\n1️⃣ Generating TypeDoc documentation...`);
     try {
@@ -65,7 +65,7 @@ program
       // Step 6: Update README with processed documentation
       if (!options.skipUpdateReadme) {
         console.log(`\n6️⃣ Updating README with processed documentation...`);
-        await updateReadme(readmePath, docGraph);
+        await updateReadme(readmePath, docGraph, options.docMarker);
       } else {
         console.warn(`Skipping README update as per options.`);
       }
