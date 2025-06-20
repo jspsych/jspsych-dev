@@ -37,8 +37,9 @@ export default async function updateReadme(
     nodeContent = adjustHeadingLevels(nodeContent, headingLevel + 1);
 
     if (filename.endsWith("createTimeline.md")) {
-      nodeContent =
-        `${"#".repeat(headingLevel)} \`createTimeline()\` Documentation\n\n` + nodeContent;
+      const createTimelineRegex = /^#*\s*createTimeline\(\) Documentation.*$/i;
+      nodeContent = !createTimelineRegex.test(docHeading) ?
+        `${"#".repeat(headingLevel)} \`createTimeline()\` Documentation\n\n` + nodeContent : nodeContent;
     } else if (filename.endsWith("timelineUnits.md")) {
       nodeContent = `${"#".repeat(headingLevel)} \`timelineUnits\` Documentation\n\n` + nodeContent;
     } else if (filename.endsWith("utils.md")) {
@@ -56,7 +57,7 @@ export default async function updateReadme(
   }
 
   const updatedReadmeContent =
-    readmeContent.slice(0, docStart) + "\n" + docContent + readmeContent.slice(docEnd);
+    readmeContent.slice(0, docStart + docHeading.length) + "\n" + docContent + readmeContent.slice(docEnd);
   fs.writeFileSync(readmePath, updatedReadmeContent, "utf-8");
   console.log(`☑️ Complete updating README documentation section starting at ${docHeading}.`);
   return true;
