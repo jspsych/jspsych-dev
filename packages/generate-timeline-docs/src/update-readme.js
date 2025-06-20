@@ -37,7 +37,7 @@ export default async function updateReadme(
     nodeContent = adjustHeadingLevels(nodeContent, headingLevel + 1);
 
     if (filename.endsWith("createTimeline.md")) {
-      const createTimelineRegex = /^#*\s*createTimeline\(\) Documentation.*$/i;
+      const createTimelineRegex = /^#+\s+.*`*createTimeline\(\)`* Documentation.*$/i;
       nodeContent = !createTimelineRegex.test(docHeading) ?
         `${"#".repeat(headingLevel)} \`createTimeline()\` Documentation\n\n` + nodeContent : nodeContent;
     } else if (filename.endsWith("timelineUnits.md")) {
