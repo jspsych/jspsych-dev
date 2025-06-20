@@ -16,12 +16,14 @@ export function addDocsInDirAsNodes(dir, depGraph) {
     const stats = fs.statSync(fullPath);
     if (stats.isDirectory()) {
       addDocsInDirAsNodes(fullPath, depGraph);
-    } else if (stats.isFile() && file.endsWith(".md")) { // If it's a markdown file, add it as a node in the dependency graph
+    } else if (stats.isFile() && file.endsWith(".md")) {
+      // If it's a markdown file, add it as a node in the dependency graph
       try {
         const content = fs.readFileSync(fullPath, "utf-8");
 
         // Add the entire file as a node
-        depGraph.graph.addNode(fullPath, content);
+        // Assume if the file is a documentation file, it should have at least one section ending with "***"
+        depGraph.graph.addNode(fullPath, "");
 
         // Process sections separated by *** markers
         const sections = content.split(/\n\s*\*\*\*\s*\n/);
@@ -31,9 +33,19 @@ export function addDocsInDirAsNodes(dir, depGraph) {
           const section = sections[i].trim();
 
           if (section) {
-            const firstLine = section.split("\n")[0].trim();
-            if (firstLine.startsWith("#")) {
-              const headingText = firstLine.replace(/^#+\s+/, "");
+            // Find the first line that starts with # (a heading)
+            const lines = section.split("\n");
+            let headingLine = null;
+            
+            for (const line of lines) {
+              if (line.trim().startsWith("#")) {
+                headingLine = line.trim();
+                break;
+              }
+            }
+            
+            if (headingLine) {
+              const headingText = headingLine.replace(/^#+\s+/, "");
               const anchorId = headingText
                 .toLowerCase()
                 .replace(/[^\w\s-]/g, "") // Remove special chars
@@ -42,6 +54,7 @@ export function addDocsInDirAsNodes(dir, depGraph) {
               currentPosition = sectionStart + section.length;
               const sectionKey = `${fullPath}#${anchorId}`;
               depGraph.graph.addNode(sectionKey, section);
+              depGraph.graph.addDependency(fullPath, sectionKey);
             }
           }
         }
@@ -52,41 +65,6 @@ export function addDocsInDirAsNodes(dir, depGraph) {
   });
 }
 
-function sliceDocsFragmentContent(linkedPath, fragment) {
-  let nodeContent = "";
-  // Try to read the content of the linked file
-  try {
-    if (fs.existsSync(linkedPath)) {
-      const fullContent = fs.readFileSync(linkedPath, "utf-8");
-
-      // Convert fragment to a heading that could appear in markdown
-      // e.g., "some-heading" becomes a regex for "# Some Heading" (case insensitive)
-      const headingText = fragment
-        .replace(/-/g, " ")
-        .replace(/^\w|\s\w/g, (match) => match.toUpperCase());
-
-      // Create regex to find the heading
-      const headingRegex = new RegExp(`^#+\\s+${headingText}`, "mi");
-
-      const headingMatch = fullContent.match(headingRegex);
-      if (headingMatch) {
-        const headingStart = headingMatch.index;
-        // Find the next separator or end of file
-        const sectionEnd = fullContent.indexOf("***", headingStart);
-
-        // Extract just the section needed
-        if (sectionEnd !== -1) {
-          nodeContent = fullContent.substring(headingStart, sectionEnd).trim();
-        } else {
-          nodeContent = fullContent.substring(headingStart).trim();
-        }
-      }
-    }
-  } catch (error) {
-    console.warn(`Error reading linked file ${linkedPath}: ${error.message}`);
-  }
-  return nodeContent;
-}
 
 class DocDependencyGraph {
   constructor() {
@@ -109,19 +87,27 @@ class DocDependencyGraph {
       if (linkedPath !== filePath && !filePath.includes(linkedPath)) {
         // Avoid self-references
         if (fragment) {
-          const nodeContent = sliceDocsFragmentContent(linkedPath, fragment);
-          // Add the linked file as a node with the extracted content
-          if (nodeContent) {
-            this.graph.addNode(linkedPath + "#" + fragment, nodeContent);
-            this.graph.addDependency(filePath, linkedPath + "#" + fragment);
+          const fullInternalLink = `${linkedPath}#${fragment}`;
+          if (this.graph.hasNode(fullInternalLink)) {
+            // If the fragment exists as a node
+            this.graph.addDependency(filePath, fullInternalLink);
+          } else if (this.graph.hasNode(linkedPath)) {
+            // If the file exists but not the fragment
+            console.warn(`Fragment "${fragment}" in link "${linkedPath}" not found.`);
+            this.graph.addDependency(filePath, linkedPath);
+            continue;
           } else {
-            console.warn(
-              `Fragment "${fragment}" in link "${fullMatch}" not found in file ${linkedPath}`
-            );
-            continue; // Skip if fragment content is not found
+            // If neither the file nor fragment exists
+            console.warn(`Linked file "${fullInternalLink}" not found in dependency graph.`);
+            continue;
           }
         } else {
-          this.graph.addDependency(filePath, linkedPath);
+          // If no fragment, just link to the file
+          if (this.graph.hasNode(linkedPath)) {
+            this.graph.addDependency(filePath, linkedPath);
+          } else {
+            console.warn(`Linked file "${linkedPath}" not found in dependency graph.`);
+          }
         }
       }
     }
