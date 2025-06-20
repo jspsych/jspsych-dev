@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import normalizeInternalLinks from "./normalize-internal-links.js";
+import { normalizeInternalLinksToAbsolute } from "./normalize-internal-links.js";
 
 /**
  * Filters the documentation to keep only the part with the interface description, table and return type, and writes the filtered content back to the file.
@@ -44,7 +44,7 @@ export default function filterInterfacesDocs(packageDir) {
   mdFiles.forEach((file) => {
     const interfacePath = path.join(docsInterfacesPath, `${file}`);
     let filteredContent = filterInterfaceDoc(interfacePath);
-    filteredContent = normalizeInternalLinks(filteredContent, interfacePath, docsPath);
+    filteredContent = normalizeInternalLinksToAbsolute(filteredContent, interfacePath, docsPath);
     fs.writeFileSync(interfacePath, filteredContent + "\n***\n", "utf-8");
   });
 

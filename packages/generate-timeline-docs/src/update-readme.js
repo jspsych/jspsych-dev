@@ -1,117 +1,63 @@
 import fs from "fs";
-import path from "path";
 
-function updateSectionBetweenHeadings(readmeContent, startHeading, endHeading, content) {
-  const escapedStartHeading = startHeading.replace(/([()[{*+.$^\\|?])/g, "\\$1");
-  const escapedEndHeading = endHeading ? endHeading.replace(/([()[{*+.$^\\|?])/g, "\\$1") : null;
+import { adjustHeadingLevels } from "./adjust-headings.js";
+import { normalizeInternalLinksToMarkdownAnchors } from "./normalize-internal-links.js";
 
-  let pattern;
-  if (endHeading) {
-    pattern = new RegExp(`(## ${escapedStartHeading}\\s*)(.*?)(\\s*## ${escapedEndHeading})`, "s");
-  } else {
-    // case for utils which does not have an end heading
-    pattern = new RegExp(`(## ${escapedStartHeading}\\s*)(.*?)(?=\\s*(?:#{1,6} |$))`, "s");
+export default async function updateReadme(
+  readmePath,
+  docGraph,
+  docHeading = "## `createTimeline()` Documentation"
+) {
+  const orderedFiles = docGraph.getOrderedFiles().map((file) => file.name);
+  const readmeContent = fs.readFileSync(readmePath, "utf-8");
+  const docStart = readmeContent.indexOf(docHeading);
+
+  // Check if the documentation heading exists in the README file
+  if (docStart === -1) {
+    console.error(`Heading "${docHeading}" not found in README file.`);
+    return false;
   }
 
-  const matches = pattern.test(readmeContent);
-
-  // Replace content between headings, preserving the headings themselves
-  if (matches) {
-    return endHeading
-      ? readmeContent.replace(pattern, `$1\n\n${content}\n\n$3`)
-      : readmeContent.replace(pattern, `$1\n\n${content}\n\n`);
-  } else {
-    console.warn(`Section with heading "${startHeading}" not found in README!`);
-    return readmeContent; // return original content if no match found
+  const headingLevel = docHeading.match(/^#+/)[0].length;
+  let docEnd = readmeContent.length;
+  const lines = readmeContent.split("\n");
+  for (let i = docStart + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const lineHeadingLevel = line.match(/^#+/);
+    if (lineHeadingLevel && lineHeadingLevel[0].length <= headingLevel) {
+      docEnd = readmeContent.indexOf(line, docStart);
+      break;
+    }
   }
-}
 
-function updateContentFromFile(docsDir, readmePath, filePath, startHeading, endHeading = null) {
-  // Full path to the documentation file
-  const fullPath = path.join(docsDir, filePath);
+  let docContent = "";
 
-  try {
-    // Check if files exist
-    if (!fs.existsSync(fullPath)) {
-      console.error(`File not found: docs/${filePath}`);
-      return null;
+  for (const filename of orderedFiles) {
+    let nodeContent = docGraph.graph.getNodeData(filename);
+    nodeContent = adjustHeadingLevels(nodeContent, headingLevel + 1);
+
+    if (filename.endsWith("createTimeline.md")) {
+      nodeContent =
+        `${"#".repeat(headingLevel)} \`createTimeline()\` Documentation\n\n` + nodeContent;
+    } else if (filename.endsWith("timelineUnits.md")) {
+      nodeContent = `${"#".repeat(headingLevel)} \`timelineUnits\` Documentation\n\n` + nodeContent;
+    } else if (filename.endsWith("utils.md")) {
+      nodeContent = `${"#".repeat(headingLevel)} \`utils\` Documentation\n\n` + nodeContent;
     }
-    if (!fs.existsSync(readmePath)) {
-      console.error(`README not found: ${readmePath}`);
-      return null;
+
+    if (!nodeContent) {
+      console.warn(`No content found for file: ${filename}`);
+      continue;
     }
 
-    // Read files
-    const docContent = fs.readFileSync(fullPath, "utf8");
-    const readmeContent = fs.readFileSync(readmePath, "utf8");
+    nodeContent = await normalizeInternalLinksToMarkdownAnchors(nodeContent);
 
-    // Update section between headings
-    const updatedReadme = updateSectionBetweenHeadings(
-      readmeContent,
-      startHeading,
-      endHeading,
-      docContent
-    );
-
-    // Write updated README
-    fs.writeFileSync(readmePath, updatedReadme);
-    return updatedReadme;
-  } catch (error) {
-    console.error(`Error updating ${startHeading} section:`, error);
-    return null;
+    docContent += nodeContent + "\n\n";
   }
-}
 
-// Main function
-export default function updateReadme(packageDir, readmePath) {
-  const docsDir = path.join(packageDir, "docs");
-  try {
-    // Define standard file names for documentation files
-    const timelineDocsFp = "functions/createTimeline.md";
-    const timelineUnitsDocsFp = "variables/timelineUnits.md";
-    const utilsDocsFp = "variables/utils.md";
-
-    // Update createTimeline() documentation section
-    let currentReadme = updateContentFromFile(
-      docsDir,
-      readmePath,
-      timelineDocsFp,
-      "createTimeline() Documentation",
-      "timelineUnits Documentation"
-    );
-
-    if (currentReadme) {
-      // Use the updated README content for the next update
-      fs.writeFileSync(readmePath, currentReadme);
-    } else {
-      console.error("No updated content found for timeline Documentation.");
-    }
-
-    // Update timelineUnits documentation section
-    currentReadme = updateContentFromFile(
-      docsDir,
-      readmePath,
-      timelineUnitsDocsFp,
-      "timelineUnits Documentation",
-      "utils Documentation"
-    );
-
-    if (currentReadme) {
-      fs.writeFileSync(readmePath, currentReadme);
-    } else {
-      console.error("No updated content found for timelineUnits Documentation.");
-    }
-
-    // Update utils documentation section
-    // For the last section, there's no ending heading
-    currentReadme = updateContentFromFile(docsDir, readmePath, utilsDocsFp, "utils Documentation");
-
-    if (currentReadme) {
-      fs.writeFileSync(readmePath, currentReadme);
-    } else {
-      console.error("No updated content found for utils Documentation.");
-    }
-  } catch (error) {
-    console.error("Error updating README sections:", error);
-  }
+  const updatedReadmeContent =
+    readmeContent.slice(0, docStart) + "\n" + docContent + readmeContent.slice(docEnd);
+  fs.writeFileSync(readmePath, updatedReadmeContent, "utf-8");
+  console.log(`☑️ Complete updating README documentation section starting at ${docHeading}.`);
+  return true;
 }

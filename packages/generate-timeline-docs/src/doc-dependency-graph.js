@@ -53,7 +53,12 @@ export function addDocsInDirAsNodes(dir, depGraph) {
               const sectionStart = content.indexOf(section, currentPosition);
               currentPosition = sectionStart + section.length;
               const sectionKey = `${fullPath}#${anchorId}`;
-              depGraph.graph.addNode(sectionKey, section);
+              
+              // Check if section already ends with *** to avoid duplicates
+              const sectionWithMarker = section.trimEnd().endsWith("***") 
+                ? section 
+                : section + "\n\n***\n\n";
+              depGraph.graph.addNode(sectionKey, sectionWithMarker);
               depGraph.graph.addDependency(fullPath, sectionKey);
             }
           }

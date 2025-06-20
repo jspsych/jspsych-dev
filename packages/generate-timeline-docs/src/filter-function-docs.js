@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import normalizeInternalLinks from "./normalize-internal-links.js";
+import { normalizeInternalLinksToAbsolute } from "./normalize-internal-links.js";
 
 /**
  * Filters the function documentation to keep only the relevant sections.
@@ -72,7 +72,7 @@ export default function filterFunctionsDocs(packageDir) {
   for (const functionFile of functionFiles) {
     const functionPath = path.join(docsFunctionsPath, functionFile);
     let filteredDoc = filterFunctionDoc(functionPath);
-    filteredDoc = normalizeInternalLinks(filteredDoc, functionPath, docsPath);
+    filteredDoc = normalizeInternalLinksToAbsolute(filteredDoc, functionPath, docsPath);
     fs.writeFileSync(functionPath, filteredDoc + "\n***\n", "utf-8");
   }
 

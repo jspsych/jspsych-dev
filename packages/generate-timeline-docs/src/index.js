@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 
+import path from "path";
+import fs from "fs";
 import generateTypedocDocs from "./generate-typedoc-docs.js";
 import filterInterfacesDocs from "./filter-interfaces-docs.js";
 import filterFunctionsDocs from "./filter-function-docs.js";
 import filterVariablesDocs from "./filter-variables-docs.js";
 import {docGraph, addDocsInDirAsNodes } from "./doc-dependency-graph.js";
-// import updateReadme from "./update-readme.js";
-import path from "path";
-import fs from "fs";
+import updateReadme from "./update-readme.js";
+import deleteDocs from "./delete-docs.js";
 
 
 /**
@@ -19,6 +20,7 @@ import fs from "fs";
  */
 export default async function generateDocumentation(packageDir, options = { skipCleanup: false }) {
   const readmePath = path.join(packageDir, "README.md");
+  const docsDir = path.join(packageDir, "docs");
   console.log(`\n1️⃣ Generating TypeDoc documentation...`);
   
   try {
@@ -29,7 +31,7 @@ export default async function generateDocumentation(packageDir, options = { skip
       return false;
     }
 
-    // Step 2: Delete README.md from docs
+    // Step 1.5: Delete README.md from docs
     if (fs.existsSync(path.join(packageDir, "docs", "README.md"))) {
       fs.rmSync(path.join(packageDir, "docs", "README.md"));
       console.log("Deleted README.md from docs directory.");
@@ -51,17 +53,19 @@ export default async function generateDocumentation(packageDir, options = { skip
     console.log(`\n5️⃣ Building documentation dependency graph...`);
     addDocsInDirAsNodes(path.join(packageDir, "docs"), docGraph);
     docGraph.extractAllDependencies();
-    console.log(docGraph.graph.nodes.keys());
-    console.log(docGraph.getOrderedFiles().map(file => file.name));
+    console.log(`☑️ Completed building documentation dependency graph.`);
 
+    // Step 6: Update README with processed documentation
+    console.log(`\n6️⃣ Updating README with processed documentation...`);
+    await updateReadme(readmePath, docGraph);
 
-    // // Step 6: Update README with processed documentation
-    // console.log(`\n6️⃣ Updating README with processed documentation...`);
-    // await updateReadme(packageDir, readmePath);
-    
-    // // // Add a new final step to resolve all internal links
-    // // console.log(`\n7️⃣ Resolving internal links in README...`);
-    // // await resolveInternalLinks(packageDir, readmePath);
+    // Step 7: Final cleanup if not skipped
+    if (!options.skipCleanup) {
+      console.log(`\n7️⃣ Performing final cleanup...`);
+      await deleteDocs(docsDir);
+    } else {
+      console.log(`Skipping final cleanup as per options.`);
+    }
     
     console.log("\n✅ Documentation generation completed successfully!");
     return true;

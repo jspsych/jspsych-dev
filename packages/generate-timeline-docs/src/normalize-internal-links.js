@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-export default function normalizeInternalLinks(content, filePath, baseDir) {
+export function normalizeInternalLinksToAbsolute(content, filePath, baseDir) {
   if (!content) {
     return "";
   }
@@ -28,15 +28,15 @@ export default function normalizeInternalLinks(content, filePath, baseDir) {
     if (!filePath || !baseDir) {
       return match; // Cannot normalize without file context
     }
-    
+
     const currentFileDir = path.dirname(filePath);
     const targetAbsolutePath = path.resolve(currentFileDir, linkPath);
-    
+
     // Instead of making path relative to baseDir, use the absolute path
     // by simply using the resolved path directly
     const absolutePath = targetAbsolutePath;
     const fragmentSuffix = fragment ? `#${fragment}` : "";
-    
+
     // Normalize path separators for cross-platform compatibility
     const normalizedPath = absolutePath.replace(/\\/g, "/");
 
@@ -44,4 +44,42 @@ export default function normalizeInternalLinks(content, filePath, baseDir) {
   });
 
   return content;
+}
+
+/**
+ * Resolves internal links in a README file to all markdown anchors.
+ * @param {string} packageDir - The package directory
+ * @param {string} readmeContent - Path to the README file
+ * @returns {Promise<string>} - The updated README content
+ */
+export async function normalizeInternalLinksToMarkdownAnchors(readmeContent) {
+  let updatedContent = readmeContent;
+
+  // Find all internal links in the README
+  const internalLinkRegex =
+    /\[([^\]]+)\]\((.*?docs\/(functions|variables|interfaces)\/([^\/]+\.md))(?:#([^)]+))?\)/g;
+  const matches = [...updatedContent.matchAll(internalLinkRegex)];
+
+  for (const match of matches) {
+    const [fullMatch, linkText, fullLinkPath, type, linkPath, fragment] = match;
+
+    // Extract filename for anchor
+    let filename = path.basename(linkPath, ".md");
+    let anchor = "";
+
+    // REVIEW: Need to test for edge cases
+    if (fragment) {
+      filename = fragment;
+    }
+    if (type == "functions") {
+      anchor = `#function-${filename.toLowerCase()}`;
+    } else if (type == "variables") {
+      anchor = `#${filename.toLowerCase()}`;
+    } else if (type == "interfaces") {
+      anchor = `#interface-${filename.toLowerCase()}`;
+    }
+    updatedContent = updatedContent.replace(fullMatch, `[${linkText}](${anchor})`);
+  }
+
+  return updatedContent;
 }

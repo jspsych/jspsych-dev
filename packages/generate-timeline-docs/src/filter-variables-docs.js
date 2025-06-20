@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import normalizeInternalLinks from "./normalize-internal-links.js";
+import { normalizeInternalLinksToAbsolute } from "./normalize-internal-links.js";
 
 function removeTypeDeclaration(content) {
   const typeDeclarationMarker = "## Type declaration";
@@ -82,11 +82,11 @@ export default function filterVariablesDocs(packageDir) {
   for (const variableFile of variableFiles) {
     const variablePath = path.join(docsVariablesPath, variableFile);
     let filteredDoc = filterVariableDoc(variablePath);
-    filteredDoc = normalizeInternalLinks(filteredDoc, variablePath, docsPath);
+    filteredDoc = normalizeInternalLinksToAbsolute(filteredDoc, variablePath, docsPath);
     fs.writeFileSync(variablePath, filteredDoc, "utf-8");
   }
 
-  console.log(`✔️ Complete processing variables documentation for ${packageDir}!`);
+  console.log(`☑️ Complete processing variables documentation for ${packageDir}!`);
   return true;
 }
 
