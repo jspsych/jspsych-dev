@@ -9,6 +9,9 @@
   "scripts": {
     "generate-timeline-docs": "node src/index.js"
   },
+  "files": [
+    "typedoc.json"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jspsych/jspsych-dev.git",

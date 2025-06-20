@@ -13,33 +13,50 @@ import { fileURLToPath } from "url";
 export default async function generateDocumentation(packageDir) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  
+
   const rootDir = path.join(__dirname, "..");
   const rootRepo = path.resolve(__dirname, "..", "..");
   const typedocConfigPath = path.join(__dirname, "..", "typedoc.json");
   const docsDir = path.join(packageDir, "docs");
 
   try {
-    // Look for src/index.ts as entry point
-    const srcDir = path.join(packageDir, "src");
-    let entryPointsArg = "";
-
-    if (fs.existsSync(srcDir)) {
-      const indexFilePath = path.join(srcDir, "index.ts");
-
-      if (fs.existsSync(indexFilePath)) {
-        entryPointsArg = `"${indexFilePath}"`;
-      } else {
-        console.error(`No index.ts found in ${srcDir}. Terminating documentation process.`);
-        // REVIEW: fallback?
-        return false;
-      }
-    } else {
-      console.error(`Source directory not found: ${srcDir}`);
+    // Read the typedoc configuration to get configured entry points
+    let typedocConfig;
+    try {
+      const configContent = fs.readFileSync(typedocConfigPath, "utf8");
+      typedocConfig = JSON.parse(configContent);
+    } catch (error) {
+      console.error(`Error reading typedoc config: ${error.message}`);
       return false;
     }
 
-    // REVIEW: good practice?
+    // Get entry points from config, or use a default
+    const configuredEntryPoints = typedocConfig.entryPoints || ["src/index.ts"];
+
+    // Look for entry points in order of configuration
+    let entryPointsArg = "";
+    let entryPointFound = false;
+
+    for (const entryPoint of configuredEntryPoints) {
+      const entryPath = path.join(packageDir, entryPoint);
+
+      if (fs.existsSync(entryPath)) {
+        entryPointsArg = `"${entryPath}"`;
+        entryPointFound = true;
+        console.log(`Using entry point: ${entryPath}`);
+        break;
+      }
+    }
+
+    if (!entryPointFound) {
+      console.error(
+        `No valid entry points found in ${packageDir}. Configured entry points: ${configuredEntryPoints.join(
+          ", "
+        )}`
+      );
+      return false;
+    }
+
     execSync(`npx typedoc --options ${typedocConfigPath} --out ${docsDir} ${entryPointsArg}`, {
       stdio: "inherit",
       cwd: rootDir,
@@ -68,7 +85,7 @@ if (import.meta.url === import.meta.main) {
   // Get the directory of the documentation tool
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  
+
   const toolDir = path.resolve(__dirname, ".."); // Root directory of the tool
   const rootDir = path.resolve(__dirname, "..", ".."); // Parent directory of the tool
   const packageDir = process.cwd(); // Package directory

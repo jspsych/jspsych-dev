@@ -17,5 +17,5 @@
     "gitRevision": "main",
     "excludeNotDocumented": true,
     "expandParameters": false,
-    "expandObjects": false,
+    "expandObjects": false
 }
