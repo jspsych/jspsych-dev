@@ -16,10 +16,35 @@ export function addDocsInDirAsNodes(dir, depGraph) {
     const stats = fs.statSync(fullPath);
     if (stats.isDirectory()) {
       addDocsInDirAsNodes(fullPath, depGraph);
-    } else if (stats.isFile() && file.endsWith(".md")) {
-      // If it's a markdown file, add it as a node in the dependency graph
+    } else if (stats.isFile() && file.endsWith(".md")) { // If it's a markdown file, add it as a node in the dependency graph
       try {
-        depGraph.graph.addNode(fullPath, fs.readFileSync(fullPath, "utf-8"));
+        const content = fs.readFileSync(fullPath, "utf-8");
+
+        // Add the entire file as a node
+        depGraph.graph.addNode(fullPath, content);
+
+        // Process sections separated by *** markers
+        const sections = content.split(/\n\s*\*\*\*\s*\n/);
+
+        let currentPosition = 0;
+        for (let i = 0; i < sections.length; i++) {
+          const section = sections[i].trim();
+
+          if (section) {
+            const firstLine = section.split("\n")[0].trim();
+            if (firstLine.startsWith("#")) {
+              const headingText = firstLine.replace(/^#+\s+/, "");
+              const anchorId = headingText
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, "") // Remove special chars
+                .replace(/\s+/g, "-"); // Replace spaces with hyphens
+              const sectionStart = content.indexOf(section, currentPosition);
+              currentPosition = sectionStart + section.length;
+              const sectionKey = `${fullPath}#${anchorId}`;
+              depGraph.graph.addNode(sectionKey, section);
+            }
+          }
+        }
       } catch (error) {
         console.warn(`Error processing file ${fullPath}: ${error.message}`);
       }
