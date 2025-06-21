@@ -19,7 +19,7 @@ program
     "Generate documentation for your jsPsych timeline package and optionally update the README.md"
   )
   .version("0.0.1")
-  .argument("[package-directory]", "Path to the timeline package directory", process.cwd()) // Default to current directory if not provided
+  .argument("[package-directory]", "Path to the timeline package directory (relative or absolute). If relative, assume starting from current working directory", process.cwd()) // Default to current directory if not provided
   .option("--skip-cleanup", "Keep the docs/ directory TypeDoc generates", false)
   .option(
     "--skip-update-readme",
@@ -27,6 +27,8 @@ program
   )
   .option("--doc-marker <marker>", "Marker to identify where to insert the documentation in README.md", "## `createTimeline()` Documentation")
   .action(async (packageDir, options) => {
+    packageDir = path.isAbsolute(packageDir) ? packageDir : path.resolve(process.cwd(), packageDir);
+    console.log(`\n🟡 Processing package directory: ${packageDir}`);
     console.log(`\n1️⃣ Generating TypeDoc documentation...`);
     try {
       const readmePath = path.join(packageDir, "README.md");
