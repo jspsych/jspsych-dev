@@ -6,7 +6,7 @@ import { normalizeInternalLinksToMarkdownAnchors } from "./normalize-internal-li
 export default async function updateReadme(
   readmePath,
   docGraph,
-  docHeading = "## `createTimeline()` Documentation"
+  docHeading = "## Documentation"
 ) {
   const orderedFiles = docGraph.getOrderedFiles().map((file) => file.name);
   const readmeContent = fs.readFileSync(readmePath, "utf-8");
@@ -20,8 +20,8 @@ export default async function updateReadme(
 
   const headingLevel = docHeading.match(/^#+/)[0].length;
   let docEnd = readmeContent.length;
-  const lines = readmeContent.split("\n");
-  for (let i = docStart + 1; i < lines.length; i++) {
+  const lines = readmeContent.slice(docStart+docHeading.length).split("\n");
+  for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     const lineHeadingLevel = line.match(/^#+/);
     if (lineHeadingLevel && lineHeadingLevel[0].length <= headingLevel) {
@@ -34,16 +34,16 @@ export default async function updateReadme(
 
   for (const filename of orderedFiles) {
     let nodeContent = docGraph.graph.getNodeData(filename);
-    nodeContent = adjustHeadingLevels(nodeContent, headingLevel + 1);
+    nodeContent = adjustHeadingLevels(nodeContent, headingLevel + 2);
 
     if (filename.endsWith("createTimeline.md")) {
       const createTimelineRegex = /^#+\s+.*`*createTimeline\(\)`* Documentation.*$/i;
       nodeContent = !createTimelineRegex.test(docHeading) ?
-        `${"#".repeat(headingLevel)} \`createTimeline()\` Documentation\n\n` + nodeContent : nodeContent;
+        `${"#".repeat(headingLevel+1)} \`createTimeline()\` Documentation\n\n` + nodeContent : nodeContent;
     } else if (filename.endsWith("timelineUnits.md")) {
-      nodeContent = `${"#".repeat(headingLevel)} \`timelineUnits\` Documentation\n\n` + nodeContent;
+      nodeContent = `${"#".repeat(headingLevel+1)} \`timelineUnits\` Documentation\n\n` + nodeContent;
     } else if (filename.endsWith("utils.md")) {
-      nodeContent = `${"#".repeat(headingLevel)} \`utils\` Documentation\n\n` + nodeContent;
+      nodeContent = `${"#".repeat(headingLevel+1)} \`utils\` Documentation\n\n` + nodeContent;
     }
 
     if (!nodeContent) {

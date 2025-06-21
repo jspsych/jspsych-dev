@@ -25,7 +25,7 @@ program
     "--skip-update-readme",
     "Don't update package README.md file with generated documentation", false
   )
-  .option("--doc-marker <marker>", "Marker to identify where to insert the documentation in README.md", "## `createTimeline()` Documentation")
+  .option("--doc-marker <marker>", "Marker to identify where to insert the documentation in README.md", "## Documentation")
   .action(async (packageDir, options) => {
     packageDir = path.isAbsolute(packageDir) ? packageDir : path.resolve(process.cwd(), packageDir);
     console.log(`\n🟡 Processing package directory: ${packageDir}`);
