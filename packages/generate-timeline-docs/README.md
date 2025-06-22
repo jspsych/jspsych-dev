@@ -4,7 +4,7 @@ This command-line tool allows you to automatically generate documentation for yo
 
 ## Overview
 
-This tool uses [TypeDoc](https://typedoc.org/) to generate an initial set of documentation. TypeDoc converts [JSDoc-style](https://jsdoc.app/) comments into documentation by parsing your source code and building docs for exported objects based on the accompanying JSDoc comments. We provide a guide [here](#guide-to-writing-comments-for-documentation-generation) for writing JSDoc comments in your code to better integrate this tool.
+This tool uses [TypeDoc](https://typedoc.org/) to generate an initial set of documentation. TypeDoc converts [JSDoc-style](https://jsdoc.app/) comments into documentation by parsing your source code and building docs for exported objects based on the accompanying JSDoc comments. We provide a guide [here](#guide-to-writing-jsdoc-annotations) for writing JSDoc comments in your code to better integrate this tool.
 
 The documentation generation process follows these steps:
 
@@ -27,7 +27,7 @@ The documentation generation process follows these steps:
    
 3. **The tool loops through the `docs/` folder again, using internal links in each object documentation to build a dependency graph.**
    
-    In your source code, you may have instances of objects depending on each other, such as a function with an `options` parameter that implements an interface. You can make this dependency relationship explicit using [internal links](#guide-to-writing-comments-for-documentation-generation) in your JSDoc comments. This allows the tool to add the interface as a dependency of the function when building a dependency graph. In the final documentation, the documentation for the interface will then be positioned right below that of the function, instead of following the natural order of the files.
+    In your source code, you may have instances of objects depending on each other, such as a function with an `options` parameter that implements an interface. You can make this dependency relationship explicit using [internal links](#guide-to-writing-jsdoc-annotations) in your JSDoc comments. This allows the tool to add the interface as a dependency of the function when building a dependency graph. In the final documentation, the documentation for the interface will then be positioned right below that of the function, instead of following the natural order of the files.
 
 4. **[[Optional](#command-line-options)] Your README is updated with the processed documentation.**
    
@@ -76,7 +76,7 @@ Here are some common errors that may occur when using this tool:
 | Error | Explanation & Fix |
 | ----- | ----------------- |
 | No valid entry points found in &lt;package-name&gt; | The tool uses your package's `src/index.ts` or `src/index.js` as entry points. Make sure one of these files exists. If you need to set different entry points, modify the `entryPoints` field in `typedoc.json`. |
-| Heading "..." not found in README file | The tool couldn't find where to insert the documentation. Make sure your README.md contains the marker heading (default: `## \`createTimeline()\` Documentation`). You can specify a custom marker with `--doc-marker`. |
+| Heading "..." not found in README file | The tool couldn't find where to insert the documentation. Make sure your README.md contains the marker heading `## Documentation` (default). You can specify a different marker with `--doc-marker`. |
 | TypeDoc documentation generation failed | Check if TypeDoc can properly process your source files. Ensure you have valid JSDoc comments and TypeScript types if using TypeScript. |
 
 If you need additional help or have suggestions, feel free to open a thread on our [discussion board](https://github.com/jspsych/jsPsych/discussions/).
