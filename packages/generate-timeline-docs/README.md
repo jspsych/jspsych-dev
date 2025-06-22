@@ -61,10 +61,46 @@ You can customize the documentation generation process by specifying these argum
 
 ## Guide to Writing JSDoc Annotations
 
-This tool works best with a TypeScript source script with JSDoc annotations. 
-
 <!-- TODO: this part is so boring -->
+This tool works best with a TypeScript source script with JSDoc annotations. The official JSDoc documentation details the many tags you can use to describe the functionality of a section of code in your script, so we will leave it to them to explain how to annotate with JSDoc. One useful feature to highlight is internal links. In JSDoc comments, you can use the `@link` tag to create links to other parts of the documentation. This is particularly helpful when a function has a large `options` parameter. Instead of writing all the details directly in the function, you can define the structure of the options parameter in an interface and then link to it for clarity. Here is an example:
 
+```javascript
+/**
+ * This function runs the whole experiment timeline for an implementation of the arrow-flanker task.
+ * 
+ * @param {JsPsych} jsPsych -- The JsPsych object that runs the experiment
+ * @param {CreateTimelineOptions} options -- The options object that includes the number of trials, the weights for how often each type of stimulus appears, the weights for how often the stimulus appears on each side, whether to include a demo section or not, and the instruction text at the beginning and end of the experiment.
+ * @returns {timeline object} The main timeline object
+ */
+export default function createTimeline(jsPsych: JsPsych, options: Partial<CreateTimelineOptions>) {
+    // ... rest of function
+    }
+```
+
+In this example, we can see from the description for the `options` parameter in the JSDoc comment that the `options` parameter is an object with many fields. Some of these fields may themselves point to objects with more nested fields. In cases like this, it is often cumberson to annotate both information about the function itself and information about the `options` parameter's structure all in one JSDoc comment. Instead, it is helpful to write an interface and name it something like `CreateTimelineOptions`, which can then have its own JSDoc annotation:
+
+```javascript
+/**
+ * Define and export the interface for the `options` parameter in {@link createTimeline}.
+ */
+export interface CreateTimelineOptions {
+  /**
+   * The number of trials to include in the experiment.
+   * @defaultValue 20
+   */
+  n_trials: number;
+
+  /**
+   * The weights for how often the stimulus appears on each side [left, right].
+   * @defaultValue [1, 1]
+   */
+  side_weights: [left_weight: number, right_weight: number];
+
+  // ... The rest of the interface
+}
+```
+
+Now, every option in the `options` parameter can have its own JSDoc annotation, including useful information like the default value of the option. When we use this documentation generation tool to parse a setup like this, it will generate a separate table for the `CreateTimelineOptions` interface with each option getting its own row. The `{@link createTimeline}` tag in the interface's JSDoc annotation, and the specification of the `options` parameter's type as `CreateTimelineOptions` in the function declaration of `createTimeline` lets the tool know that these two objects are linked. The tool will then append the documentation for `CreateTimelineOptions` right after the `createTimeline` documentation in the final output.
 
 ## Troubleshooting
 
