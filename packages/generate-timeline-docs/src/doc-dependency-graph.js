@@ -182,6 +182,12 @@ class DocDependencyGraph {
         addNodeAndDependencies(node);
       }
 
+      // 4. Add any remaining nodes that weren't included yet
+      const allNodes = Array.from(this.graph.nodes.keys());
+      for (const node of allNodes) {
+        addNodeAndDependencies(node);
+      }
+
       return result;
     } catch (error) {
       console.warn(`Error ordering files: ${error.message}`);

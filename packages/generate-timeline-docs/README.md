@@ -1,45 +1,85 @@
 # `@jspsych-dev/generate-timeline-docs`
 
-This tool allows you to automatically generate documentation for your jsPsych timeline package based on your source script(s), which should be where the main logic of your jsPsych timeline lives, and optionally update your package's `README.md` with the generated documentation. For the tool to properly generate documentation, we recommend writing your source script(s) in a certain way, including following the standardized abstraction/export structure we defined in our [template for new timelines](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline/templates/timeline-template-ts), and writing JSDoc comments in your code to explain what each functional element does. We provide a more detailed guide for how to write your source script(s) to make it friendly to this tool in [this section](#guide-to-writing-comments-to-help-documentation-generation). If you run into errors or issues when using this tool, you can first look for solutions in the [Troubleshooting](#troubleshooting) section as a first step. We also outline existing limitations to the tool in the [Limitations] section. If you need more help or have suggestions/requests for additional documentation, feel free to open a thread on our [discussion board](https://github.com/jspsych/jsPsych/discussions/).
+This command-line tool allows you to automatically generate documentation for your jsPsych timeline package based on your source code and (optionally) update your package's `README.md` with the generated documentation.
+
+## Overview
+
+This tool uses [TypeDoc](https://typedoc.org/) to generate an initial set of documentation. TypeDoc converts [JSDoc-style](https://jsdoc.app/) comments into documentation by parsing your source code and building docs for exported objects based on the accompanying JSDoc comments. We provide a guide [here](#guide-to-writing-comments-for-documentation-generation) for writing JSDoc comments in your code to better integrate this tool.
+
+The documentation generation process follows these steps:
+
+1. **TypeDoc generates markdown documentation** in the `docs/` folder based on the `src/index.ts` or `src/index.js` script in your package directory.
+
+    This behavior depends on the tool's default configuration of TypeDoc, which can be changed at `node_modules/@jspsych-dev/generate-timeline-docs/typedoc.json`, where `node_modules` is the folder in which the tool is installed.
+
+    > [!IMPORTANT] 
+    > This tool is also designed to work with timeline packages that follow our [template](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline/templates/timeline-template-ts). The main implication of this is that the tool will assume the source code exports these three things:
+    >
+    > * A `createTimeline()` function that serves as the default export of the package, representing the entire jsPsych experiment timeline
+    > * A `timelineUnits` object that contains an array of functional subcomponents of the timeline, e.g. an individual procedure or trial
+    > * A `utils` object that contains an array of anything useful for running the timeline, e.g. helper functions, types, etc.
+    >
+    > Accordingly, the tool will print out documentation for `createTimeline()` first, then `timelineUnits`, followed by `utils`. Any leftover documentation that neither belong to these exports nor are referenced by them are appended at the end. You can find more detailed information about this export structure and how to easily create a template timeline that follows it [here](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline). 
+
+    <!-- REVIEW: not sure we actually have a good documentation explaining this structure on GitHub -->
+
+2. **The tool processes each generated file**, filtering to keep only each exported object's name, description, parameters table and return type, depending on which of these are applicable.
+   
+3. **The tool loops through the `docs/` folder again, using internal links in each object documentation to build a dependency graph.**
+   
+    In your source code, you may have instances of objects depending on each other, such as a function with an `options` parameter that implements an interface. You can make this dependency relationship explicit using [internal links](#guide-to-writing-comments-for-documentation-generation) in your JSDoc comments. This allows the tool to add the interface as a dependency of the function when building a dependency graph. In the final documentation, the documentation for the interface will then be positioned right below that of the function, instead of following the natural order of the files.
+
+4. **[[Optional](#command-line-options)] Your README is updated with the processed documentation.**
+   
+   By default, the tool is designed to find the first line in the README that matches the string `"## Documentation"` and replace it with the documentation, but you can specify a custom marker to insert the documentation at using the tool's [command-line options](#command-line-options). The tool also updates the heading levels in the generated documentation to match the marker, i.e. if the marker starts with 3 `#`s, the heading levels of the documentation will start with 4`#`s as the highest level. The tool will replace any content between the marker and the next marker that is at the same heading level or higher (fewer `#`s), or end of document if not found.
+5. **[[Optional](#command-line-options)] The temporary `docs/` folder generated by TypeDoc is deleted.**
 
 ## How to Use
+
 To use this tool, follow these steps:
+
 1. Navigate to the root directory of your timeline package
-```bash
+```sh
 cd /path/to/your/package/root/directory
 ```
-2. Run the tool
-```bash
+
+2. Run the tool with default settings
+```sh
 npx @jspsych-dev/generate-timeline-docs
 ```
 
-The tool should then generate documentation based on your source script, which should be where the main logic of your jsPsych timeline lives.
-
 ### Command-Line Options
 
+You can customize the documentation generation process by specifying these arguments and options:
 
-You can customize the documentation generation process with these options:
+| Argument/Option | Description |
+|----------------|-------------| 
+| `[package-directory]` | Path to the timeline package directory (default: current directory) |
+| `--skip-cleanup` | Keep the `docs/` directory that TypeDoc generates (default: false) | `--skip-update-readme` | Don't update package README.md file with generated documentation |
+| `--doc-marker <marker>` | Marker text to identify where to insert documentation in README.md (default: `## Documentation`) |
+| `--help` | Display help information |
 
-```bash
-npx @jspsych-dev/generate-timeline-docs --skip-cleanup
+## Guide to Writing JSDoc Annotations
 
-npx @jspsych-dev/generate-timeline-docs --no-append-readme
+This tool works best with a TypeScript source script with JSDoc annotations. 
 
-npx @jspsych-dev/generate-timeline-docs /path/to/package/directory
+<!-- TODO: this part is so boring -->
 
-npx @jspsych-dev/generate-timeline-docs --help
-```
-
-## Guide to Writing Comments to Help Documentation Generation
-The tool is intended to be used on timeline packages that follow , but can also be used on a package that does not follow this structure. We outline the tool's limitations when used on such non-standardized timeline packages in [this section](#used-on-a-non-standardized-timeline-package). 
 
 ## Troubleshooting
 
-Here are some common errors that may come up when you are using this tool:
+<!-- TODO: add a lot more of these based on the errors we are catching -->
+<!-- TODO: also have to write CI tests to uncover more errors to handle gracefully -->
+
+Here are some common errors that may occur when using this tool:
 
 | Error | Explanation & Fix |
 | ----- | ----------------- |
-|No valid entry points found in <package-name>.| The tool uses your package's `src/index.ts` or `src/index.ts` as entry points. If your package does not have either of these files, the tool will exit with this error. If you wish to set different entry points for TypeDoc to generate documentation from, you can add them by navigating to `node_modules/@jspsych-dev/generate-timeline-docs/typedoc.json` and modifying the `entryPoints` field in this file. |
+| No valid entry points found in &lt;package-name&gt; | The tool uses your package's `src/index.ts` or `src/index.js` as entry points. Make sure one of these files exists. If you need to set different entry points, modify the `entryPoints` field in `typedoc.json`. |
+| Heading "..." not found in README file | The tool couldn't find where to insert the documentation. Make sure your README.md contains the marker heading (default: `## \`createTimeline()\` Documentation`). You can specify a custom marker with `--doc-marker`. |
+| TypeDoc documentation generation failed | Check if TypeDoc can properly process your source files. Ensure you have valid JSDoc comments and TypeScript types if using TypeScript. |
+
+If you need additional help or have suggestions, feel free to open a thread on our [discussion board](https://github.com/jspsych/jsPsych/discussions/).
 
 
 
