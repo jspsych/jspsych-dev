@@ -62,7 +62,9 @@ You can customize the documentation generation process by specifying these argum
 ## Guide to Writing JSDoc Annotations
 
 <!-- TODO: this part is so boring -->
-This tool works best with a TypeScript source script with JSDoc annotations. The official JSDoc documentation details the many tags you can use to describe the functionality of a section of code in your script, so we will leave it to them to explain how to annotate with JSDoc. One useful feature to highlight is internal links. In JSDoc comments, you can use the `@link` tag to create links to other parts of the documentation. This is particularly helpful when a function has a large `options` parameter. Instead of writing all the details directly in the function, you can define the structure of the options parameter in an interface and then link to it for clarity. Here is an example:
+This tool works best with a TypeScript source script with JSDoc annotations. The official [JSDoc documentation](https://jsdoc.app/) details the many tags you can use to describe the functionality of a section of code in your script, so we will leave it to them to explain how to annotate with JSDoc.
+
+One useful feature to highlight is internal links. In JSDoc comments, you can use the `@link` tag to create links to other parts of the documentation. This is particularly helpful when a function has a large `options` parameter. Instead of writing all the details directly in the function, you can define the structure of the options parameter in an interface and then link to it for clarity, though keep in mind that interface declarations can only be used in TypeScript files. Here is an example:
 
 ```javascript
 /**
