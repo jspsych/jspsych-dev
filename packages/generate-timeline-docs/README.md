@@ -10,28 +10,28 @@ The documentation generation process follows these steps:
 
 1. **TypeDoc generates markdown documentation** in the `docs/` folder based on the `src/index.ts` or `src/index.js` script in your package directory.
 
-    This behavior depends on the tool's default configuration of TypeDoc, which can be changed at `node_modules/@jspsych-dev/generate-timeline-docs/typedoc.json`, where `node_modules` is the folder in which the tool is installed.
+   This behavior depends on the tool's default configuration of TypeDoc, which can be changed at `node_modules/@jspsych-dev/generate-timeline-docs/typedoc.json`, where `node_modules` is the folder in which the tool is installed.
 
-    > [!IMPORTANT] 
-    > This tool is also designed to work with timeline packages that follow our [template](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline/templates/timeline-template-ts). The main implication of this is that the tool will assume the source code exports these three things:
-    >
-    > * A `createTimeline()` function that serves as the default export of the package, representing the entire jsPsych experiment timeline
-    > * A `timelineUnits` object that contains an array of functional subcomponents of the timeline, e.g. an individual procedure or trial
-    > * A `utils` object that contains an array of anything useful for running the timeline, e.g. helper functions, types, etc.
-    >
-    > Accordingly, the tool will print out documentation for `createTimeline()` first, then `timelineUnits`, followed by `utils`. Any leftover documentation that neither belong to these exports nor are referenced by them are appended at the end. You can find more detailed information about this export structure and how to easily create a template timeline that follows it [here](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline). 
+   > **NOTE:**<br>
+   > This tool is also designed to work with timeline packages that follow our [template](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline/templates/timeline-template-ts). The main implication of this is that the tool will assume the source code exports these three things:
+   >
+   > - A `createTimeline()` function that serves as the default export of the package, representing the entire jsPsych experiment timeline
+   > - A `timelineUnits` object that contains an array of functional subcomponents of the timeline, e.g. an individual procedure or trial
+   > - A `utils` object that contains an array of anything useful for running the timeline, e.g. helper functions, types, etc.
+   >
+   > Accordingly, the tool will print out documentation for `createTimeline()` first, then `timelineUnits`, followed by `utils`. Any leftover documentation that neither belong to these exports nor are referenced by them are appended at the end. You can find more detailed information about this export structure and how to easily create a template timeline that follows it [here](https://github.com/jspsych/jspsych-dev/tree/main/packages/new-timeline).
 
-    <!-- REVIEW: not sure we actually have a good documentation explaining this structure on GitHub -->
+   <!-- REVIEW: not sure we actually have a good documentation explaining this structure on GitHub -->
 
 2. **The tool processes each generated file**, filtering to keep only each exported object's name, description, parameters table and return type, depending on which of these are applicable.
-   
 3. **The tool loops through the `docs/` folder again, using internal links in each object documentation to build a dependency graph.**
-   
-    In your source code, you may have instances of objects depending on each other, such as a function with an `options` parameter that implements an interface. You can make this dependency relationship explicit using [internal links](#guide-to-writing-jsdoc-annotations) in your JSDoc comments. This allows the tool to add the interface as a dependency of the function when building a dependency graph. In the final documentation, the documentation for the interface will then be positioned right below that of the function, instead of following the natural order of the files.
+
+   In your source code, you may have instances of objects depending on each other, such as a function with an `options` parameter that implements an interface. You can make this dependency relationship explicit using [internal links](#guide-to-writing-jsdoc-annotations) in your JSDoc comments. This allows the tool to add the interface as a dependency of the function when building a dependency graph. In the final documentation, the documentation for the interface will then be positioned right below that of the function, instead of following the natural order of the files.
 
 4. **[[Optional](#command-line-options)] Your README is updated with the processed documentation.**
-   
+
    By default, the tool is designed to find the first line in the README that matches the string `"## Documentation"` and replace it with the documentation, but you can specify a custom marker to insert the documentation at using the tool's [command-line options](#command-line-options). The tool also updates the heading levels in the generated documentation to match the marker, i.e. if the marker starts with 3 `#`s, the heading levels of the documentation will start with 4`#`s as the highest level. The tool will replace any content between the marker and the next marker that is at the same heading level or higher (fewer `#`s), or end of document if not found.
+
 5. **[[Optional](#command-line-options)] The temporary `docs/` folder generated by TypeDoc is deleted.**
 
 ## How to Use
@@ -39,11 +39,13 @@ The documentation generation process follows these steps:
 To use this tool, follow these steps:
 
 1. Navigate to the root directory of your timeline package
+
 ```sh
 cd /path/to/your/package/root/directory
 ```
 
 2. Run the tool with default settings
+
 ```sh
 npx @jspsych-dev/generate-timeline-docs
 ```
@@ -52,29 +54,30 @@ npx @jspsych-dev/generate-timeline-docs
 
 You can customize the documentation generation process by specifying these arguments and options:
 
-| Argument/Option | Description |
-|----------------|-------------| 
-| `[package-directory]` | Path to the timeline package directory (default: current directory) |
-| `--skip-cleanup` | Keep the `docs/` directory that TypeDoc generates (default: false) | `--skip-update-readme` | Don't update package README.md file with generated documentation |
+| Argument/Option         | Description                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------ | ---------------------- | ---------------------------------------------------------------- |
+| `[package-directory]`   | Path to the timeline package directory (default: current directory)                              |
+| `--skip-cleanup`        | Keep the `docs/` directory that TypeDoc generates (default: false)                               | `--skip-update-readme` | Don't update package README.md file with generated documentation |
 | `--doc-marker <marker>` | Marker text to identify where to insert documentation in README.md (default: `## Documentation`) |
-| `--help` | Display help information |
+| `--help`                | Display help information                                                                         |
 
 ## Guide to Writing JSDoc Annotations
 
 <!-- TODO: this part is so boring -->
+
 This tool works best with a TypeScript source script with JSDoc annotations. The official [JSDoc documentation](https://jsdoc.app/) details the many tags you can use to describe the functionality of a section of code in your script, so we will leave it to them to explain how to annotate with JSDoc.
 
-One useful feature to highlight is internal links. In JSDoc comments, you can use the `@link` tag to create links to other parts of the documentation. This is particularly helpful when a function has a large `options` parameter. Instead of writing all the details directly in the function, you can define the structure of the options parameter in an interface and then link to it for clarity, though keep in mind that interface declarations can only be used in TypeScript files. Here is an example:
+One useful feature to highlight is internal links. In JSDoc comments, you can use the `@link` tag to create links to other parts of the documentation. This is particularly helpful when a function has a large `options` parameter. Instead of writing all the details directly in the function, you can define the structure of the options parameter in an interface and then link to it for clarity, though keep in mind that interface declarations can only be used in TypeScript files, and that you must export the interface as well to make it work. Here is an example:
 
 ```javascript
 /**
  * This function runs the whole experiment timeline for an implementation of the arrow-flanker task.
- * 
+ *
  * @param {JsPsych} jsPsych -- The JsPsych object that runs the experiment
  * @param {CreateTimelineOptions} options -- The options object that includes the number of trials, the weights for how often each type of stimulus appears, the weights for how often the stimulus appears on each side, whether to include a demo section or not, and the instruction text at the beginning and end of the experiment.
  * @returns {timeline object} The main timeline object
  */
-export default function createTimeline(jsPsych: JsPsych, options: Partial<CreateTimelineOptions>) {
+export function createTimeline(jsPsych: JsPsych, options: Partial<CreateTimelineOptions>) {
     // ... rest of function
     }
 ```
@@ -111,14 +114,11 @@ Now, every option in the `options` parameter can have its own JSDoc annotation, 
 
 Here are some common errors that may occur when using this tool:
 
-| Error | Explanation & Fix |
-| ----- | ----------------- |
-| No valid entry points found in &lt;package-name&gt; | The tool uses your package's `src/index.ts` or `src/index.js` as entry points. Make sure one of these files exists. If you need to set different entry points, modify the `entryPoints` field in `typedoc.json`. |
-| Heading "..." not found in README file | The tool couldn't find where to insert the documentation. Make sure your README.md contains the marker heading `## Documentation` (default). You can specify a different marker with `--doc-marker`. |
-| TypeDoc documentation generation failed | Check if TypeDoc can properly process your source files. Ensure you have valid JSDoc comments and TypeScript types if using TypeScript. |
+| Error                                               | Explanation & Fix                                                                                                                                                                                                |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing documentation for a given element | This is likely because the element was not annotated with a JSDoc-style comment. Check that it is annotated in your source code, and debug by running the tool again with the `--skip-cleanup` flag to check whether a documentation file was generated for the element under `docs/`. |
+| No valid entry points found in `<package-name>` | The tool uses your package's `src/index.ts` or `src/index.js` as entry points. Make sure one of these files exists. If you need to set different entry points, modify the `entryPoints` field in `typedoc.json`. |
+| Heading "..." not found in README file              | The tool couldn't find where to insert the documentation. Make sure your README.md contains the marker heading `## Documentation` (default). You can specify a different marker with `--doc-marker`.             |
+| TypeDoc documentation generation failed             | Check if TypeDoc can properly process your source files. Ensure you have valid JSDoc comments and TypeScript types if using TypeScript.                                                                          |
 
 If you need additional help or have suggestions, feel free to open a thread on our [discussion board](https://github.com/jspsych/jsPsych/discussions/).
-
-
-
-
