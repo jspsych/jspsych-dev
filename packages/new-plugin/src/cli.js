@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { input, select } from "@inquirer/prompts";
+import { Command } from "commander";
 import { deleteSync } from "del";
 import { dest, series, src } from "gulp";
 import rename from "gulp-rename";
@@ -14,6 +15,10 @@ import { simpleGit } from "simple-git";
 const git = simpleGit();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Import version from package.json
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+const { version } = packageJson;
 
 async function getRepoRoot() {
   try {
@@ -317,6 +322,109 @@ async function processAnswers(answers) {
   series(processTemplate, renameExampleTemplate, renameDocsTemplate, renameReadmeTemplate)();
 }
 
-const cwdInfo = await getCwdInfo();
-const answers = await runPrompts(cwdInfo);
-await processAnswers(answers);
+async function runWithArgs(cwdInfo, options) {
+  // Check if package already exists
+  const packagePath = `${cwdInfo.destDir}/plugin-${getHyphenateName(options.name)}`;
+  if (fs.existsSync(packagePath)) {
+    console.error(`Error: A plugin package with this name already exists in this directory: ${packagePath}`);
+    process.exit(1);
+  }
+
+  // Set defaults and calculate derived values
+  const name = options.name;
+  const language = options.language || 'ts';
+  
+  let readmePath = options.readmePath;
+  if (!readmePath) {
+    if (!cwdInfo.isContribRepo) {
+      const remoteGitUrl = await getRemoteGitUrl();
+      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/README.md`;
+    } else {
+      readmePath = `https://github.com/jspsych/jspsych-contrib/packages/plugin-${getHyphenateName(name)}/README.md`;
+    }
+  }
+
+  return {
+    name: name,
+    description: options.description,
+    author: options.author,
+    authorUrl: options.authorUrl || '',
+    language: language,
+    readmePath: readmePath,
+    destDir: cwdInfo.destDir,
+    isContribRepo: cwdInfo.isContribRepo,
+  };
+}
+
+// Set up Commander.js
+const program = new Command();
+
+program
+  .name('new-plugin')
+  .description('Creates a new jsPsych plugin package')
+  .version(version)
+  .option('--name <name>', 'Name of the plugin package (required)')
+  .option('--description <description>', 'Brief description of the plugin package (required)')
+  .option('--author <author>', 'Name of the author (required)')
+  .option('--author-url <url>', 'Profile URL for the author (optional)')
+  .option('--language <lang>', 'Language to use: ts or js (default: ts)', 'ts')
+  .option('--readme-path <path>', 'Path to README.md file (optional)')
+  .addHelpText('after', `
+
+Examples:
+  $ new-plugin --name "my-plugin" --description "My awesome plugin" --author "John Doe"
+  $ new-plugin --name "my-plugin" --description "My plugin" --author "John Doe" --language js`)
+  .action((options) => {
+    // This action will only run if we have arguments provided
+    return main(options, true); // true = non-interactive mode
+  });
+
+async function main(options, isNonInteractive = false) {
+  const cwdInfo = await getCwdInfo();
+  
+  let answers;
+  if (isNonInteractive) {
+    // Validate required options
+    if (!options.name) {
+      console.error('Error: --name is required');
+      process.exit(1);
+    }
+    if (!options.description) {
+      console.error('Error: --description is required');
+      process.exit(1);
+    }
+    if (!options.author) {
+      console.error('Error: --author is required');
+      process.exit(1);
+    }
+    
+    // Validate language
+    if (options.language && !['ts', 'js'].includes(options.language)) {
+      console.error('Error: --language must be either "ts" or "js"');
+      process.exit(1);
+    }
+    
+    // Non-interactive mode
+    answers = await runWithArgs(cwdInfo, options);
+  } else {
+    // Interactive mode (existing behavior)
+    answers = await runPrompts(cwdInfo);
+  }
+
+  await processAnswers(answers);
+}
+
+program.parse();
+const options = program.opts();
+
+// Check if we have command line arguments (any option except defaults)
+const hasArgs = Object.keys(options).some(key => 
+  (key !== 'language' || options[key] !== 'ts') && 
+  key !== 'version' && 
+  options[key] !== undefined
+);
+
+if (!hasArgs) {
+  // No arguments provided, run in interactive mode
+  await main({}, false);
+}
