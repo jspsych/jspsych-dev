@@ -16,6 +16,10 @@ const git = simpleGit();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Import version from package.json
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+const { version } = packageJson;
+
 async function getRepoRoot() {
   try {
     const rootDir = await git.revparse(["--show-toplevel"]);
@@ -358,7 +362,7 @@ const program = new Command();
 program
   .name('new-plugin')
   .description('Creates a new jsPsych plugin package')
-  .version('1.0.0')
+  .version(version)
   .option('--name <name>', 'Name of the plugin package (required)')
   .option('--description <description>', 'Brief description of the plugin package (required)')
   .option('--author <author>', 'Name of the author (required)')
