@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.3.0
+
+### Minor Changes
+
+- 41e0a32: Add non-interactive mode with command-line arguments using Commander.js
+
 ## 0.2.2
 
 ### Patch Changes
