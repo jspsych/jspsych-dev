@@ -22,6 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "@inquirer/prompts": "^7.2.3",
+    "commander": "^11.1.0",
     "del": "^8.0.0",
     "gulp": "^5.0.0",
     "gulp-rename": "^2.0.0",

@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { input, select } from "@inquirer/prompts";
+import { Command } from "commander";
 import { deleteSync } from "del";
 import { dest, series, src } from "gulp";
 import rename from "gulp-rename";
@@ -304,107 +305,19 @@ async function processAnswers(answers) {
   series(processTemplate, renameExampleTemplate, renameDocsTemplate, renameReadmeTemplate)();
 }
 
-// Parse command line arguments
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const parsed = {};
-  const flags = [];
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === '--help' || arg === '-h') {
-      flags.push('help');
-    } else if (arg.startsWith('--name=')) {
-      parsed.name = arg.split('=')[1];
-    } else if (arg === '--name' && i + 1 < args.length) {
-      parsed.name = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--description=')) {
-      parsed.description = arg.split('=')[1];
-    } else if (arg === '--description' && i + 1 < args.length) {
-      parsed.description = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--author=')) {
-      parsed.author = arg.split('=')[1];
-    } else if (arg === '--author' && i + 1 < args.length) {
-      parsed.author = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--author-url=')) {
-      parsed.authorUrl = arg.split('=')[1];
-    } else if (arg === '--author-url' && i + 1 < args.length) {
-      parsed.authorUrl = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--language=')) {
-      parsed.language = arg.split('=')[1];
-    } else if (arg === '--language' && i + 1 < args.length) {
-      parsed.language = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--readme-path=')) {
-      parsed.readmePath = arg.split('=')[1];
-    } else if (arg === '--readme-path' && i + 1 < args.length) {
-      parsed.readmePath = args[i + 1];
-      i++;
-    }
-  }
-
-  return { parsed, flags };
-}
-
-function showHelp() {
-  console.log(`
-Usage: new-timeline [options]
-
-Creates a new jsPsych timeline package.
-
-Options:
-  --name <name>               Name of the timeline package (required)
-  --description <desc>        Brief description of the timeline package (required)
-  --author <author>           Name of the author (required)
-  --author-url <url>          Profile URL for the author (optional)
-  --language <lang>           Language to use: 'ts' or 'js' (optional, default: 'ts')
-  --readme-path <path>        Path to README.md file (optional)
-  -h, --help                  Show this help message
-
-Examples:
-  new-timeline --name "my-timeline" --description "My awesome timeline" --author "John Doe"
-  new-timeline --name "my-timeline" --description "My timeline" --author "John Doe" --language js
-  new-timeline --help
-`);
-}
-
-async function runWithArgs(cwdInfo, args) {
-  // Validate required arguments
-  if (!args.name) {
-    console.error('Error: --name is required');
-    process.exit(1);
-  }
-  if (!args.description) {
-    console.error('Error: --description is required');
-    process.exit(1);
-  }
-  if (!args.author) {
-    console.error('Error: --author is required');
-    process.exit(1);
-  }
-
-  // Validate language
-  if (args.language && !['ts', 'js'].includes(args.language)) {
-    console.error('Error: --language must be either "ts" or "js"');
-    process.exit(1);
-  }
-
+async function runWithArgs(cwdInfo, options) {
   // Check if package already exists
-  const packagePath = `${cwdInfo.destDir}/${getHyphenateName(args.name)}`;
+  const packagePath = `${cwdInfo.destDir}/${getHyphenateName(options.name)}`;
   if (fs.existsSync(packagePath)) {
     console.error(`Error: A timeline package with this name already exists in this directory: ${packagePath}`);
     process.exit(1);
   }
 
   // Set defaults and calculate derived values
-  const name = args.name;
-  const language = args.language || 'ts';
+  const name = options.name;
+  const language = options.language || 'ts';
   
-  let readmePath = args.readmePath;
+  let readmePath = options.readmePath;
   if (!readmePath) {
     if (!cwdInfo.isTimelinesRepo) {
       const remoteGitUrl = await getRemoteGitUrl();
@@ -416,9 +329,9 @@ async function runWithArgs(cwdInfo, args) {
 
   return {
     name: name,
-    description: args.description,
-    author: args.author,
-    authorUrl: args.authorUrl || '',
+    description: options.description,
+    author: options.author,
+    authorUrl: options.authorUrl || '',
     language: language,
     readmePath: readmePath,
     destDir: cwdInfo.destDir,
@@ -426,25 +339,75 @@ async function runWithArgs(cwdInfo, args) {
   };
 }
 
-const { parsed: args, flags } = parseArgs();
+// Set up Commander.js
+const program = new Command();
 
-if (flags.includes('help')) {
-  showHelp();
-  process.exit(0);
+program
+  .name('new-timeline')
+  .description('Creates a new jsPsych timeline package')
+  .version('1.0.0')
+  .option('--name <name>', 'Name of the timeline package (required)')
+  .option('--description <description>', 'Brief description of the timeline package (required)')
+  .option('--author <author>', 'Name of the author (required)')
+  .option('--author-url <url>', 'Profile URL for the author (optional)')
+  .option('--language <lang>', 'Language to use: ts or js (default: ts)', 'ts')
+  .option('--readme-path <path>', 'Path to README.md file (optional)')
+  .addHelpText('after', `
+
+Examples:
+  $ new-timeline --name "my-timeline" --description "My awesome timeline" --author "John Doe"
+  $ new-timeline --name "my-timeline" --description "My timeline" --author "John Doe" --language js`)
+  .action((options) => {
+    // This action will only run if we have arguments provided
+    return main(options, true); // true = non-interactive mode
+  });
+
+async function main(options, isNonInteractive = false) {
+  const cwdInfo = await getCwdInfo();
+  
+  let answers;
+  if (isNonInteractive) {
+    // Validate required options
+    if (!options.name) {
+      console.error('Error: --name is required');
+      process.exit(1);
+    }
+    if (!options.description) {
+      console.error('Error: --description is required');
+      process.exit(1);
+    }
+    if (!options.author) {
+      console.error('Error: --author is required');
+      process.exit(1);
+    }
+    
+    // Validate language
+    if (options.language && !['ts', 'js'].includes(options.language)) {
+      console.error('Error: --language must be either "ts" or "js"');
+      process.exit(1);
+    }
+    
+    // Non-interactive mode
+    answers = await runWithArgs(cwdInfo, options);
+  } else {
+    // Interactive mode (existing behavior)
+    answers = await runPrompts(cwdInfo);
+  }
+
+  await processAnswers(answers);
 }
 
-const cwdInfo = await getCwdInfo();
+program.parse();
+const options = program.opts();
 
-// Check if we have command line arguments
-const hasArgs = Object.keys(args).length > 0;
+// Check if we have command line arguments (any option except defaults)
+const hasArgs = Object.keys(options).some(key => 
+  (key !== 'language' || options[key] !== 'ts') && 
+  key !== 'version' && 
+  options[key] !== undefined
+);
 
-let answers;
-if (hasArgs) {
-  // Non-interactive mode
-  answers = await runWithArgs(cwdInfo, args);
-} else {
-  // Interactive mode (existing behavior)
-  answers = await runPrompts(cwdInfo);
+if (!hasArgs) {
+  // No arguments provided, run in interactive mode
+  await main({}, false);
 }
-
-await processAnswers(answers);
