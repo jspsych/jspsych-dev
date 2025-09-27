@@ -304,6 +304,147 @@ async function processAnswers(answers) {
   series(processTemplate, renameExampleTemplate, renameDocsTemplate, renameReadmeTemplate)();
 }
 
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const parsed = {};
+  const flags = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--help' || arg === '-h') {
+      flags.push('help');
+    } else if (arg.startsWith('--name=')) {
+      parsed.name = arg.split('=')[1];
+    } else if (arg === '--name' && i + 1 < args.length) {
+      parsed.name = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--description=')) {
+      parsed.description = arg.split('=')[1];
+    } else if (arg === '--description' && i + 1 < args.length) {
+      parsed.description = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--author=')) {
+      parsed.author = arg.split('=')[1];
+    } else if (arg === '--author' && i + 1 < args.length) {
+      parsed.author = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--author-url=')) {
+      parsed.authorUrl = arg.split('=')[1];
+    } else if (arg === '--author-url' && i + 1 < args.length) {
+      parsed.authorUrl = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--language=')) {
+      parsed.language = arg.split('=')[1];
+    } else if (arg === '--language' && i + 1 < args.length) {
+      parsed.language = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--readme-path=')) {
+      parsed.readmePath = arg.split('=')[1];
+    } else if (arg === '--readme-path' && i + 1 < args.length) {
+      parsed.readmePath = args[i + 1];
+      i++;
+    }
+  }
+
+  return { parsed, flags };
+}
+
+function showHelp() {
+  console.log(`
+Usage: new-timeline [options]
+
+Creates a new jsPsych timeline package.
+
+Options:
+  --name <name>               Name of the timeline package (required)
+  --description <desc>        Brief description of the timeline package (required)
+  --author <author>           Name of the author (required)
+  --author-url <url>          Profile URL for the author (optional)
+  --language <lang>           Language to use: 'ts' or 'js' (optional, default: 'ts')
+  --readme-path <path>        Path to README.md file (optional)
+  -h, --help                  Show this help message
+
+Examples:
+  new-timeline --name "my-timeline" --description "My awesome timeline" --author "John Doe"
+  new-timeline --name "my-timeline" --description "My timeline" --author "John Doe" --language js
+  new-timeline --help
+`);
+}
+
+async function runWithArgs(cwdInfo, args) {
+  // Validate required arguments
+  if (!args.name) {
+    console.error('Error: --name is required');
+    process.exit(1);
+  }
+  if (!args.description) {
+    console.error('Error: --description is required');
+    process.exit(1);
+  }
+  if (!args.author) {
+    console.error('Error: --author is required');
+    process.exit(1);
+  }
+
+  // Validate language
+  if (args.language && !['ts', 'js'].includes(args.language)) {
+    console.error('Error: --language must be either "ts" or "js"');
+    process.exit(1);
+  }
+
+  // Check if package already exists
+  const packagePath = `${cwdInfo.destDir}/${getHyphenateName(args.name)}`;
+  if (fs.existsSync(packagePath)) {
+    console.error(`Error: A timeline package with this name already exists in this directory: ${packagePath}`);
+    process.exit(1);
+  }
+
+  // Set defaults and calculate derived values
+  const name = args.name;
+  const language = args.language || 'ts';
+  
+  let readmePath = args.readmePath;
+  if (!readmePath) {
+    if (!cwdInfo.isTimelinesRepo) {
+      const remoteGitUrl = await getRemoteGitUrl();
+      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/${getHyphenateName(name)}/README.md`;
+    } else {
+      readmePath = `https://github.com/jspsych/jspsych-timelines/packages/${getHyphenateName(name)}/README.md`;
+    }
+  }
+
+  return {
+    name: name,
+    description: args.description,
+    author: args.author,
+    authorUrl: args.authorUrl || '',
+    language: language,
+    readmePath: readmePath,
+    destDir: cwdInfo.destDir,
+    isTimelinesRepo: cwdInfo.isTimelinesRepo,
+  };
+}
+
+const { parsed: args, flags } = parseArgs();
+
+if (flags.includes('help')) {
+  showHelp();
+  process.exit(0);
+}
+
 const cwdInfo = await getCwdInfo();
-const answers = await runPrompts(cwdInfo);
+
+// Check if we have command line arguments
+const hasArgs = Object.keys(args).length > 0;
+
+let answers;
+if (hasArgs) {
+  // Non-interactive mode
+  answers = await runWithArgs(cwdInfo, args);
+} else {
+  // Interactive mode (existing behavior)
+  answers = await runPrompts(cwdInfo);
+}
+
 await processAnswers(answers);
