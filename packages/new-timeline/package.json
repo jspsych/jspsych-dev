@@ -1,6 +1,6 @@
 {
   "name": "@jspsych/new-timeline",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "CLI tool for creating new jsPsych timelines",
   "type": "module",
   "bin": "./src/cli.js",

@@ -1,5 +1,11 @@
 # @jspsych/new-plugin
 
+## 0.3.1
+
+### Patch Changes
+
+- 7aa0ca8: Fix CLI tools entering non-interactive mode incorrectly when run without arguments
+
 ## 0.3.0
 
 ### Minor Changes
