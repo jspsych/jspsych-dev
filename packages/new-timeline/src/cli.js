@@ -360,11 +360,7 @@ program
 
 Examples:
   $ new-timeline --name "my-timeline" --description "My awesome timeline" --author "John Doe"
-  $ new-timeline --name "my-timeline" --description "My timeline" --author "John Doe" --language js`)
-  .action((options) => {
-    // This action will only run if we have arguments provided
-    return main(options, true); // true = non-interactive mode
-  });
+  $ new-timeline --name "my-timeline" --description "My timeline" --author "John Doe" --language js`);
 
 async function main(options, isNonInteractive = false) {
   const cwdInfo = await getCwdInfo();
@@ -414,4 +410,7 @@ const hasArgs = Object.keys(options).some(key =>
 if (!hasArgs) {
   // No arguments provided, run in interactive mode
   await main({}, false);
+} else {
+  // Arguments provided, run in non-interactive mode
+  await main(options, true);
 }

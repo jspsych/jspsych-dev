@@ -373,11 +373,7 @@ program
 
 Examples:
   $ new-extension --name "my-extension" --description "My awesome extension" --author "John Doe"
-  $ new-extension --name "my-extension" --description "My extension" --author "John Doe" --language js`)
-  .action((options) => {
-    // This action will only run if we have arguments provided
-    return main(options, true); // true = non-interactive mode
-  });
+  $ new-extension --name "my-extension" --description "My extension" --author "John Doe" --language js`);
 
 async function main(options, isNonInteractive = false) {
   const cwdInfo = await getCwdInfo();
@@ -427,4 +423,7 @@ const hasArgs = Object.keys(options).some(key =>
 if (!hasArgs) {
   // No arguments provided, run in interactive mode
   await main({}, false);
+} else {
+  // Arguments provided, run in non-interactive mode
+  await main(options, true);
 }
