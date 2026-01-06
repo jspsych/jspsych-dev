@@ -223,7 +223,7 @@ async function processAnswers(answers) {
   })
   answers.name = getHyphenateName(answers.name);
   const camelCaseName = getCamelCaseName(answers.name);
-  const globalName = "jsPsychPlugin" + camelCaseName;
+  const globalName = "jsPsych" + camelCaseName;
   const packageName = `plugin-${answers.name}`;
   const destPath = path.join(answers.destDir, packageName);
   const npmPackageName = (() => {

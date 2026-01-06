@@ -270,7 +270,7 @@ async function processAnswers(answers) {
           answers.isTimelinesRepo
             ? // prettier-ignore
               `<!-- Once this timeline package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-timelines/${packageName}"></script> -->\n`
-            : `<!-- Load the published timeline package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.global.js"></script> -->\n`
+            : `<!-- Load the published timeline package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.browser.js"></script> -->\n`
         )
       )
       .pipe(dest(`${destPath}/examples`));
