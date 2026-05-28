@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import ts from "typescript";
+
+import { Command } from "commander";
+
+import { updateDocSections } from "./utils.js";
+import { getPluginInfo, getPluginInfoAndExamples } from "./parsers/plugin.js";
+import { getPluginDocs } from "./renderers/plugin.js";
+
+// auto get version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const packageJson = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "../package.json"), "utf8")
+) as { version: string };
+const { version } = packageJson;
+
+interface CliOptions {
+  source?: string;
+  dest?: string;
+  example?: string;
+}
+
+// TODO: simulation mode-- detect if simulation mode is supported via these plugins.
+async function main(options: CliOptions): Promise<void> {
+  let sourcePath: string;
+  if (options.source) {
+    sourcePath = options.source;
+  } else {
+    throw new Error("No source file provided. Please specify a source file with --source.");
+  }
+
+  if (!options.dest) {
+    throw new Error("No destination file provided. Please specify a destination file with --dest.");
+  }
+
+  const source = ts.createSourceFile(
+      sourcePath,
+      fs.readFileSync(sourcePath, 'utf-8'),
+      ts.ScriptTarget.Latest,
+      true
+  );
+
+  let pluginInfo;
+  if (options.example) {
+    pluginInfo = await getPluginInfoAndExamples(source, options.example);
+  } else {
+    pluginInfo = await getPluginInfo(source);
+  }
+
+  try {
+    const pluginPackageJson = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+    );
+    if (pluginPackageJson.version) {
+      pluginInfo.version = pluginPackageJson.version;
+    } else {
+      console.warn("Warning: No version field found in package.json.");
+      pluginInfo.version = "unknown version";
+    }
+  } catch (err) {
+    console.warn("Warning: Could not read package.json to determine version. Ensure you are running the CLI in the directory that contains the package.json.");
+    pluginInfo.version = "unknown version";
+  }
+
+  const docs = await getPluginDocs(pluginInfo);
+
+  const rawContent = Object.values(docs).join("\n\n");
+  if (!fs.existsSync(options.dest)) {
+    fs.writeFileSync(options.dest, rawContent, "utf8");
+  } else {
+    const existingContent = fs.readFileSync(options.dest, "utf8");
+    if (existingContent.trim() === "") {
+      fs.writeFileSync(options.dest, rawContent, "utf8");
+    } else {
+      const updatedContent = updateDocSections(existingContent, docs);
+      fs.writeFileSync(options.dest, updatedContent, "utf8");
+    }
+  }
+}
+
+const program = new Command();
+
+program
+  .name("autodoc")
+  .description("CLI tool to generate documentation for jsPsych plugins")
+  .version(version)
+  .option("--source <name>", "Source of the package")
+  .option("--dest <name>", "Destination directory for the generated documentation")
+  .option("--repo <name>", "Repository that contains the source/destination files (optional)")
+  .option("--example <name>", "Example folder containing usages of the plugin (optional)")
+  .option("-v, --verbose", "Enable verbose logging (optional)")
+  .option("-f, --force", "Force overwrite of existing documentation (optional, use with caution or with --copy)")
+  .option("--copy <name>", "Copy original documentation to a specified location (optional)")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ autodoc --source /src/index.ts --dest /docs/index.md
+  $ autodoc --source /src/index.ts --dest /docs/index.md --example /examples/`
+  );
+
+program.parse();
+const options = program.opts<CliOptions>();
+await main(options);
