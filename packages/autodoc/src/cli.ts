@@ -7,16 +7,17 @@ import ts from "typescript";
 
 import { Command } from "commander";
 
-import { updateDocSections } from "./utils.js";
+import { extractVersionFromPackageJson, identifyPackageType, updateDocSections } from "./utils.js";
 import { getPluginInfo, getPluginInfoAndExamples } from "./parsers/plugin.js";
 import { getPluginDocs } from "./renderers/plugin.js";
+import { PluginInfo } from "./types/info.js";
 
 // auto get version from package.json
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const packageJson = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "../package.json"), "utf8")
+  fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"),
 ) as { version: string };
 const { version } = packageJson;
 
@@ -40,35 +41,34 @@ async function main(options: CliOptions): Promise<void> {
   }
 
   const source = ts.createSourceFile(
-      sourcePath,
-      fs.readFileSync(sourcePath, 'utf-8'),
-      ts.ScriptTarget.Latest,
-      true
+    sourcePath,
+    fs.readFileSync(sourcePath, "utf-8"),
+    ts.ScriptTarget.Latest,
+    true,
   );
 
-  let pluginInfo;
-  if (options.example) {
-    pluginInfo = await getPluginInfoAndExamples(source, options.example);
-  } else {
-    pluginInfo = await getPluginInfo(source);
-  }
+  const { classNode, type } = identifyPackageType(source);
+  let docs: Record<string, string>;
 
-  try {
-    const pluginPackageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
-    );
-    if (pluginPackageJson.version) {
-      pluginInfo.version = pluginPackageJson.version;
+  if (type === "extension") {
+    throw new Error("Extension autodocs are not yet supported. Please use the autodoc CLI with a plugin source file.");
+  } else if (type === "plugin") {
+    console.log("Identified package type: plugin");
+
+    let pluginInfo: PluginInfo;
+    if (options.example) {
+      pluginInfo = await getPluginInfoAndExamples(source, classNode, options.example);
     } else {
-      console.warn("Warning: No version field found in package.json.");
-      pluginInfo.version = "unknown version";
+      pluginInfo = await getPluginInfo(source, classNode);
     }
-  } catch (err) {
-    console.warn("Warning: Could not read package.json to determine version. Ensure you are running the CLI in the directory that contains the package.json.");
-    pluginInfo.version = "unknown version";
+
+    pluginInfo.version = extractVersionFromPackageJson();
+
+    docs = await getPluginDocs(pluginInfo);
+  } else {
+    throw new Error("Unrecognized package type.");
   }
 
-  const docs = await getPluginDocs(pluginInfo);
 
   const rawContent = Object.values(docs).join("\n\n");
   if (!fs.existsSync(options.dest)) {
@@ -95,14 +95,17 @@ program
   .option("--repo <name>", "Repository that contains the source/destination files (optional)")
   .option("--example <name>", "Example folder containing usages of the plugin (optional)")
   .option("-v, --verbose", "Enable verbose logging (optional)")
-  .option("-f, --force", "Force overwrite of existing documentation (optional, use with caution or with --copy)")
+  .option(
+    "-f, --force",
+    "Force overwrite of existing documentation (optional, use with caution or with --copy)",
+  )
   .option("--copy <name>", "Copy original documentation to a specified location (optional)")
   .addHelpText(
     "after",
     `
 Examples:
   $ autodoc --source /src/index.ts --dest /docs/index.md
-  $ autodoc --source /src/index.ts --dest /docs/index.md --example /examples/`
+  $ autodoc --source /src/index.ts --dest /docs/index.md --example /examples/`,
   );
 
 program.parse();

@@ -5,3 +5,7 @@ export enum ParameterType {
 export interface JsPsychPlugin<T> {
     trial(display_element: HTMLElement, trial: T): void;
 }
+
+export interface JsPsychExtension {
+    
+}
