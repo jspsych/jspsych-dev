@@ -63,9 +63,6 @@ function main(options: CliOptions): void {
       extensionInfo = getExtensionInfo(source, classNode);
     }
 
-    console.log(extensionInfo);
-    return;
-
     extensionInfo.version = extractVersionFromPackageJson();
 
     docs = getExtensionDocs(extensionInfo);
