@@ -2,64 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { PluginInfo, ParameterInfo, ExampleInfo } from "../types/info.js";
-import { extractJsDocComment } from "./utils.js";
-
-/** Parses one parameter from an parameter node. */
-function parseParamGroup(
-  node: ts.ObjectLiteralExpression,
-  source: ts.SourceFile,
-): Record<string, ParameterInfo> {
-  const result: Record<string, ParameterInfo> = {};
-  for (const prop of node.properties) {
-    if (!ts.isPropertyAssignment(prop)) continue;
-    if (!ts.isObjectLiteralExpression(prop.initializer)) continue;
-    const name = prop.name.getText(source);
-    const info = extractParameter(prop.initializer, source);
-    const comment = extractJsDocComment(prop, source);
-    if (comment) info.description = comment;
-    result[name] = info;
-  }
-  return result;
-}
-
-/** Gathers parameter information (type, default, etc.) from a node. */
-function extractParameter(node: ts.ObjectLiteralExpression, source: ts.SourceFile): ParameterInfo {
-  const result: Partial<ParameterInfo> = {};
-
-  for (const prop of node.properties) {
-    if (!ts.isPropertyAssignment(prop)) continue;
-    const key = prop.name.getText(source);
-
-    switch (key) {
-      case "type": {
-        if (ts.isPropertyAccessExpression(prop.initializer)) {
-          result.type = prop.initializer.getText(source);
-        }
-        break;
-      }
-      case "default": {
-        result.default = prop.initializer.getText(source);
-        break;
-      }
-      case "array": {
-        if (prop.initializer.kind === ts.SyntaxKind.TrueKeyword) {
-          result.array = true;
-        } else if (prop.initializer.kind === ts.SyntaxKind.FalseKeyword) {
-          result.array = false;
-        }
-        break;
-      }
-      case "nested": {
-        if (ts.isObjectLiteralExpression(prop.initializer)) {
-          result.nested = parseParamGroup(prop.initializer, source);
-        }
-        break;
-      }
-    }
-  }
-
-  return result as ParameterInfo;
-}
+import { extractJsDocComment, parseParamGroup } from "./utils.js";
 
 /**
  * Extracts plugin information from a TypeScript AST. Source must already be
@@ -71,7 +14,7 @@ function extractParameter(node: ts.ObjectLiteralExpression, source: ts.SourceFil
  * @param classNode the node representing the class declaration of the plugin
  * @returns a PluginInfo object containing name, description, parameters, and data.
  */
-export async function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDeclaration): Promise<PluginInfo> {
+export function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDeclaration): PluginInfo {
   let result: PluginInfo = {
     name: "",
     description: "",
@@ -99,7 +42,7 @@ export async function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDe
   visit(source);
 
   if (infoNode === undefined) {
-    throw new Error("Could not find info object in plugin file");
+    throw new Error("Could not find info object in plugin file.");
   }
 
   const nameProp = infoNode.properties.find(
@@ -112,7 +55,6 @@ export async function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDe
   const parametersProp = infoNode.properties.find(
     (p) => ts.isPropertyAssignment(p) && p.name.getText(source) === "parameters",
   ) as ts.PropertyAssignment | undefined;
-
   if (parametersProp && ts.isObjectLiteralExpression(parametersProp.initializer)) {
     result.parameters = parseParamGroup(parametersProp.initializer, source);
   }
@@ -120,7 +62,6 @@ export async function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDe
   const dataProp = infoNode.properties.find(
     (p) => ts.isPropertyAssignment(p) && p.name.getText(source) === "data",
   ) as ts.PropertyAssignment | undefined;
-
   if (dataProp && ts.isObjectLiteralExpression(dataProp.initializer)) {
     result.data = parseParamGroup(dataProp.initializer, source);
   }
@@ -304,12 +245,12 @@ function getExampleInfo(sourcePath: string): Record<string, ExampleInfo> | undef
  * @param examplePath Path to an example file or directory
  * @returns a PluginInfo object containing name, description, version, parameters, data, and examples.
  */
-export async function getPluginInfoAndExamples(
+export function getPluginInfoAndExamples(
   source: ts.SourceFile,
   classNode: ts.ClassDeclaration,
   examplePath: string,
-): Promise<PluginInfo> {
-  const info = await getPluginInfo(source, classNode);
+): PluginInfo {
+  const info = getPluginInfo(source, classNode);
 
   if (!fs.existsSync(examplePath)) {
     throw new Error(`Example path does not exist: ${examplePath}`);

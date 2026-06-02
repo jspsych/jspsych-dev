@@ -15,36 +15,36 @@ const fixtureSource = ts.createSourceFile(
 );
 
 describe('getPluginInfo', () => {
-    it('extracts name', async () => {
+    it('extracts name', () => {
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfo(fixtureSource, classNode);
+        const info = getPluginInfo(fixtureSource, classNode);
         expect(info.name).toBe('test-plugin');
     });
 
-    it('extracts class JSDoc as description', async () => {
+    it('extracts class JSDoc as description', () => {
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfo(fixtureSource, classNode);
+        const info = getPluginInfo(fixtureSource, classNode);
         expect(info.description).toBe('A test jsPsych plugin.');
     });
 
-    it('extracts parameters with types and descriptions', async () => {
+    it('extracts parameters with types and descriptions', () => {
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfo(fixtureSource, classNode);
+        const info = getPluginInfo(fixtureSource, classNode);
         expect(info.parameters.single.type).toBe('ParameterType.STRING');
         expect(info.parameters.single.description).toBe('Single-line description.');
         expect(info.parameters.double_double.type).toBe('ParameterType.INT');
         expect(info.parameters.double_double.description).toBe('Multi-line description. It has two lines for a parameter.');
     });
 
-    it('extracts array flag on parameters', async () => {
+    it('extracts array flag on parameters', () => {
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfo(fixtureSource, classNode);
+        const info = getPluginInfo(fixtureSource, classNode);
         expect(info.parameters.list_of_stimuli.array).toBe(true);
     });
 
-    it('extracts data parameters', async () => {
+    it('extracts data parameters', () => {
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfo(fixtureSource, classNode);
+        const info = getPluginInfo(fixtureSource, classNode);
         expect(info.data.data_param.type).toBe('ParameterType.FLOAT');
         expect(info.data.data_param.description).toBe('Data parameter description.');
         expect(info.data.double_data.type).toBe('ParameterType.BOOL');
@@ -55,10 +55,10 @@ describe('getPluginInfo', () => {
 describe('getPluginInfoAndExamples', () => {
     const examplesDir = path.resolve(__dirname, '../fixtures/plugin/examples');
 
-    it('should extract examples from provided file', async () => {
+    it('should extract examples from provided file', () => {
         const filePath = path.join(examplesDir, 'simple-sentinel-example.html');
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfoAndExamples(fixtureSource, classNode, filePath);
+        const info = getPluginInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
         expect(info.examples['simple sentinel example']).toBeDefined();
         expect(info.examples['simple sentinel example'].path).toBe(filePath);
@@ -67,9 +67,9 @@ describe('getPluginInfoAndExamples', () => {
         );
     });
 
-    it('should extract examples from provided directory', async () => {
+    it('should extract examples from provided directory', () => {
         const { classNode } = identifyPackageType(fixtureSource);
-        const info = await getPluginInfoAndExamples(fixtureSource, classNode, examplesDir);
+        const info = getPluginInfoAndExamples(fixtureSource, classNode, examplesDir);
         expect(Object.keys(info.examples)).toHaveLength(4);
         expect(info.examples['ignored example']).toBeUndefined();
 

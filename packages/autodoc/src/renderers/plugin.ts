@@ -147,7 +147,7 @@ ${sections}
   },
 ];
 
-export async function getPluginDocs(info: PluginInfo): Promise<Record<string, string>> {
+export function getPluginDocs(info: PluginInfo): Record<string, string> {
   return Object.fromEntries(
     mainTemplate.map((section) => {
       const content = section.render(info);
