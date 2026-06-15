@@ -245,7 +245,10 @@ async function processAnswers(answers) {
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
-    return src(`${templatesDir}/plugin-template-${answers.language}/**/*`)
+    return src(`${templatesDir}/plugin-template-${answers.language}/**/*`, {
+      dot: true,   // Includes hidden files too
+      nodir: false // Includes directories
+    })
       .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{author}", answers.author))
       .pipe(replace("{authorUrl}", answers.authorUrl))
@@ -259,6 +262,15 @@ async function processAnswers(answers) {
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
       .pipe(replace("{documentationUrl}", answers.readmePath))
       .pipe(replace("{packageDir}", packageDir))
+      .pipe(
+        // npm renames a literal ".gitignore" to ".npmignore" when this package is
+        // published, so the template ships as "gitignore" and is restored here.
+        rename((p) => {
+          if (p.basename === "gitignore" && p.extname === "") {
+            p.basename = ".gitignore";
+          }
+        })
+      )
       .pipe(dest(destPath));
   }
 
@@ -270,8 +282,8 @@ async function processAnswers(answers) {
           "{publishingComment}\n",
           answers.isContribRepo
             ? // prettier-ignore
-              `<!-- Once this plugin package is published, it can be loaded via\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n<script src="../dist/index.browser.js"></script> -->\n`
-            : `<!-- Load the published plugin package here, e.g.\n<script src="https://unpkg.com/${packageName}"></script>\n<script src="../dist/index.browser.js"></script> -->\n`
+              `<!-- Once this plugin package is published, you can load it from a CDN instead:\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script> -->\n`
+            : `<!-- Once this plugin package is published, you can load it from a CDN instead:\n<script src="https://unpkg.com/${packageName}"></script> -->\n`
         )
       )
       .pipe(dest(`${destPath}/examples`));
@@ -311,8 +323,8 @@ async function processAnswers(answers) {
             ? // prettier-ignore
               answers.language == "ts"
               ? // prettier-ignore
-                `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}">\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${globalName} from "${packageName}";\n\`\`\``
-              : `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}">\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\``
+                `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${camelCaseName} from "${npmPackageName}";\n\`\`\``
+              : `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/@jspsych-contrib/${packageName}"></script>\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\``
             : `## Loading\n\n*Enter instructions for loading the plugin package here.*`
         )
       )
