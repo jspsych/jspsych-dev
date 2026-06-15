@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>complex inferred example</title>
+</head>
+<body>
+<script>
+var jsPsych = initJsPsych();
+
+var stimulus = "Hello, world!";
+var duration = 1000;
+var choices = ["f", "j"];
+
+var trial = {
+  type: jsPsychTestPlugin,
+  stimulus: stimulus,
+  trial_duration: duration,
+  choices: choices,
+  extensions: [
+    {type: jsPsychTestExtension, params: {test: "inferred complex"}}
+  ]
+};
+
+var trialNoExtension = {
+  type: jsPsychTestPlugin,
+  stimulus: "This trial has no extension and won't be counted.",
+  trial_duration: duration,
+  choices: choices  
+};
+
+jsPsych.run([trial, trialNoExtension]);
+</script>
+</body>
+</html>

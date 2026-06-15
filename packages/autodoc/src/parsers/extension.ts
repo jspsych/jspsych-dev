@@ -1,8 +1,6 @@
 import ts from "typescript";
-import fs from "node:fs";
-import path from "node:path";
 import { ExtensionInfo } from "../types/info.js";
-import { extractJsDocComment, parseParamGroup, parseTSParamGroup } from "./utils.js";
+import { collectExamples, dedent, extractJsDocComment, parseParamGroup, parseTSParamGroup } from "./utils.js";
 
 export function getExtensionInfo(
   source: ts.SourceFile,
@@ -74,36 +72,125 @@ export function getExtensionInfo(
   return result;
 }
 
+/**
+ * Fallback code block extractor for HTML extension example files without sentinels. Requires
+ * exactly one inline script block. Extracts the `initJsPsych` call and all trial variables
+ * (camel/snake case) whose object literal contains an `extensions` field. For each matched
+ * trial, its direct local dependencies (one level of indirection) are also included.
+ * The initJsPsych variable itself is never treated as a dependency.
+ */
+function inferCodeBlock(sourceContent: string, sourcePath: string): string {
+  const scriptRegex = /<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi;
+  const blocks: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = scriptRegex.exec(sourceContent)) !== null) blocks.push(match[1]);
+
+  if (blocks.length === 0) throw new Error(`${sourcePath}: no inline script blocks found`);
+  if (blocks.length > 1)
+    throw new Error(
+      `${sourcePath}: multiple inline script blocks found, use jspsych-autodoc:start/end sentinels instead`,
+    );
+
+  const scriptContent = blocks[0];
+  const sourceFile = ts.createSourceFile("example.js", scriptContent, ts.ScriptTarget.Latest, true);
+
+  const trialPattern = /^[a-zA-Z_$]*[Tt]rial(_?\d+)?$/;
+  let initStatement: ts.VariableStatement | undefined;
+  let initJsPsychVarName: string | undefined;
+  const trialNodes: ts.VariableDeclaration[] = [];
+
+  function visitNodes(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
+      const init = node.initializer;
+
+      if (
+        init &&
+        ts.isCallExpression(init) &&
+        ts.isIdentifier(init.expression) &&
+        init.expression.text === "initJsPsych"
+      ) {
+        const stmt = node.parent.parent;
+        if (ts.isVariableStatement(stmt)) {
+          initStatement = stmt;
+          initJsPsychVarName = node.name.text;
+        }
+      }
+
+      if (trialPattern.test(node.name.text) && init && ts.isObjectLiteralExpression(init)) {
+        const hasExtensions = init.properties.some(
+          (p) =>
+            ts.isPropertyAssignment(p) &&
+            ts.isIdentifier(p.name) &&
+            p.name.text === "extensions",
+        );
+        if (hasExtensions) trialNodes.push(node);
+      }
+    }
+    ts.forEachChild(node, visitNodes);
+  }
+  visitNodes(sourceFile);
+
+  if (!initStatement)
+    throw new Error(
+      `${sourcePath}: no initJsPsych call found — use jspsych-autodoc:start/end sentinels instead`,
+    );
+
+  if (trialNodes.length === 0)
+    throw new Error(
+      `${sourcePath}: no trial variables with an "extensions" field found — use jspsych-autodoc:start/end sentinels instead`,
+    );
+
+  // build map of all local variable declarations, excluding trial nodes themselves  
+  const localDecls = new Map<string, ts.VariableStatement>();
+  function visitDecls(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
+      const stmt = node.parent.parent;
+      if (ts.isVariableStatement(stmt)) localDecls.set(node.name.text, stmt);
+    }
+    ts.forEachChild(node, visitDecls);
+  }
+  visitDecls(sourceFile);
+  if (initJsPsychVarName) localDecls.delete(initJsPsychVarName);
+  for (const trial of trialNodes) localDecls.delete((trial.name as ts.Identifier).text);
+
+  function collectIdentifiers(node: ts.Node, result: Set<string>) {
+    if (ts.isPropertyAssignment(node)) {
+      collectIdentifiers(node.initializer, result);
+      return;
+    }
+    if (ts.isIdentifier(node)) {
+      result.add(node.text);
+      return;
+    }
+    ts.forEachChild(node, (child) => collectIdentifiers(child, result));
+  }
+
+  const outputStatements = new Map<string, ts.Node>();
+  outputStatements.set("__initJsPsych__", initStatement);
+
+  for (const trial of trialNodes) {
+    const trialStmt = trial.parent.parent;
+    if (ts.isVariableStatement(trialStmt))
+      outputStatements.set((trial.name as ts.Identifier).text, trialStmt);
+
+    const refs = new Set<string>();
+    collectIdentifiers(trial.initializer!, refs);
+    for (const ref of refs)
+      if (localDecls.has(ref)) outputStatements.set(ref, localDecls.get(ref)!);
+  }
+
+  return Array.from(outputStatements.values())
+    .sort((a, b) => a.pos - b.pos)
+    .map((node) => dedent(node.getFullText(sourceFile)))
+    .join("\n\n");
+}
+
 export function getExtensionInfoAndExamples(
   source: ts.SourceFile,
   classNode: ts.ClassDeclaration,
   examplePath: string,
 ): ExtensionInfo {
   const info = getExtensionInfo(source, classNode);
-
-  if (!fs.existsSync(examplePath)) {
-    throw new Error(`Example path does not exist: ${examplePath}`);
-  }
-
-  const stat = fs.statSync(examplePath);
-  const htmlFiles: string[] = [];
-
-  if (stat.isDirectory()) {
-    htmlFiles.push(
-      ...fs
-        .readdirSync(examplePath)
-        .filter((f) => f.endsWith(".html"))
-        .map((f) => path.join(examplePath, f)),
-    );
-  } else if (stat.isFile()) {
-    if (!examplePath.endsWith(".html")) {
-      throw new Error(`Example file must be an HTML file: ${examplePath}`);
-    }
-    htmlFiles.push(examplePath);
-  } else {
-    throw new Error(`Example path is neither a file nor a directory: ${examplePath}`);
-  }
-
-  // TODO: actually implement this
+  info.examples = collectExamples(examplePath, inferCodeBlock);
   return info;
 }

@@ -1,8 +1,6 @@
-import fs from "node:fs";
-import path from "node:path";
 import ts from "typescript";
-import { PluginInfo, ParameterInfo, ExampleInfo } from "../types/info.js";
-import { extractJsDocComment, parseParamGroup } from "./utils.js";
+import { PluginInfo } from "../types/info.js";
+import { collectExamples, dedent, extractJsDocComment, parseParamGroup } from "./utils.js";
 
 /**
  * Extracts plugin information from a TypeScript AST. Source must already be
@@ -156,83 +154,8 @@ function inferCodeBlock(sourceContent: string, sourcePath: string): string {
 
   return Array.from(outputStatements.values())
     .sort((a, b) => a.pos - b.pos)
-    .map((node) => node.getText(sourceFile).trim())
+    .map((node) => dedent(node.getFullText(sourceFile)))
     .join("\n\n");
-}
-
-/**
- * Gets the example code block text from a given HTML file. Looks for sentinels first and
- * orders sub-blocks via file position. Otherwise, infers based on trial variable declarations
- * and their dependencies.
- */
-function getCodeBlock(sourceContent: string, sourcePath: string): string {
-  const START = "// jspsych-autodoc:start";
-  const END = "// jspsych-autodoc:end";
-
-  type Marker = { type: "start" | "end"; pos: number };
-  const markers: Marker[] = [];
-
-  let i = 0;
-  while (i < sourceContent.length) {
-    const s = sourceContent.indexOf(START, i);
-    const e = sourceContent.indexOf(END, i);
-    if (s === -1 && e === -1) break;
-    if (s !== -1 && (e === -1 || s < e)) {
-      markers.push({ type: "start", pos: s });
-      i = s + START.length;
-    } else {
-      markers.push({ type: "end", pos: e });
-      i = e + END.length;
-    }
-  }
-
-  if (markers.length === 0) return inferCodeBlock(sourceContent, sourcePath);
-
-  for (let j = 0; j < markers.length; j++) {
-    const expected = j % 2 === 0 ? "start" : "end";
-    if (markers[j].type !== expected)
-      throw new Error(
-        `${sourcePath}: mismatched jspsych-autodoc sentinels: unexpected ${markers[j].type} at marker ${j + 1}`,
-      );
-  }
-  if (markers.length % 2 !== 0)
-    throw new Error(
-      `${sourcePath}: mismatched jspsych-autodoc sentinels: last start has no matching end`,
-    );
-
-  const blocks: string[] = [];
-  for (let j = 0; j < markers.length; j += 2) {
-    const newlineAfterStart = sourceContent.indexOf("\n", markers[j].pos);
-    const blockStart =
-      newlineAfterStart === -1 ? markers[j].pos + START.length : newlineAfterStart + 1;
-    const blockEnd = markers[j + 1].pos;
-    blocks.push(sourceContent.slice(blockStart, blockEnd).trimEnd());
-  }
-
-  return blocks.join("\n\n");
-}
-
-/** Fetch example information from a given HTML filepath. `undefined` if the file is ignored
- * via sentinel <!-- jspsych-autodoc:ignore -->. */
-function getExampleInfo(sourcePath: string): Record<string, ExampleInfo> | undefined {
-  const content = fs.readFileSync(sourcePath, "utf-8");
-
-  if (/<!--\s*jspsych-autodoc:ignore\s*-->/.test(content)) return undefined;
-
-  let title: string;
-
-  const sentinelMatch = content.match(/<!--\s*jspsych-autodoc:title\s+(.+?)\s*-->/);
-  if (sentinelMatch) {
-    title = sentinelMatch[1].trim();
-  } else {
-    const titleTagMatch = content.match(/<title>([\s\S]*?)<\/title>/i);
-    if (!titleTagMatch) throw new Error(`No title found in example file: ${sourcePath}`);
-    title = titleTagMatch[1].trim();
-  }
-
-  return {
-    [title]: { path: sourcePath, code: getCodeBlock(content, sourcePath) },
-  };
 }
 
 /**
@@ -251,34 +174,6 @@ export function getPluginInfoAndExamples(
   examplePath: string,
 ): PluginInfo {
   const info = getPluginInfo(source, classNode);
-
-  if (!fs.existsSync(examplePath)) {
-    throw new Error(`Example path does not exist: ${examplePath}`);
-  }
-
-  const stat = fs.statSync(examplePath);
-  const htmlFiles: string[] = [];
-
-  if (stat.isDirectory()) {
-    htmlFiles.push(
-      ...fs
-        .readdirSync(examplePath)
-        .filter((f) => f.endsWith(".html"))
-        .map((f) => path.join(examplePath, f)),
-    );
-  } else if (stat.isFile()) {
-    if (!examplePath.endsWith(".html")) {
-      throw new Error(`Example file must be an HTML file: ${examplePath}`);
-    }
-    htmlFiles.push(examplePath);
-  } else {
-    throw new Error(`Example path is neither a file nor a directory: ${examplePath}`);
-  }
-
-  for (const file of htmlFiles) {
-    const exampleInfo = getExampleInfo(file);
-    if (exampleInfo) Object.assign(info.examples, exampleInfo);
-  }
-
+  info.examples = collectExamples(examplePath, inferCodeBlock);
   return info;
 }

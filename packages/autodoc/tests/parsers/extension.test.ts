@@ -1,4 +1,4 @@
-import { getExtensionInfo } from '../../src/parsers/extension.js';
+import { getExtensionInfo, getExtensionInfoAndExamples } from '../../src/parsers/extension.js';
 import ts from 'typescript';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,5 +90,52 @@ describe('getExtensionInfo', () => {
         expect(info.data.grid.type).toBe('ParameterType.COMPLEX');
         expect(info.data.grid.description).toBe("Now let's have a grid.");
         expect(info.data.grid.nested).toBeDefined();
+    });
+});
+
+describe('getExtensionInfoAndExamples', () => {
+    const examplesDir = path.resolve(__dirname, '../fixtures/extension/examples');
+
+    it('should extract examples from a provided file', () => {
+        const filePath = path.join(examplesDir, 'simple-sentinel-example.html');
+        const { classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        expect(info.examples['simple sentinel example']).toBeDefined();
+        expect(info.examples['simple sentinel example'].path).toBe(filePath);
+        expect(info.examples['simple sentinel example'].code).toBe(
+            'var trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};'
+        );
+    });
+
+    it('should extract examples from a provided directory', () => {
+        const { classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, examplesDir);
+        expect(Object.keys(info.examples)).toHaveLength(4);
+        expect(info.examples['ignored example']).toBeUndefined();
+
+        const simpleSentinelExample = info.examples['simple sentinel example'];
+        expect(simpleSentinelExample.path).toBe(path.join(examplesDir, 'simple-sentinel-example.html'));
+        expect(simpleSentinelExample.code).toBe(
+            'var trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};'
+        );
+
+        const complexSentinelExample = info.examples['complex sentinel example'];
+        expect(complexSentinelExample.path).toBe(path.join(examplesDir, 'complex-sentinel-example.html'));
+        expect(complexSentinelExample.code).toBe(
+            'var jsPsych = initJsPsych({\n    extensions: [\n        {type: jsPsychTestExtension}\n    ]\n});\n\nvar helloTrial = {\n  type: jsPsychTestPlugin,\n  stimulus: "Hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};\n\nvar goodbyeTrial = {\n  type: jsPsychTestPlugin,\n  stimulus: "Goodbye",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "bye"}}\n  ]\n};'
+        );
+
+        const simpleInferredExample = info.examples['simple inferred example'];
+        expect(simpleInferredExample.path).toBe(path.join(examplesDir, 'simple-inferred-example.html'));
+        expect(simpleInferredExample.code).toBe(
+            'var jsPsych = initJsPsych({\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "inferred"}}\n  ]\n});\n\nvar trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "World",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "trial-level inferred"}}\n  ]\n};'
+        );
+
+        const complexInferredExample = info.examples['complex inferred example'];
+        expect(complexInferredExample.path).toBe(path.join(examplesDir, 'complex-inferred-example.html'));
+        expect(complexInferredExample.code).toBe(
+            'var jsPsych = initJsPsych();\n\nvar stimulus = "Hello, world!";\n\nvar duration = 1000;\n\nvar choices = ["f", "j"];\n\nvar trial = {\n  type: jsPsychTestPlugin,\n  stimulus: stimulus,\n  trial_duration: duration,\n  choices: choices,\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "inferred complex"}}\n  ]\n};'
+        );
     });
 });

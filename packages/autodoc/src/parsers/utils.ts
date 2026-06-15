@@ -1,5 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
 import ts from "typescript";
-import { ParameterInfo } from "../types/info.js";
+import { ExampleInfo, ParameterInfo } from "../types/info.js";
+
+// --- PARSE SRC FILE UTILS ---
 
 /** thing that removes comments from nested parameter types */
 const printer = ts.createPrinter({ removeComments: true });
@@ -145,4 +149,134 @@ function parseTSProperty(
   }
 
   return info as ParameterInfo;
+}
+
+// --- PARSE EXAMPLE FILE UTILS ---
+
+/** Strips common leading whitespace from all lines of a multi-line string. */
+export function dedent(text: string): string {
+  const lines = text.split("\n");
+  const minIndent = Math.min(
+    ...lines.filter((l) => l.trim().length > 0).map((l) => l.match(/^( *)/)![1].length),
+  );
+  return lines.map((l) => l.slice(minIndent)).join("\n").trim();
+}
+
+/**
+ * Gets the example code block text from a given HTML file. Looks for sentinels first and
+ * orders sub-blocks via file position. Otherwise, delegates to the provided fallback or throws.
+ */
+export function getCodeBlock(
+  sourceContent: string,
+  sourcePath: string,
+  inferFallback: (content: string, path: string) => string,
+): string {
+  const START = "// jspsych-autodoc:start";
+  const END = "// jspsych-autodoc:end";
+
+  type Marker = { type: "start" | "end"; pos: number };
+  const markers: Marker[] = [];
+
+  let i = 0;
+  while (i < sourceContent.length) {
+    const s = sourceContent.indexOf(START, i);
+    const e = sourceContent.indexOf(END, i);
+    if (s === -1 && e === -1) break;
+    if (s !== -1 && (e === -1 || s < e)) {
+      markers.push({ type: "start", pos: s });
+      i = s + START.length;
+    } else {
+      markers.push({ type: "end", pos: e });
+      i = e + END.length;
+    }
+  }
+
+  if (markers.length === 0) {
+    return inferFallback(sourceContent, sourcePath);
+  }
+
+  for (let j = 0; j < markers.length; j++) {
+    const expected = j % 2 === 0 ? "start" : "end";
+    if (markers[j].type !== expected)
+      throw new Error(
+        `${sourcePath}: mismatched jspsych-autodoc sentinels: unexpected ${markers[j].type} at marker ${j + 1}`,
+      );
+  }
+  if (markers.length % 2 !== 0)
+    throw new Error(
+      `${sourcePath}: mismatched jspsych-autodoc sentinels: last start has no matching end`,
+    );
+
+  const blocks: string[] = [];
+  for (let j = 0; j < markers.length; j += 2) {
+    const newlineAfterStart = sourceContent.indexOf("\n", markers[j].pos);
+    const blockStart =
+      newlineAfterStart === -1 ? markers[j].pos + START.length : newlineAfterStart + 1;
+    const blockEnd = markers[j + 1].pos;
+    blocks.push(sourceContent.slice(blockStart, blockEnd).trimEnd());
+  }
+
+  return blocks.join("\n\n");
+}
+
+/** Fetch example information from a given HTML filepath. `undefined` if the file is ignored
+ * via sentinel <!-- jspsych-autodoc:ignore -->. */
+export function getExampleInfo(
+  sourcePath: string,
+  inferFallback: (content: string, path: string) => string,
+): Record<string, ExampleInfo> | undefined {
+  const content = fs.readFileSync(sourcePath, "utf-8");
+
+  if (/<!--\s*jspsych-autodoc:ignore\s*-->/.test(content)) return undefined;
+
+  let title: string;
+
+  const sentinelMatch = content.match(/<!--\s*jspsych-autodoc:title\s+(.+?)\s*-->/);
+  if (sentinelMatch) {
+    title = sentinelMatch[1].trim();
+  } else {
+    const titleTagMatch = content.match(/<title>([\s\S]*?)<\/title>/i);
+    if (!titleTagMatch) throw new Error(`No title found in example file: ${sourcePath}`);
+    title = titleTagMatch[1].trim();
+  }
+
+  return {
+    [title]: { path: sourcePath, code: getCodeBlock(content, sourcePath, inferFallback) },
+  };
+}
+
+/** Collects example info from a directory or single HTML file. */
+export function collectExamples(
+  examplePath: string,
+  inferFallback: (content: string, path: string) => string,
+): Record<string, ExampleInfo> {
+  if (!fs.existsSync(examplePath)) {
+    throw new Error(`Example path does not exist: ${examplePath}`);
+  }
+
+  const stat = fs.statSync(examplePath);
+  const htmlFiles: string[] = [];
+
+  if (stat.isDirectory()) {
+    htmlFiles.push(
+      ...fs
+        .readdirSync(examplePath)
+        .filter((f) => f.endsWith(".html"))
+        .map((f) => path.join(examplePath, f)),
+    );
+  } else if (stat.isFile()) {
+    if (!examplePath.endsWith(".html")) {
+      throw new Error(`Example file must be an HTML file: ${examplePath}`);
+    }
+    htmlFiles.push(examplePath);
+  } else {
+    throw new Error(`Example path is neither a file nor a directory: ${examplePath}`);
+  }
+
+  const result: Record<string, ExampleInfo> = {};
+  for (const file of htmlFiles) {
+    const exampleInfo = getExampleInfo(file, inferFallback);
+    if (exampleInfo) Object.assign(result, exampleInfo);
+  }
+  return result;
 }

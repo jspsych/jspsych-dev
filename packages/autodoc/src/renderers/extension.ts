@@ -80,7 +80,26 @@ ${topDataChart}
 ${rows ?? "*None*"}
 `.trim();
   },
-  }
+  },
+  {
+    heading: "examples",
+    render: (info) => {
+      const sections = Object.entries(info.examples)
+        .map(
+          ([title, example]) =>
+            `### ${title} (${example.path})
+
+\`\`\`js
+${example.code}
+\`\`\``,
+        )
+        .join("\n\n");
+      return `## Examples
+
+${sections}
+`.trim();
+    },
+  },
 ]
 
 export function getExtensionDocs(info: ExtensionInfo): Record<string, string> {

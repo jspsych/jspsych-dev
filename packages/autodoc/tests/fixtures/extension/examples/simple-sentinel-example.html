@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- jspsych-autodoc:title simple sentinel example -->
+</head>
+<body>
+<script>
+var jsPsych = initJsPsych();
+
+// jspsych-autodoc:start
+var trial = {
+  type: jsPsychTestPlugin,
+  stimulus: "hello",
+  extensions: [
+    {type: jsPsychTestExtension, params: {test: "hi"}}
+  ]
+};
+// jspsych-autodoc:end
+
+jsPsych.run([trial]);
+</script>
+</body>
+</html>
