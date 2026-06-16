@@ -1,0 +1,85 @@
+name: CLI Template Smoke Test
+
+# End-to-end check that every scaffolding CLI produces a package that
+# installs and builds from a clean checkout. Catches broken template
+# package.json scripts/dependencies before they reach published CLIs.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "packages/new-plugin/**"
+      - "packages/new-extension/**"
+      - "packages/new-timeline/**"
+      - ".github/workflows/smoke-test-templates.yml"
+  workflow_dispatch:
+
+jobs:
+  scaffold-and-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cli: [new-plugin, new-extension, new-timeline]
+        language: [ts, js]
+    name: ${{ matrix.cli }} (${{ matrix.language }})
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      # Installs the CLI packages' own dependencies (gulp, commander, etc.)
+      # so the generators can run. npm ci is intentionally avoided: the
+      # scaffolded package below does a fresh, isolated npm install.
+      - name: Install workspace dependencies
+        run: npm install
+
+      - name: Scaffold a package
+        id: scaffold
+        run: |
+          set -euo pipefail
+          WORKDIR="$(mktemp -d)"
+          echo "workdir=$WORKDIR" >> "$GITHUB_OUTPUT"
+          case "${{ matrix.cli }}" in
+            new-plugin)    DIR="plugin-smoke-test" ;;
+            new-extension) DIR="extension-smoke-test" ;;
+            new-timeline)  DIR="smoke-test" ;;
+          esac
+          echo "pkgdir=$WORKDIR/$DIR" >> "$GITHUB_OUTPUT"
+          cd "$WORKDIR"
+          node "$GITHUB_WORKSPACE/packages/${{ matrix.cli }}/src/cli.js" \
+            --name "smoke-test" \
+            --description "CI smoke test package" \
+            --author "jsPsych CI" \
+            --language "${{ matrix.language }}"
+          if [ ! -d "$WORKDIR/$DIR" ]; then
+            echo "::error::CLI did not create expected package directory: $DIR"
+            ls -la "$WORKDIR"
+            exit 1
+          fi
+
+      - name: Install scaffolded package
+        working-directory: ${{ steps.scaffold.outputs.pkgdir }}
+        run: npm install
+
+      - name: Build scaffolded package
+        working-directory: ${{ steps.scaffold.outputs.pkgdir }}
+        run: npm run build
+
+      - name: Verify build output
+        working-directory: ${{ steps.scaffold.outputs.pkgdir }}
+        run: |
+          set -euo pipefail
+          OUT="dist/index.browser.min.js"
+          if [ ! -s "$OUT" ]; then
+            echo "::error::Expected build artifact missing or empty: $OUT"
+            ls -la dist || echo "(no dist directory)"
+            exit 1
+          fi
+          echo "Built $OUT ($(wc -c < "$OUT" | tr -d ' ') bytes)"
