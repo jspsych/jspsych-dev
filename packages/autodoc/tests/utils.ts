@@ -9,3 +9,7 @@ export interface JsPsychPlugin<T> {
 export interface JsPsychExtension {
     
 }
+
+export type JsPsych = {
+    dummy: string;
+}

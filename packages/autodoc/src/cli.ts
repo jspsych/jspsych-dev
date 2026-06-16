@@ -10,9 +10,11 @@ import { Command } from "commander";
 import { extractVersionFromPackageJson, identifyPackageType, updateDocSections } from "./utils.js";
 import { getPluginInfo, getPluginInfoAndExamples } from "./parsers/plugin.js";
 import { getPluginDocs } from "./renderers/plugin.js";
-import { ExtensionInfo, PluginInfo } from "./types/info.js";
 import { getExtensionInfo, getExtensionInfoAndExamples } from "./parsers/extension.js";
 import { getExtensionDocs } from "./renderers/extension.js";
+import { getTimelineInfo, getTimelineInfoAndExamples } from "./parsers/timeline.js";
+import { getTimelineDocs } from "./renderers/timeline.js";
+import { ExtensionInfo, PluginInfo, TimelineInfo } from "./types/info.js";
 
 // auto get version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -49,7 +51,7 @@ function main(options: CliOptions): void {
     true,
   );
 
-  const { classNode, type } = identifyPackageType(source);
+  const { mainNode, type } = identifyPackageType(source);
   console.log(type)
   let docs: Record<string, string>;
 
@@ -58,9 +60,9 @@ function main(options: CliOptions): void {
 
     let extensionInfo: ExtensionInfo;
     if (options.example) {
-      extensionInfo = getExtensionInfoAndExamples(source, classNode, options.example);
+      extensionInfo = getExtensionInfoAndExamples(source, mainNode as ts.ClassDeclaration, options.example);
     } else {
-      extensionInfo = getExtensionInfo(source, classNode);
+      extensionInfo = getExtensionInfo(source, mainNode as ts.ClassDeclaration);
     }
 
     extensionInfo.version = extractVersionFromPackageJson();
@@ -71,14 +73,27 @@ function main(options: CliOptions): void {
 
     let pluginInfo: PluginInfo;
     if (options.example) {
-      pluginInfo = getPluginInfoAndExamples(source, classNode, options.example);
+      pluginInfo = getPluginInfoAndExamples(source, mainNode as ts.ClassDeclaration, options.example);
     } else {
-      pluginInfo = getPluginInfo(source, classNode);
+      pluginInfo = getPluginInfo(source, mainNode as ts.ClassDeclaration);
     }
 
     pluginInfo.version = extractVersionFromPackageJson();
 
     docs = getPluginDocs(pluginInfo);
+  } else if (type === "timeline") {
+    console.log("Identified package type: timeline");
+
+    let timelineInfo: TimelineInfo;
+    if (options.example) {
+      timelineInfo = getTimelineInfoAndExamples(source, mainNode as ts.FunctionDeclaration, options.example);
+    } else {
+      timelineInfo = getTimelineInfo(source, mainNode as ts.FunctionDeclaration);
+    }
+
+    timelineInfo.version = extractVersionFromPackageJson();
+
+    docs = getTimelineDocs(timelineInfo);
   } else {
     throw new Error("Unrecognized package type.");
   }

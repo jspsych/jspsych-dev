@@ -18,6 +18,7 @@ function loadFixture(relativePath: string) {
 
 const pluginSource = loadFixture("fixtures/plugin/basic.ts");
 const extensionSource = loadFixture("fixtures/extension/basic.ts");
+const timelineSource = loadFixture("fixtures/timeline/basic.ts")
 const bothInterfacesSource = loadFixture("fixtures/utils/both-interfaces.ts");
 const noClassSource = loadFixture("fixtures/utils/no-class.ts");
 
@@ -25,14 +26,20 @@ describe("identifyPackageType", () => {
     it("identifies plugin class", () => {
         const result = identifyPackageType(pluginSource);
         expect(result.type).toBe("plugin");
-        expect(result.classNode.name?.text).toBe("TestPlugin");
+        expect(result.mainNode.name?.text).toBe("TestPlugin");
     });
 
     it("identifies extension class", () => {
         const result = identifyPackageType(extensionSource);
         expect(result.type).toBe("extension");
-        expect(result.classNode.name?.text).toBe("TestExtension");
+        expect(result.mainNode.name?.text).toBe("TestExtension");
     });
+
+    it("identifies timeline function", () => {
+        const result = identifyPackageType(timelineSource);
+        expect(result.type).toBe("timeline")
+        expect(result.mainNode.name?.text).toBe("createTimeline");
+    })
 
     it("throws if class implements both interfaces", () => {
         expect(() => identifyPackageType(bothInterfacesSource)).toThrow(

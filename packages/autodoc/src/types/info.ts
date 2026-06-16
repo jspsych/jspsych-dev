@@ -19,6 +19,23 @@ export interface ExtensionInfo {
     examples: Record<string, ExampleInfo>;
 }
 
+export interface TimelineInfo {
+    name: string;
+    description: string; // TODO: just gather this from package.json
+    version: string;
+    createTimeline: TimelineHelperInfo; // only one: no need to attach name
+    timelineUnits: Record<string, TimelineHelperInfo>;
+    utils: Record<string, TimelineHelperInfo>;
+    examples: Record<string, ExampleInfo>;
+}
+
+// name is attached via Record
+export interface TimelineHelperInfo {
+    description: string;
+    helperParameters: Record<string, ParameterInfo>;
+}
+
+// name is attached via Record
 export interface ParameterInfo {
     type: string;
     default: string;
@@ -27,6 +44,7 @@ export interface ParameterInfo {
     nested?: Record<string, ParameterInfo>;
 }
 
+// name is attached via Record
 export interface ExampleInfo {
     path: string;
     code: string;

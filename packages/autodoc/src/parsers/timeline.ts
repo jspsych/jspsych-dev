@@ -1,8 +1,31 @@
-export function getTimelineInfo(info: any): string[] {
-  // Placeholder implementation, replace with actual logic to retrieve documentation
-  return [
-    `Documentation for timeline: ${info.name}`,
-    `Description: ${info.description}`,
-    `Version: ${info.version}`,
-  ];
+import ts from "typescript";
+import { TimelineInfo, TimelineHelperInfo } from "../types/info.js";
+import { collectExamples, dedent, extractJsDocComment, parseParamGroup } from "./utils.js";
+
+export function getTimelineInfo(sourceFile: ts.SourceFile, createTimelineNode: ts.FunctionDeclaration): TimelineInfo {
+  let result: TimelineInfo = {
+    name: "",
+    description: "",
+    version: "",
+    createTimeline: { description: "", helperParameters: {} },
+    timelineUnits: {},
+    utils: {},
+    examples: {},
+  };
+
+  return result;
+}
+
+function inferCodeBlock(content: string, path: string): string {
+  return "";
+}
+
+export function getTimelineInfoAndExamples(
+  sourceFile: ts.SourceFile,
+  createTimelineNode: ts.FunctionDeclaration,
+  examplePath: string,
+): TimelineInfo {
+  const info = getTimelineInfo(sourceFile, createTimelineNode);
+  info.examples = collectExamples(examplePath, inferCodeBlock);
+  return info;
 }

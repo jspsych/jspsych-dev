@@ -16,20 +16,20 @@ const fixtureSource = ts.createSourceFile(
 
 describe('getPluginInfo', () => {
     it('extracts name', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.name).toBe('test-plugin');
     });
 
     it('extracts class JSDoc as description', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.description).toBe('A test jsPsych plugin.');
     });
 
     it('extracts parameters with types and descriptions', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.parameters.single.type).toBe('ParameterType.STRING');
         expect(info.parameters.single.description).toBe('Single-line description.');
         expect(info.parameters.double_double.type).toBe('ParameterType.INT');
@@ -37,14 +37,14 @@ describe('getPluginInfo', () => {
     });
 
     it('extracts array flag on parameters', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.parameters.list_of_stimuli.array).toBe(true);
     });
 
     it('extracts data parameters', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.data.data_param.type).toBe('ParameterType.FLOAT');
         expect(info.data.data_param.description).toBe('Data parameter description.');
         expect(info.data.double_data.type).toBe('ParameterType.BOOL');
@@ -57,8 +57,8 @@ describe('getPluginInfoAndExamples', () => {
 
     it('should extract examples from provided file', () => {
         const filePath = path.join(examplesDir, 'simple-sentinel-example.html');
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfoAndExamples(fixtureSource, classNode, filePath);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
         expect(info.examples['simple sentinel example']).toBeDefined();
         expect(info.examples['simple sentinel example'].path).toBe(filePath);
@@ -68,8 +68,8 @@ describe('getPluginInfoAndExamples', () => {
     });
 
     it('should extract examples from provided directory', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getPluginInfoAndExamples(fixtureSource, classNode, examplesDir);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, examplesDir);
         expect(Object.keys(info.examples)).toHaveLength(4);
         expect(info.examples['ignored example']).toBeUndefined();
 

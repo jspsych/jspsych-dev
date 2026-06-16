@@ -74,19 +74,25 @@ export function updateDocSections(fileContent: string, docs: Record<string, stri
 
 //TODO: add timeline functionality
 /**
- * Identifies whether a source file contains a jsPsychPlugin/jsPsychExtension, returning the classNode and the type.
+ * Identifies whether a source file contains a plugin/extension/timeline, 
+ * returning the classNode and the type. classNode here represents the "main node", either
+ * the class node that implements `jsPsychPlugin`/`jsPsychExtension`, or the function node that 
+ * is the createTimeline entrypoint for jsPsych timelines.
  * 
  * @param source the AST of the source file 
- * @returns object containing the classNode (for use in extracting doc, so that 
- * getXXXInfo does not have to re-find) and the type of package (plugin/extension). 
+ * @returns object containing the "main node" (for use in extracting doc, so that 
+ * getXXXInfo does not have to re-find) and the type of package (plugin/extension/timeline). 
  */
 export function identifyPackageType(source: ts.SourceFile): {
-  classNode: ts.ClassDeclaration;
-  type: "plugin" | "extension";
+  mainNode: ts.ClassDeclaration | ts.FunctionDeclaration;
+  type: "plugin" | "extension" | "timeline";
 } {
-  let result: { classNode: ts.ClassDeclaration; type: "plugin" | "extension" } | null = null;
+  let result: {
+    mainNode: ts.ClassDeclaration | ts.FunctionDeclaration;
+    type: "plugin" | "extension" | "timeline"
+  } | null = null;
 
-  function visitClass(node: ts.Node) {
+  function searchForMainNode(node: ts.Node) {
     if (ts.isClassDeclaration(node)) {
       const implementsPlugin = node.heritageClauses?.some(
         (h) =>
@@ -102,17 +108,20 @@ export function identifyPackageType(source: ts.SourceFile): {
         throw new Error(
           "A class cannot implement both JsPsychPlugin and JsPsychExtension interfaces.",
         );
-      } 
-      else if (implementsExtension) result = { classNode: node, type: "extension" };
-      else if (implementsPlugin) result = { classNode: node, type: "plugin" };
+      }
+      else if (implementsExtension) result = { mainNode: node, type: "extension" };
+      else if (implementsPlugin) result = { mainNode: node, type: "plugin" };
       else
         throw new Error(
           "Class does not implement JsPsychPlugin or JsPsychExtension interfaces. Ensure your class implements the correct interface.",
         );
+    } else if (ts.isFunctionDeclaration(node)) {
+      const isCreateTimeline = node.name?.text === "createTimeline";
+      if (isCreateTimeline) result = { mainNode: node as ts.FunctionDeclaration, type: "timeline" };
     }
-    ts.forEachChild(node, visitClass);
+    ts.forEachChild(node, searchForMainNode);
   }
-  visitClass(source);
+  searchForMainNode(source);
 
   if (!result) {
     throw new Error("No plugin or extension class found in source file.");

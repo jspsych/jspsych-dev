@@ -16,20 +16,20 @@ const fixtureSource = ts.createSourceFile(
 
 describe('getExtensionInfo', () => {
     it('extracts name', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.name).toBe('test-extension');
     });
 
     it('extracts class JSDoc as description', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.description).toBe('A test jsPsych extension.');
     });
 
     it('extracts initializeParameters with types, descriptions, and defaults', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.initializeParameters.single.type).toBe('number');
         expect(info.initializeParameters.single.description).toBe('Single-line description.');
         expect(info.initializeParameters.single.default).toBe('0');
@@ -39,24 +39,24 @@ describe('getExtensionInfo', () => {
     });
 
     it('extracts array flag on initializeParameters', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.initializeParameters.list_of_stimuli.array).toBe(true);
         expect(info.initializeParameters.list_of_stimuli.type).toBe('string');
         expect(info.initializeParameters.list_of_stimuli.default).toBe('["stim1.png", "stim2.png"]');
     });
 
     it('extracts onStartParameters with object type', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.onStartParameters.nested_object.type).toBe('{ nested_param: number }');
         expect(info.onStartParameters.nested_object.description).toBe("Let's try an object.");
         expect(info.onStartParameters.nested_object.default).toBe('{ nested_param: 42 }');
     });
 
     it('extracts onLoadParameters with nested descriptions and defaults', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.onLoadParameters.grid.description).toBe('Maybe a grid.');
         expect(info.onLoadParameters.grid.default).toBeUndefined();
         expect(info.onLoadParameters.grid.nested).toBeDefined();
@@ -67,8 +67,8 @@ describe('getExtensionInfo', () => {
     });
 
     it('extracts onFinishParameters with nested array type', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.onFinishParameters.boolean_param.array).toBe(true);
         expect(info.onFinishParameters.boolean_param.type).toBe('boolean[]');
         expect(info.onFinishParameters.boolean_param.description).toBe('And a boolean grid.');
@@ -76,8 +76,8 @@ describe('getExtensionInfo', () => {
     });
 
     it('extracts data parameters', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.data.data_param.type).toBe('ParameterType.FLOAT');
         expect(info.data.data_param.description).toBe('Data parameter description.');
         expect(info.data.double_data.type).toBe('ParameterType.BOOL');
@@ -85,8 +85,8 @@ describe('getExtensionInfo', () => {
     });
 
     it('extracts nested data parameters', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfo(fixtureSource, classNode);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
         expect(info.data.grid.type).toBe('ParameterType.COMPLEX');
         expect(info.data.grid.description).toBe("Now let's have a grid.");
         expect(info.data.grid.nested).toBeDefined();
@@ -98,8 +98,8 @@ describe('getExtensionInfoAndExamples', () => {
 
     it('should extract examples from a provided file', () => {
         const filePath = path.join(examplesDir, 'simple-sentinel-example.html');
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
         expect(info.examples['simple sentinel example']).toBeDefined();
         expect(info.examples['simple sentinel example'].path).toBe(filePath);
@@ -109,8 +109,8 @@ describe('getExtensionInfoAndExamples', () => {
     });
 
     it('should extract examples from a provided directory', () => {
-        const { classNode } = identifyPackageType(fixtureSource);
-        const info = getExtensionInfoAndExamples(fixtureSource, classNode, examplesDir);
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, examplesDir);
         expect(Object.keys(info.examples)).toHaveLength(4);
         expect(info.examples['ignored example']).toBeUndefined();
 
