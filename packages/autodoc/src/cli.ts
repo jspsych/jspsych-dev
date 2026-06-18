@@ -7,7 +7,7 @@ import ts from "typescript";
 
 import { Command } from "commander";
 
-import { extractVersionFromPackageJson, identifyPackageType, updateDocSections } from "./utils.js";
+import { extractPackageJsonInfo, identifyPackageType, updateDocSections } from "./utils.js";
 import { getPluginInfo, getPluginInfoAndExamples } from "./parsers/plugin.js";
 import { getPluginDocs } from "./renderers/plugin.js";
 import { getExtensionInfo, getExtensionInfoAndExamples } from "./parsers/extension.js";
@@ -29,6 +29,7 @@ interface CliOptions {
   source?: string;
   dest?: string;
   example?: string;
+  packageJson?: string;
 }
 
 // TODO: simulation mode-- detect if simulation mode is supported via these plugins.
@@ -65,7 +66,7 @@ function main(options: CliOptions): void {
       extensionInfo = getExtensionInfo(source, mainNode as ts.ClassDeclaration);
     }
 
-    extensionInfo.version = extractVersionFromPackageJson();
+    extensionInfo.version = extractPackageJsonInfo(options.packageJson).version;
 
     docs = getExtensionDocs(extensionInfo);
   } else if (type === "plugin") {
@@ -78,7 +79,7 @@ function main(options: CliOptions): void {
       pluginInfo = getPluginInfo(source, mainNode as ts.ClassDeclaration);
     }
 
-    pluginInfo.version = extractVersionFromPackageJson();
+    pluginInfo.version = extractPackageJsonInfo(options.packageJson).version;
 
     docs = getPluginDocs(pluginInfo);
   } else if (type === "timeline") {
@@ -86,12 +87,15 @@ function main(options: CliOptions): void {
 
     let timelineInfo: TimelineInfo;
     if (options.example) {
-      timelineInfo = getTimelineInfoAndExamples(source, mainNode as ts.FunctionDeclaration, options.example);
+      timelineInfo = getTimelineInfoAndExamples(options.source, options.example);
     } else {
-      timelineInfo = getTimelineInfo(source, mainNode as ts.FunctionDeclaration);
+      timelineInfo = getTimelineInfo(options.source);
     }
 
-    timelineInfo.version = extractVersionFromPackageJson();
+    const packageJsonInfo = extractPackageJsonInfo(options.packageJson);
+    timelineInfo.name = packageJsonInfo.name;
+    timelineInfo.description = packageJsonInfo.description;
+    timelineInfo.version = packageJsonInfo.version;
 
     docs = getTimelineDocs(timelineInfo);
   } else {
@@ -122,6 +126,10 @@ program
   .option("--dest <name>", "Destination directory for the generated documentation")
   .option("--repo <name>", "Repository that contains the source/destination files (optional)")
   .option("--example <name>", "Example folder containing usages of the plugin (optional)")
+  .option(
+    "--package-json <name>",
+    "Path to the package.json to read name/description/version from (optional, defaults to ./package.json)",
+  )
   .option("-v, --verbose", "Enable verbose logging (optional)")
   .option(
     "-f, --force",

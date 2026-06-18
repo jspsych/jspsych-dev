@@ -6,7 +6,7 @@ import { ExampleInfo, ParameterInfo } from "../types/info.js";
 // --- PARSE SRC FILE UTILS ---
 
 /** thing that removes comments from nested parameter types */
-const printer = ts.createPrinter({ removeComments: true });
+export const printer = ts.createPrinter({ removeComments: true });
 
 /** Grabs JSDoc comments from a node. */
 export function extractJsDocComment(node: ts.Node, source: ts.SourceFile): string | undefined {
@@ -36,7 +36,6 @@ export function parseParamGroup(
   }
   return result;
 }
-
 
 /** Gathers parameter information (type, default, etc.) from a node. */
 function extractParameter(node: ts.ObjectLiteralExpression, source: ts.SourceFile): ParameterInfo {

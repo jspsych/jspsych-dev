@@ -130,22 +130,35 @@ export function identifyPackageType(source: ts.SourceFile): {
   return result;
 }
 
-/** Gathers the version number from a package.json file found in the current working directory. */
-export function extractVersionFromPackageJson(): string {
+export interface PackageJsonInfo {
+  name: string;
+  description: string;
+  version: string;
+}
+
+/**
+ * gathers name, description, and version from package-json, using either a given
+ * path to one, or attempting to infer via checking the root directory.
+ */
+export function extractPackageJsonInfo(packageJsonPath?: string): PackageJsonInfo {
+  const resolvedPath = packageJsonPath ?? path.join(process.cwd(), "package.json");
   try {
-    const pluginPackageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
-    );
-    if (pluginPackageJson.version) {
-      return pluginPackageJson.version;
-    } else {
-      console.warn("Warning: No version field found in package.json.");
-      return "unknown version";
-    }
+    const packageJson = JSON.parse(fs.readFileSync(resolvedPath, "utf8"));
+
+    if (!packageJson.name) console.warn("Warning: No name field found in package.json.");
+    if (!packageJson.description) console.warn("Warning: No description field found in package.json.");
+    if (!packageJson.version) console.warn("Warning: No version field found in package.json.");
+
+    return {
+      name: packageJson.name ?? "unknown name",
+      description: packageJson.description ?? "unknown description",
+      version: packageJson.version ?? "unknown version",
+    };
   } catch (err) {
     console.warn(
-      "Warning: Could not read package.json to determine version. Ensure you are running the CLI in the directory that contains the package.json.",
+      `Warning: Could not read package.json at ${resolvedPath} to determine package info. ` +
+        "Ensure you are running the CLI in the directory that contains the package.json, or provide --package-json.",
     );
-    return "unknown version";
+    return { name: "unknown name", description: "unknown description", version: "unknown version" };
   }
 }

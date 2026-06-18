@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>complex inferred example</title>
+</head>
+<body>
+<script>
+var jsPsych = initJsPsych();
+
+const fixationConfig = {
+    fixation: "+",
+    duration: 1000,
+}
+
+const fixationTrial = jsPsychTestTimeline.timelineUnits.createFixation(fixationConfig);
+
+const stimulusConfig = {
+    stimuli: ["hello", "cheese wheel"],
+    duration: [250, 1000],
+}
+
+const stimulusTrial = jsPsychTestTimeline.timelineUnits.createStimulus({
+    ...stimulusConfig, 
+    reverse: true
+})
+
+let feedbackMessage = "dog";
+
+const feedbackTrial = jsPsychTestTimeline.timelineUnits.createFeedbackTrial({
+    feedback: feedbackMessage,
+    showCreature: jsPsychTestTimeline.utils.canShowCreature("maybe")
+})
+
+jsPsych.run([fixationTrial, feedbackTrial]);
+</script>
+</body>
+</html>
