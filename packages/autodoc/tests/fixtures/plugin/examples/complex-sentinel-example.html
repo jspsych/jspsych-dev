@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- jspsych-autodoc:title complex sentinel example -->
+</head>
+<body>
+<script>
+var jsPsych = initJsPsych();
+
+var dummyVar = "this should not appear";
+
+// jspsych-autodoc:start
+var fixationTrial = {
+  type: jsPsychTestPlugin,
+  stimulus: "+"
+};
+// jspsych-autodoc:end
+
+console.log("this should not appear either");
+
+// jspsych-autodoc:start
+var stimulusTrial = {
+  type: jsPsychTestPlugin,
+  stimulus: "Hello"
+};
+// jspsych-autodoc:end
+
+var anotherDummy = 42;
+
+// jspsych-autodoc:start
+var feedbackTrial = {
+  type: jsPsychTestPlugin,
+  stimulus: "Correct!"
+};
+// jspsych-autodoc:end
+
+jsPsych.run([fixationTrial, stimulusTrial, feedbackTrial]);
+</script>
+</body>
+</html>

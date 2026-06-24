@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- jspsych-autodoc:title simple sentinel example -->
+</head>
+<body>
+<script>
+// jspsych-autodoc:start
+const config = {
+    testParam: 1,
+    testParam2: "hello hello"
+}
+
+const timeline = jsPsychTestTimeline.createTimeline(jsPsych, config);
+// jspsych-autodoc:end
+jsPsych.run(timeline);
+</script>
+</body>
+</html>

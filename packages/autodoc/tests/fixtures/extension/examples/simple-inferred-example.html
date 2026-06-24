@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>simple inferred example</title>
+</head>
+<body>
+<script>
+var jsPsych = initJsPsych({
+  extensions: [
+    {type: jsPsychTestExtension, params: {test: "inferred"}}
+  ]
+});
+
+var trial = {
+  type: jsPsychTestPlugin,
+  stimulus: "World",
+  extensions: [
+    {type: jsPsychTestExtension, params: {test: "trial-level inferred"}}
+  ]
+};
+
+var trialNoExtension = {
+  type: jsPsychTestPlugin,
+  stimulus: "This trial has no extension and won't be counted."
+};
+
+jsPsych.run([trial, trialNoExtension]);
+</script>
+</body>
+</html>

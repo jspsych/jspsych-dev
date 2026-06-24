@@ -1,0 +1,40 @@
+{
+  "name": "@jspsych/autodoc",
+  "version": "0.0.1",
+  "description": "CLI tool to generate documentation for jsPsych plugins",
+  "type": "module",
+  "bin": "./dist/cli.js",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "test": "node --experimental-vm-modules ../../node_modules/.bin/jest"
+  },
+  "keywords": [
+    "jspsych",
+    "psychology",
+    "documentation",
+    "cli"
+  ],
+  "author": "jade",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.6.2",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

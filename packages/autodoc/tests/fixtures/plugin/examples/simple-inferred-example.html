@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>simple inferred example</title>
+</head>
+<body>
+<script>
+var jsPsych = initJsPsych();
+
+var trial = {
+  type: jsPsychTestPlugin,
+  stimulus: "World"
+};
+
+jsPsych.run([trial]);
+</script>
+</body>
+</html>
