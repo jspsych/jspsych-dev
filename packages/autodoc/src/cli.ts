@@ -7,7 +7,14 @@ import ts from "typescript";
 
 import { Command } from "commander";
 
-import { extractPackageJsonInfo, identifyPackageType, updateDocSections } from "./utils.js";
+import {
+  discoverDest,
+  discoverExample,
+  discoverSource,
+  extractPackageJsonInfo,
+  identifyPackageType,
+  updateDocSections,
+} from "./utils.js";
 import { getPluginInfo, getPluginInfoAndExamples } from "./parsers/plugin.js";
 import { getPluginDocs } from "./renderers/plugin.js";
 import { getExtensionInfo, getExtensionInfoAndExamples } from "./parsers/extension.js";
@@ -30,20 +37,42 @@ interface CliOptions {
   dest?: string;
   example?: string;
   packageJson?: string;
+  dryRun?: boolean;
 }
 
 // TODO: simulation mode-- detect if simulation mode is supported via these plugins.
 function main(options: CliOptions): void {
-  let sourcePath: string;
-  if (options.source) {
-    sourcePath = options.source;
-  } else {
-    throw new Error("No source file provided. Please specify a source file with --source.");
-  }
 
-  if (!options.dest) {
-    throw new Error("No destination file provided. Please specify a destination file with --dest.");
-  }
+  let cachedAnchor: string | undefined;
+
+  /** cwd if it is a package root (contains package.json), else undefined, memoized. */
+  const anchorOrNull = (): string | undefined => {
+    if (cachedAnchor) return cachedAnchor;
+    const cwd = process.cwd();
+    if (!fs.existsSync(path.join(cwd, "package.json"))) return undefined;
+    return (cachedAnchor = path.resolve(cwd));
+  };
+
+  /** like `anchorOrNull`, for inputs that genuinely require discovery (throw if null) */
+  const anchor = (): string => {
+    const a = anchorOrNull();
+    if (!a) {
+      throw new Error(
+        "No package.json found in the current directory. " +
+          "Run autodoc from the root of the package you want to document, " +
+          "or pass --source/--dest/--package-json explicitly.",
+      );
+    }
+    return a;
+  };
+
+  const sourcePath = options.source ?? discoverSource(anchor());
+  const packageJsonPath = options.packageJson ?? path.join(anchor(), "package.json");
+  
+  // example discovery is optional, so shouldn't really have to deal w/ fail-fast
+  // behavior if not necessary
+  const exampleAnchor = anchorOrNull();
+  const examplePath = options.example ?? (exampleAnchor ? discoverExample(exampleAnchor) : undefined);
 
   const source = ts.createSourceFile(
     sourcePath,
@@ -53,46 +82,56 @@ function main(options: CliOptions): void {
   );
 
   const { mainNode, type } = identifyPackageType(source);
-  console.log(type)
+  const packageJsonInfo = extractPackageJsonInfo(packageJsonPath);
+
+  // dest depends on the resolved type + package name, so it resolves last.
+  const destPath = options.dest ?? discoverDest(anchor(), packageJsonInfo.name, type);
+
+  const mark = (explicit: boolean) => (explicit ? "explicit" : "discovered");
+  console.log("Resolved inputs:");
+  console.log(`  type         ${type}`);
+  console.log(`  source       ${sourcePath} (${mark(!!options.source)})`);
+  console.log(`  dest         ${destPath} (${mark(!!options.dest)})`);
+  console.log(`  package.json ${packageJsonPath} (${mark(!!options.packageJson)})`);
+  console.log(`  example      ${examplePath ?? "(none)"} (${mark(!!options.example)})`);
+
+  if (options.dryRun) {
+    console.log("\n--dry-run: no files written.");
+    return;
+  }
+
   let docs: Record<string, string>;
 
   if (type === "extension") {
-    console.log("Identified package type: extension");
-
     let extensionInfo: ExtensionInfo;
-    if (options.example) {
-      extensionInfo = getExtensionInfoAndExamples(source, mainNode as ts.ClassDeclaration, options.example);
+    if (examplePath) {
+      extensionInfo = getExtensionInfoAndExamples(source, mainNode as ts.ClassDeclaration, examplePath);
     } else {
       extensionInfo = getExtensionInfo(source, mainNode as ts.ClassDeclaration);
     }
 
-    extensionInfo.version = extractPackageJsonInfo(options.packageJson).version;
+    extensionInfo.version = packageJsonInfo.version;
 
     docs = getExtensionDocs(extensionInfo);
   } else if (type === "plugin") {
-    console.log("Identified package type: plugin");
-
     let pluginInfo: PluginInfo;
-    if (options.example) {
-      pluginInfo = getPluginInfoAndExamples(source, mainNode as ts.ClassDeclaration, options.example);
+    if (examplePath) {
+      pluginInfo = getPluginInfoAndExamples(source, mainNode as ts.ClassDeclaration, examplePath);
     } else {
       pluginInfo = getPluginInfo(source, mainNode as ts.ClassDeclaration);
     }
 
-    pluginInfo.version = extractPackageJsonInfo(options.packageJson).version;
+    pluginInfo.version = packageJsonInfo.version;
 
     docs = getPluginDocs(pluginInfo);
   } else if (type === "timeline") {
-    console.log("Identified package type: timeline");
-
     let timelineInfo: TimelineInfo;
-    if (options.example) {
-      timelineInfo = getTimelineInfoAndExamples(options.source, options.example);
+    if (examplePath) {
+      timelineInfo = getTimelineInfoAndExamples(sourcePath, examplePath);
     } else {
-      timelineInfo = getTimelineInfo(options.source);
+      timelineInfo = getTimelineInfo(sourcePath);
     }
 
-    const packageJsonInfo = extractPackageJsonInfo(options.packageJson);
     timelineInfo.name = packageJsonInfo.name;
     timelineInfo.description = packageJsonInfo.description;
     timelineInfo.version = packageJsonInfo.version;
@@ -103,15 +142,15 @@ function main(options: CliOptions): void {
   }
 
   const rawContent = Object.values(docs).join("\n\n");
-  if (!fs.existsSync(options.dest)) {
-    fs.writeFileSync(options.dest, rawContent, "utf8");
+  if (!fs.existsSync(destPath)) {
+    fs.writeFileSync(destPath, rawContent, "utf8");
   } else {
-    const existingContent = fs.readFileSync(options.dest, "utf8");
+    const existingContent = fs.readFileSync(destPath, "utf8");
     if (existingContent.trim() === "") {
-      fs.writeFileSync(options.dest, rawContent, "utf8");
+      fs.writeFileSync(destPath, rawContent, "utf8");
     } else {
       const updatedContent = updateDocSections(existingContent, docs);
-      fs.writeFileSync(options.dest, updatedContent, "utf8");
+      fs.writeFileSync(destPath, updatedContent, "utf8");
     }
   }
 }
@@ -122,14 +161,15 @@ program
   .name("autodoc")
   .description("CLI tool to generate documentation for jsPsych plugins")
   .version(version)
-  .option("--source <name>", "Source of the package")
-  .option("--dest <name>", "Destination directory for the generated documentation")
+  .option("--source <name>", "Source of the package (optional, auto-detected from src/index.ts or index.ts)")
+  .option("--dest <name>", "Destination file for the generated documentation (optional, auto-detected from the package's docs)")
   .option("--repo <name>", "Repository that contains the source/destination files (optional)")
-  .option("--example <name>", "Example folder containing usages of the plugin (optional)")
+  .option("--example <name>", "Example folder containing usages of the plugin (optional, auto-detected from examples/)")
   .option(
     "--package-json <name>",
-    "Path to the package.json to read name/description/version from (optional, defaults to ./package.json)",
+    "Path to the package.json to read name/description/version from (optional, auto-detected from the package root)",
   )
+  .option("--dry-run", "Print the resolved source/dest/example paths and exit without writing (optional)")
   .option("-v, --verbose", "Enable verbose logging (optional)")
   .option(
     "-f, --force",
@@ -140,10 +180,17 @@ program
     "after",
     `
 Examples:
-  $ autodoc --source /src/index.ts --dest /docs/index.md
-  $ autodoc --source /src/index.ts --dest /docs/index.md --example /examples/`,
+  $ autodoc                                  # run inside a package; everything auto-detected
+  $ autodoc --dry-run                        # preview what would be resolved, write nothing
+  $ autodoc --source src/index.ts --dest docs/index.md
+  $ autodoc --source src/index.ts --dest docs/index.md --example examples/`,
   );
 
 program.parse();
 const options = program.opts<CliOptions>();
-main(options);
+try {
+  main(options);
+} catch (err) {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+}

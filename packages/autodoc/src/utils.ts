@@ -72,7 +72,6 @@ export function updateDocSections(fileContent: string, docs: Record<string, stri
   return result;
 }
 
-//TODO: add timeline functionality
 /**
  * Identifies whether a source file contains a plugin/extension/timeline, 
  * returning the classNode and the type. classNode here represents the "main node", either
@@ -130,6 +129,82 @@ export function identifyPackageType(source: ts.SourceFile): {
   return result;
 }
 
+/**
+ * attempts to find the source file (src/index.ts, then index.ts), but fails if not found.
+ */
+export function discoverSource(anchor: string): string {
+  const candidates = [path.join(anchor, "src", "index.ts"), path.join(anchor, "index.ts")];
+  const found = candidates.find((p) => fs.existsSync(p));
+  if (!found) {
+    throw new Error(
+      `Could not auto-detect a source file (looked for src/index.ts, index.ts under ${anchor}). ` +
+        "Specify one with --source.",
+    );
+  }
+  return found;
+}
+
+/**
+ * @returns `examples/` directory pathway to anchor, undefined if not found (optional)
+ */
+export function discoverExample(anchor: string): string | undefined {
+  const dir = path.join(anchor, "examples");
+  return fs.existsSync(dir) && fs.statSync(dir).isDirectory() ? dir : undefined;
+}
+
+/** collects `.md` files whose basename (sans extension) matches one of `stems` */
+function findMarkdownByStem(anchor: string, stems: Set<string>): string[] {
+  const results: string[] = [];
+  const walk = (dir: string, recurse: boolean) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (recurse && entry.name !== "node_modules") walk(full, true);
+      } else if (entry.isFile() && entry.name.endsWith(".md") && stems.has(entry.name.slice(0, -3))) {
+        results.push(full);
+      }
+    }
+  };
+  walk(anchor, false); // top-level files only
+  walk(path.join(anchor, "docs"), true); // docs/ recursively
+  return [...new Set(results)];
+}
+
+/**
+ * resolves destination file by matching existing md file against package
+ * name and package type, trying to find one of unscoped name (`plugin-foo`),
+ * type-stripped name (`foo`), and reconstructed name (`<type>-<name>`). fails 
+ * fast, this is a requirement if not present or if there are multiple matches.
+ */
+export function discoverDest(
+  anchor: string,
+  packageName: string,
+  type: "plugin" | "extension" | "timeline",
+): string {
+  const unscoped = packageName.replace(/^@[^/]+\//, "");
+  const stripped = unscoped.replace(/^(plugin|extension|timeline)-/, "");
+  const stems = new Set([unscoped, stripped, `${type}-${stripped}`]);
+
+  const matches = findMarkdownByStem(anchor, stems);
+
+  if (matches.length === 0) {
+    throw new Error(
+      `Could not find an existing docs file for "${unscoped}" ` +
+        `(looked for ${[...stems].map((s) => `${s}.md`).join(", ")} in ${anchor} and ${anchor}/docs). ` +
+        "Specify the destination with --dest.",
+    );
+  }
+  if (matches.length > 1) {
+    throw new Error(
+      `Multiple candidate docs files found for "${unscoped}":\n` +
+        matches.map((m) => `  - ${m}`).join("\n") +
+        "\nDisambiguate with --dest.",
+    );
+  }
+  return matches[0];
+}
+
 export interface PackageJsonInfo {
   name: string;
   description: string;
@@ -155,10 +230,10 @@ export function extractPackageJsonInfo(packageJsonPath?: string): PackageJsonInf
       version: packageJson.version ?? "unknown version",
     };
   } catch (err) {
-    console.warn(
-      `Warning: Could not read package.json at ${resolvedPath} to determine package info. ` +
-        "Ensure you are running the CLI in the directory that contains the package.json, or provide --package-json.",
+    throw new Error(
+      `Could not read package.json at ${resolvedPath} to determine package info. ` +
+        "Ensure you are running the CLI in the directory that contains the package.json, or provide --package-json. " +
+        `(${err instanceof Error ? err.message : String(err)})`,
     );
-    return { name: "unknown name", description: "unknown description", version: "unknown version" };
   }
 }
