@@ -85,8 +85,9 @@ function getGitHttpsUrl(gitUrl) {
   // Handle git@github.com:user/repo format (standard SSH URL format)
   httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, 'https://$1/$2');
   
-  // Remove trailing .git
-  httpsUrl = httpsUrl.replace(/\.git$/, '');
+  // Remove the ".git" suffix, whether it ends the URL or is followed by a path
+  // (e.g. "repo.git/tree/main/sub" must not keep ".git" in the middle).
+  httpsUrl = httpsUrl.replace(/\.git(?=\/|$)/, '');
 
   return httpsUrl;
 }
@@ -106,8 +107,7 @@ function getCamelCaseName(input) {
   return input;
 }
 
-async function detectContribRepo() {
-  const repoRoot = await getRepoRoot();
+function detectContribRepo(repoRoot) {
   if (repoRoot) {
     const packageJsonPath = path.join(repoRoot, "package.json");
 
@@ -133,17 +133,15 @@ async function detectContribRepo() {
 
 async function getCwdInfo() {
   const isRepo = await git.checkIsRepo();
-  let isContribRepo;
+  const repoRoot = isRepo ? await getRepoRoot() : "";
   // Check if current directory is the jspsych-contrib repository
-  if (isRepo) {
-    isContribRepo = await detectContribRepo();
-    if (isContribRepo) {
-      return {
-        isRepo: isRepo,
-        isContribRepo: isContribRepo,
-        destDir: path.join(await getRepoRoot(), "packages"),
-      };
-    }
+  const isContribRepo = detectContribRepo(repoRoot);
+  if (isContribRepo) {
+    return {
+      isRepo: isRepo,
+      isContribRepo: isContribRepo,
+      destDir: path.join(repoRoot, "packages"),
+    };
   }
   // If current directory is not the jspsych-contrib repository
   return {
