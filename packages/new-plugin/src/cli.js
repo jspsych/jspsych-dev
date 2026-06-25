@@ -85,8 +85,9 @@ function getGitHttpsUrl(gitUrl) {
   // Handle git@github.com:user/repo format (standard SSH URL format)
   httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, 'https://$1/$2');
   
-  // Remove trailing .git
-  httpsUrl = httpsUrl.replace(/\.git$/, '');
+  // Remove the ".git" suffix, whether it ends the URL or is followed by a path
+  // (e.g. "repo.git/tree/main/sub" must not keep ".git" in the middle).
+  httpsUrl = httpsUrl.replace(/\.git(?=\/|$)/, '');
 
   return httpsUrl;
 }
@@ -123,8 +124,7 @@ const KNOWN_REPOS = {
   },
 };
 
-async function detectRepoConfig() {
-  const repoRoot = await getRepoRoot();
+function detectRepoConfig(repoRoot) {
   if (!repoRoot) {
     return null;
   }
@@ -149,15 +149,16 @@ async function detectRepoConfig() {
 
 async function getCwdInfo() {
   const isRepo = await git.checkIsRepo();
+  const repoRoot = isRepo ? await getRepoRoot() : "";
   // Check if current directory is a known jsPsych monorepo (e.g. jspsych-contrib)
-  const repoConfig = isRepo ? await detectRepoConfig() : null;
+  const repoConfig = detectRepoConfig(repoRoot);
   if (repoConfig) {
     return {
       isRepo: isRepo,
       isContribRepo: true,
       scope: repoConfig.scope,
       repoSlug: repoConfig.repoSlug,
-      destDir: path.join(await getRepoRoot(), "packages"),
+      destDir: path.join(repoRoot, "packages"),
     };
   }
   // If current directory is not a known jsPsych monorepo
