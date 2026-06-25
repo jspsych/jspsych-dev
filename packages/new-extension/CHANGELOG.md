@@ -1,5 +1,11 @@
 # @jspsych/new-extension
 
+## 0.2.5
+
+### Patch Changes
+
+- 01719f8: Fix `getGitHttpsUrl` so the `.git` suffix is stripped at any path boundary, not only at the end of the string. Previously, when a repo's `origin` fetch URL ended in `.git`, the suggested README/docs default in stand-alone mode kept `.git` in the middle of the URL (e.g. `https://github.com/user/repo.git/tree/main/...`), producing a broken link. Also resolve the git repo root once per run in `getCwdInfo` instead of spawning `git` an extra time.
+
 ## 0.2.4
 
 ### Patch Changes
