@@ -1,0 +1,43 @@
+{
+  "name": "@jspsych/new-multiplayer-adapter",
+  "version": "0.1.0",
+  "description": "CLI tool to create new jsPsych multiplayer adapters",
+  "type": "module",
+  "bin": "./src/cli.js",
+  "files": [
+    "src",
+    "templates"
+  ],
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "jspsych",
+    "psychology",
+    "experiment",
+    "multiplayer",
+    "adapter",
+    "cli"
+  ],
+  "author": "jsPsych Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.3",
+    "commander": "^11.1.0",
+    "del": "^8.0.0",
+    "gulp": "^5.0.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-replace": "^1.1.4",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.2"
+  },
+  "engines": {
+    "node": ">=14.16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
