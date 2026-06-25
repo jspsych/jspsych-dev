@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{globalName} Example</title>
+    <script src="https://unpkg.com/jspsych"></script>
+    {publishingComment}
+    <!-- A multiplayer plugin this adapter could be used with -->
+    <script src="https://unpkg.com/@jspsych/plugin-multiplayer-sync"></script>
+    <script src="../dist/index.browser.min.js"></script>
+    <link href="https://unpkg.com/jspsych/css/jspsych.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <script>
+      const jsPsych = initJsPsych();
+
+      async function run() {
+        // Connect the adapter before running the timeline. Pass any backend-specific
+        // options your adapter's constructor needs.
+        await jsPsych.pluginAPI.connect(new {globalName}());
+
+        const trial = {
+          type: jsPsychMultiplayerSync,
+          message: "Waiting for other participants...",
+          push_data: { ready: true },
+          wait_for: (group) => Object.keys(group).length >= 2,
+        };
+
+        await jsPsych.run([trial]);
+      }
+
+      run();
+    </script>
+  </body>
+</html>

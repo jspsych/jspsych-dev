@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { input, select } from "@inquirer/prompts";
+import { input } from "@inquirer/prompts";
 import { Command } from "commander";
 import { deleteSync } from "del";
 import { dest, series, src } from "gulp";
@@ -17,8 +17,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import version from package.json
-const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"));
 const { version } = packageJson;
+
+/**
+ * Monorepos that this CLI knows how to scaffold into. When run from inside one of these (i.e.
+ * its root package.json `name` matches a key), the generated package is created under
+ * `./packages` and published under the repo's npm scope. Multiplayer adapters live in
+ * jspsych-multiplayer, but the lookup is data-driven so additional homes can be added later.
+ */
+const KNOWN_REPOS = {
+  "@jspsych/jspsych-multiplayer": {
+    scope: "@jspsych-multiplayer",
+    repoSlug: "jspsych/jspsych-multiplayer",
+  },
+};
 
 async function getRepoRoot() {
   try {
@@ -67,27 +80,26 @@ async function getRemoteGitUrl() {
 }
 
 function getGitHttpsUrl(gitUrl) {
-  if (!gitUrl || typeof gitUrl !== 'string') {
-    return '';
+  if (!gitUrl || typeof gitUrl !== "string") {
+    return "";
   }
-  
+
   let httpsUrl = gitUrl.trim();
 
   // Handle git+https:// format
-  httpsUrl = httpsUrl.replace(/^git\+https:\/\//, 'https://');
-  
+  httpsUrl = httpsUrl.replace(/^git\+https:\/\//, "https://");
+
   // Handle git:// format
-  httpsUrl = httpsUrl.replace(/^git:\/\/(.+)$/, 'https://$1');
-  
+  httpsUrl = httpsUrl.replace(/^git:\/\/(.+)$/, "https://$1");
+
   // Handle ssh://git@host.com/user/repo format
-  httpsUrl = httpsUrl.replace(/^ssh:\/\/git@([^\/]+)\/(.+)$/, 'https://$1/$2');
-  
+  httpsUrl = httpsUrl.replace(/^ssh:\/\/git@([^\/]+)\/(.+)$/, "https://$1/$2");
+
   // Handle git@github.com:user/repo format (standard SSH URL format)
-  httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, 'https://$1/$2');
-  
-  // Remove the ".git" suffix, whether it ends the URL or is followed by a path
-  // (e.g. "repo.git/tree/main/sub" must not keep ".git" in the middle).
-  httpsUrl = httpsUrl.replace(/\.git(?=\/|$)/, '');
+  httpsUrl = httpsUrl.replace(/^git@([^:]+):(.+)$/, "https://$1/$2");
+
+  // Remove trailing .git
+  httpsUrl = httpsUrl.replace(/\.git$/, "");
 
   return httpsUrl;
 }
@@ -102,46 +114,31 @@ function getHyphenateName(input) {
 }
 
 function getCamelCaseName(input) {
-  input = input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-  input = input.replace(/[^a-zA-Z0-9]/g, "") // Remove all non-alphanumeric characters
+  input =
+    input.charAt(0).toUpperCase() + input.slice(1).replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+  input = input.replace(/[^a-zA-Z0-9]/g, ""); // Remove all non-alphanumeric characters
   return input;
 }
 
 /**
- * jsPsych monorepos that this CLI knows how to scaffold into, keyed by the root package.json
- * `name`. When run from inside one of these, the generated package is created under `./packages`
- * and published under the repo's npm scope. The lookup is data-driven so additional homes can be
- * added without touching the rest of the CLI.
+ * If the current git repo's root package.json matches a known repo, return its scaffolding
+ * config ({ scope, repoSlug }); otherwise return null (stand-alone mode).
  */
-const KNOWN_REPOS = {
-  "@jspsych/jspsych-contrib": {
-    scope: "@jspsych-contrib",
-    repoSlug: "jspsych/jspsych-contrib",
-  },
-  "@jspsych/jspsych-multiplayer": {
-    scope: "@jspsych-multiplayer",
-    repoSlug: "jspsych/jspsych-multiplayer",
-  },
-};
-
-function detectRepoConfig(repoRoot) {
+async function detectRepoConfig() {
+  const repoRoot = await getRepoRoot();
   if (!repoRoot) {
     return null;
   }
 
   const packageJsonPath = path.join(repoRoot, "package.json");
-
-  // If package.json doesn't exist at the root, it cannot be a known repo.
   if (!fs.existsSync(packageJsonPath)) {
     return null;
   }
 
-  // If package.json exists, try to read and parse it.
   try {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-    return KNOWN_REPOS[packageJson.name] ?? null;
+    const rootPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+    return KNOWN_REPOS[rootPackageJson.name] ?? null;
   } catch (error) {
-    // Log an error if reading or parsing an existing package.json fails.
     console.error("Error reading or parsing package.json:", error);
     return null;
   }
@@ -149,36 +146,34 @@ function detectRepoConfig(repoRoot) {
 
 async function getCwdInfo() {
   const isRepo = await git.checkIsRepo();
-  const repoRoot = isRepo ? await getRepoRoot() : "";
-  // Check if current directory is a known jsPsych monorepo (e.g. jspsych-contrib)
-  const repoConfig = detectRepoConfig(repoRoot);
+  const repoConfig = isRepo ? await detectRepoConfig() : null;
+
   if (repoConfig) {
     return {
-      isRepo: isRepo,
-      isContribRepo: true,
-      scope: repoConfig.scope,
-      repoSlug: repoConfig.repoSlug,
-      destDir: path.join(repoRoot, "packages"),
+      isRepo,
+      isKnownRepo: true,
+      repoConfig,
+      destDir: path.join(await getRepoRoot(), "packages"),
     };
   }
-  // If current directory is not a known jsPsych monorepo
+
+  // Not inside a known monorepo — scaffold into the current working directory, unscoped.
   return {
-    isRepo: isRepo,
-    isContribRepo: false,
-    scope: undefined,
-    repoSlug: undefined,
+    isRepo,
+    isKnownRepo: false,
+    repoConfig: null,
     destDir: process.cwd(),
   };
 }
 
 async function runPrompts(cwdInfo) {
   const name = await input({
-    message: "Enter the name you would like this plugin package to be called:",
+    message: "Enter the name you would like this adapter package to be called:",
     required: true,
     validate: (input) => {
-      const packagePath = `${cwdInfo.destDir}/plugin-${getHyphenateName(input)}`;
+      const packagePath = `${cwdInfo.destDir}/adapter-${getHyphenateName(input)}`;
       if (fs.existsSync(packagePath)) {
-        return "A plugin package with this name already exists in this directory. Please choose a different name.";
+        return "An adapter package with this name already exists in this directory. Please choose a different name.";
       } else {
         return true;
       }
@@ -186,12 +181,12 @@ async function runPrompts(cwdInfo) {
   });
 
   const description = await input({
-    message: "Enter a brief description of this plugin package:",
+    message: "Enter a brief description of this adapter package:",
     required: true,
   });
 
   const author = await input({
-    message: "Enter the name of the author of this plugin package:",
+    message: "Enter the name of the author of this adapter package:",
     required: true,
   });
 
@@ -199,38 +194,29 @@ async function runPrompts(cwdInfo) {
     message: "Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:",
   });
 
-  const language = await select({
-    message: "Choose a language to use for this plugin package:",
-    choices: [
-      { name: "TypeScript", value: "ts" },
-      { name: "JavaScript", value: "js" },
-    ],
-    loop: false,
-  });
-
-  // If not in a known jsPsych monorepo, ask for the path to the README.md file
+  // If not in a known monorepo, ask for the path to the README.md file
   let readmePath;
-  if (!cwdInfo.isContribRepo) {
+  if (!cwdInfo.isKnownRepo) {
     const remoteGitUrl = await getRemoteGitUrl();
     readmePath = await input({
-      message: "Enter the path to the README.md file for this plugin package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
+      message: "Enter the path to the README.md file for this adapter package [Optional]:",
+      default: `${getGitHttpsUrl(remoteGitUrl)}/adapter-${getHyphenateName(name)}/README.md`, // '/adapter-${name}/README.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/${cwdInfo.repoSlug}/packages/plugin-${getHyphenateName(name)}/README.md`;
+    readmePath = `https://github.com/${
+      cwdInfo.repoConfig.repoSlug
+    }/blob/main/packages/adapter-${getHyphenateName(name)}/README.md`;
   }
 
   return {
-    name: name,
-    description: description,
-    author: author,
-    authorUrl: authorUrl,
-    language: language,
-    readmePath: readmePath,
+    name,
+    description,
+    author,
+    authorUrl,
+    readmePath,
     destDir: cwdInfo.destDir,
-    isContribRepo: cwdInfo.isContribRepo,
-    scope: cwdInfo.scope,
-    repoSlug: cwdInfo.repoSlug,
+    isKnownRepo: cwdInfo.isKnownRepo,
+    repoConfig: cwdInfo.repoConfig,
   };
 }
 
@@ -240,17 +226,18 @@ async function processAnswers(answers) {
       answers[key] = JSON.stringify(answers[key]); // Properly escape for JSON
       answers[key] = answers[key].slice(1, -1); // Remove outer quotes
     }
-  })
+  });
   answers.name = getHyphenateName(answers.name);
   const camelCaseName = getCamelCaseName(answers.name);
-  const globalName = "jsPsych" + camelCaseName;
-  const packageName = `plugin-${answers.name}`;
+  const globalName = "jsPsychAdapter" + camelCaseName;
+  const packageName = `adapter-${answers.name}`;
   const destPath = path.join(answers.destDir, packageName);
-  const npmPackageName = answers.isContribRepo ? `${answers.scope}/${packageName}` : packageName;
+  const scope = answers.repoConfig?.scope;
+  const npmPackageName = scope ? `${scope}/${packageName}` : packageName;
 
   const templatesDir = path.resolve(__dirname, "../templates");
   let repoRoot = await getRepoRoot();
-  let packageDir = answers.isContribRepo
+  let packageDir = answers.isKnownRepo
     ? "packages"
     : repoRoot
     ? path.relative(repoRoot, process.cwd())
@@ -259,9 +246,9 @@ async function processAnswers(answers) {
   const gitRootHttpsUrl = getGitHttpsUrl(gitRootUrl);
 
   function processTemplate() {
-    return src(`${templatesDir}/plugin-template-${answers.language}/**/*`, {
-      dot: true,   // Includes hidden files too
-      nodir: false // Includes directories
+    return src(`${templatesDir}/adapter-template-ts/**/*`, {
+      dot: true, // Includes hidden files too
+      nodir: false, // Includes directories
     })
       .pipe(replace("{npmPackageName}", npmPackageName))
       .pipe(replace("{author}", answers.author))
@@ -270,7 +257,7 @@ async function processAnswers(answers) {
       .pipe(replace("_globalName_", globalName))
       .pipe(replace("{globalName}", globalName))
       .pipe(replace("{camelCaseName}", camelCaseName))
-      .pipe(replace("PluginNamePlugin", `${camelCaseName}Plugin`))
+      .pipe(replace("AdapterNameAdapter", `${camelCaseName}Adapter`))
       .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
@@ -294,10 +281,10 @@ async function processAnswers(answers) {
       .pipe(
         replace(
           "{publishingComment}\n",
-          answers.isContribRepo
+          npmPackageName.startsWith("@")
             ? // prettier-ignore
-              `<!-- Once this plugin package is published, you can load it from a CDN instead:\n<script src="https://unpkg.com/${answers.scope}/${packageName}"></script> -->\n`
-            : `<!-- Once this plugin package is published, you can load it from a CDN instead:\n<script src="https://unpkg.com/${packageName}"></script> -->\n`
+              `<!-- Once this adapter package is published, you can load it from a CDN instead:\n<script src="https://unpkg.com/${npmPackageName}"></script> -->\n`
+            : `<!-- Once this adapter package is published, you can load it from a CDN instead:\n<script src="https://unpkg.com/${packageName}"></script> -->\n`
         )
       )
       .pipe(dest(`${destPath}/examples`));
@@ -309,10 +296,10 @@ async function processAnswers(answers) {
       .pipe(
         replace(
           "## Install",
-          answers.isContribRepo
+          answers.isKnownRepo
             ? // prettier-ignore
-              `## Install\n\nUsing the CDN-hosted JavaScript file:\n\n\`\`\`js\n<script src="https://unpkg.com/${answers.scope}/${packageName}"></script>\n\`\`\`\n\nUsing the JavaScript file downloaded from a GitHub release dist archive:\n\n\`\`\`js\n<script src="jspsych/${packageName}.js"></script>\n\`\`\`\n\nUsing NPM:\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${camelCaseName} from "${npmPackageName}";\n\`\`\`\n`
-            : "## Install\n\n*Enter instructions for installing the plugin package here.*"
+              `## Install\n\nUsing the CDN-hosted JavaScript file:\n\n\`\`\`js\n<script src="https://unpkg.com/${npmPackageName}"></script>\n\`\`\`\n\nUsing the JavaScript file downloaded from a GitHub release dist archive:\n\n\`\`\`js\n<script src="jspsych/${packageName}.js"></script>\n\`\`\`\n\nUsing NPM:\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${camelCaseName} from "${npmPackageName}";\n\`\`\`\n`
+            : "## Install\n\n*Enter instructions for installing the adapter package here.*"
         )
       )
       .pipe(dest(`${destPath}/docs`))
@@ -333,13 +320,10 @@ async function processAnswers(answers) {
       .pipe(
         replace(
           `## Loading`,
-          answers.isContribRepo
+          answers.isKnownRepo
             ? // prettier-ignore
-              answers.language == "ts"
-              ? // prettier-ignore
-                `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/${answers.scope}/${packageName}"></script>\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${camelCaseName} from "${npmPackageName}";\n\`\`\``
-              : `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/${answers.scope}/${packageName}"></script>\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\``
-            : `## Loading\n\n*Enter instructions for loading the plugin package here.*`
+              `## Loading\n\n### In browser\n\n\`\`\`html\n<script src="https://unpkg.com/${npmPackageName}"></script>\n\`\`\`\n\n### Via NPM\n\n\`\`\`\nnpm install ${npmPackageName}\n\`\`\`\n\n\`\`\`js\nimport ${camelCaseName} from "${npmPackageName}";\n\`\`\``
+            : `## Loading\n\n*Enter instructions for loading the adapter package here.*`
         )
       )
       .pipe(dest(destPath));
@@ -350,37 +334,37 @@ async function processAnswers(answers) {
 
 async function runWithArgs(cwdInfo, options) {
   // Check if package already exists
-  const packagePath = `${cwdInfo.destDir}/plugin-${getHyphenateName(options.name)}`;
+  const packagePath = `${cwdInfo.destDir}/adapter-${getHyphenateName(options.name)}`;
   if (fs.existsSync(packagePath)) {
-    console.error(`Error: A plugin package with this name already exists in this directory: ${packagePath}`);
+    console.error(
+      `Error: An adapter package with this name already exists in this directory: ${packagePath}`
+    );
     process.exit(1);
   }
 
-  // Set defaults and calculate derived values
   const name = options.name;
-  const language = options.language || 'ts';
-  
+
   let readmePath = options.readmePath;
   if (!readmePath) {
-    if (!cwdInfo.isContribRepo) {
+    if (!cwdInfo.isKnownRepo) {
       const remoteGitUrl = await getRemoteGitUrl();
-      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/README.md`;
+      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/adapter-${getHyphenateName(name)}/README.md`;
     } else {
-      readmePath = `https://github.com/${cwdInfo.repoSlug}/packages/plugin-${getHyphenateName(name)}/README.md`;
+      readmePath = `https://github.com/${
+        cwdInfo.repoConfig.repoSlug
+      }/blob/main/packages/adapter-${getHyphenateName(name)}/README.md`;
     }
   }
 
   return {
-    name: name,
+    name,
     description: options.description,
     author: options.author,
-    authorUrl: options.authorUrl || '',
-    language: language,
-    readmePath: readmePath,
+    authorUrl: options.authorUrl || "",
+    readmePath,
     destDir: cwdInfo.destDir,
-    isContribRepo: cwdInfo.isContribRepo,
-    scope: cwdInfo.scope,
-    repoSlug: cwdInfo.repoSlug,
+    isKnownRepo: cwdInfo.isKnownRepo,
+    repoConfig: cwdInfo.repoConfig,
   };
 }
 
@@ -388,46 +372,41 @@ async function runWithArgs(cwdInfo, options) {
 const program = new Command();
 
 program
-  .name('new-plugin')
-  .description('Creates a new jsPsych plugin package')
+  .name("new-multiplayer-adapter")
+  .description("Creates a new jsPsych multiplayer adapter package")
   .version(version)
-  .option('--name <name>', 'Name of the plugin package (required)')
-  .option('--description <description>', 'Brief description of the plugin package (required)')
-  .option('--author <author>', 'Name of the author (required)')
-  .option('--author-url <url>', 'Profile URL for the author (optional)')
-  .option('--language <lang>', 'Language to use: ts or js (default: ts)', 'ts')
-  .option('--readme-path <path>', 'Path to README.md file (optional)')
-  .addHelpText('after', `
+  .option("--name <name>", "Name of the adapter package (required)")
+  .option("--description <description>", "Brief description of the adapter package (required)")
+  .option("--author <author>", "Name of the author (required)")
+  .option("--author-url <url>", "Profile URL for the author (optional)")
+  .option("--readme-path <path>", "Path to README.md file (optional)")
+  .addHelpText(
+    "after",
+    `
 
 Examples:
-  $ new-plugin --name "my-plugin" --description "My awesome plugin" --author "John Doe"
-  $ new-plugin --name "my-plugin" --description "My plugin" --author "John Doe" --language js`);
+  $ new-multiplayer-adapter --name "my-backend" --description "Adapter for my backend" --author "John Doe"`
+  );
 
 async function main(options, isNonInteractive = false) {
   const cwdInfo = await getCwdInfo();
-  
+
   let answers;
   if (isNonInteractive) {
     // Validate required options
     if (!options.name) {
-      console.error('Error: --name is required');
+      console.error("Error: --name is required");
       process.exit(1);
     }
     if (!options.description) {
-      console.error('Error: --description is required');
+      console.error("Error: --description is required");
       process.exit(1);
     }
     if (!options.author) {
-      console.error('Error: --author is required');
+      console.error("Error: --author is required");
       process.exit(1);
     }
-    
-    // Validate language
-    if (options.language && !['ts', 'js'].includes(options.language)) {
-      console.error('Error: --language must be either "ts" or "js"');
-      process.exit(1);
-    }
-    
+
     // Non-interactive mode
     answers = await runWithArgs(cwdInfo, options);
   } else {
@@ -442,11 +421,7 @@ program.parse();
 const options = program.opts();
 
 // Check if we have command line arguments (any option except defaults)
-const hasArgs = Object.keys(options).some(key => 
-  (key !== 'language' || options[key] !== 'ts') && 
-  key !== 'version' && 
-  options[key] !== undefined
-);
+const hasArgs = Object.keys(options).some((key) => key !== "version" && options[key] !== undefined);
 
 if (!hasArgs) {
   // No arguments provided, run in interactive mode
