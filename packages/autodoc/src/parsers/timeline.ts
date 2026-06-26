@@ -174,6 +174,12 @@ function parseTypeNode(
     return info as ParameterInfo;
   }
 
+  // catch typeof Interface to make sure it doesn't get parsed any further
+  if (ts.isTypeQueryNode(typeNode)) {
+    info.type = `typeof ${entityNameText(typeNode.exprName)}`;
+    return info as ParameterInfo;
+  }
+
   if (ts.isTypeLiteralNode(typeNode)) {
     info.type = printer
       .printNode(ts.EmitHint.Unspecified, typeNode, typeSource)
@@ -257,6 +263,56 @@ function parseTypeLiteralMembers(
 
 // --- FUNCTION PARSING ---
 
+/**
+ * Picks a display name (and JSDoc description) for a destructured parameter,
+ * which has no identifier of its own in source. Timeline factories conventionally
+ * document the bag with a single `@param config ...` tag, so we adopt the first
+ * such "leftover" tag -- one that doesn't name an identifier parameter -- and fall
+ * back to `config` (suffixed on collision) when there is none.
+ */
+function resolveDestructuredName(
+  paramDescs: Record<string, string>,
+  identifierParamNames: Set<string>,
+  existing: Record<string, ParameterInfo>,
+): { name: string; description?: string } {
+  for (const [tagName, desc] of Object.entries(paramDescs)) {
+    if (!identifierParamNames.has(tagName) && !(tagName in existing)) {
+      return { name: tagName, description: desc };
+    }
+  }
+  let name = "config";
+  for (let i = 2; name in existing; i++) name = `config${i}`;
+  return { name };
+}
+
+/**
+ * handles destructured object parameters (like `{ ... }: Config = {}`) as a
+ * single parameter typed by annotations. per-field defaults are on binding elements,
+ * not in the object literal. this also allows for shared config interfaces to be hoisted
+ */
+function parseDestructuredParam(
+  param: ts.ParameterDeclaration,
+  pattern: ts.ObjectBindingPattern,
+  source: ts.SourceFile,
+  interfaceMap: Map<string, InterfaceEntry>,
+  usageMap: UsageMap,
+): ParameterInfo {
+  const defaultExpr =
+    param.initializer && ts.isObjectLiteralExpression(param.initializer)
+      ? param.initializer
+      : undefined;
+  const info = parseTypeNode(param.type, source, defaultExpr, source, interfaceMap, new Set(), usageMap);
+
+  if (info.nested) {
+    for (const element of pattern.elements) {
+      if (!ts.isIdentifier(element.name) || !element.initializer) continue;
+      const target = info.nested[element.name.text];
+      if (target && !target.default) target.default = element.initializer.getText(source);
+    }
+  }
+  return info;
+}
+
 function parseFunctionParams(
   funcNode: ts.FunctionDeclaration,
   source: ts.SourceFile,
@@ -266,17 +322,28 @@ function parseFunctionParams(
   const result: Record<string, ParameterInfo> = {};
   const params = [...funcNode.parameters];
   const paramDescs = getJsDocParamDescriptions(funcNode, source);
+  const identifierParamNames = new Set(
+    params.filter((p) => ts.isIdentifier(p.name)).map((p) => (p.name as ts.Identifier).text),
+  );
   for (const param of params) {
-    if (!ts.isIdentifier(param.name)) continue;
-    const name = param.name.text;
-    const defaultExpr = param.initializer
-      ? resolveDefaultExpr(param.initializer, source)
-      : undefined;
-    const info = parseTypeNode(param.type, source, defaultExpr, source, interfaceMap, new Set(), usageMap);
-    const desc = paramDescs[name];
-    if (desc) info.description = desc;
-    recordInterfaceUsage(usageMap, interfaceMap, info);
-    result[name] = info;
+    if (ts.isIdentifier(param.name)) {
+      const name = param.name.text;
+      const defaultExpr = param.initializer
+        ? resolveDefaultExpr(param.initializer, source)
+        : undefined;
+      const info = parseTypeNode(param.type, source, defaultExpr, source, interfaceMap, new Set(), usageMap);
+      const desc = paramDescs[name];
+      if (desc) info.description = desc;
+      recordInterfaceUsage(usageMap, interfaceMap, info);
+      result[name] = info;
+    } else if (ts.isObjectBindingPattern(param.name)) {
+      const info = parseDestructuredParam(param, param.name, source, interfaceMap, usageMap);
+      const { name, description } = resolveDestructuredName(paramDescs, identifierParamNames, result);
+      if (description && !info.description) info.description = description;
+      recordInterfaceUsage(usageMap, interfaceMap, info);
+      result[name] = info;
+    }
+    // array binding patterns and other parameter shapes are intentionally skipped
   }
   return result;
 }

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturePath = path.resolve(__dirname, '../fixtures/timeline/basic.ts');
+const destructuredFixturePath = path.resolve(__dirname, '../fixtures/timeline/destructured.ts');
 
 describe('getTimelineInfo', () => {
     it('extracts createTimeline helperParameters with types and defaults', () => {
@@ -64,6 +65,58 @@ describe('getTimelineInfo', () => {
             stuff: { type: 'number', description: 'some stuff' },
             things: { type: 'boolean', description: 'some things' },
         });
+    });
+});
+
+describe('getTimelineInfo with destructured parameters', () => {
+    it('parses a destructured object parameter instead of dropping it', () => {
+        const info = getTimelineInfo(destructuredFixturePath);
+        const config = info.createTimeline.helperParameters.config;
+        expect(config).toBeDefined();
+        expect(config.type).toBe('SharedConfig');
+        expect(config.default).toBe('{}');
+    });
+
+    it('names a destructured parameter from its leftover JSDoc @param tag', () => {
+        const info = getTimelineInfo(destructuredFixturePath);
+        expect(info.createTimeline.helperParameters.config.description).toBe('tuning knobs');
+    });
+
+    it('falls back to "config" when a destructured parameter has no JSDoc tag', () => {
+        const info = getTimelineInfo(destructuredFixturePath);
+        expect(info.timelineUnits.createWidget.helperParameters.config).toBeDefined();
+    });
+
+    it('hoists a config interface shared by destructured parameters across functions', () => {
+        const info = getTimelineInfo(destructuredFixturePath);
+        // SharedConfig is the type of the destructured param in both createTimeline and createPractice
+        expect(info.interfaces.SharedConfig).toBeDefined();
+        expect(info.interfaces.SharedConfig.description).toBe('shared config nation');
+        expect(info.interfaces.SharedConfig.interfaceParameters.show.type).toBe('boolean');
+
+        expect(info.createTimeline.helperParameters.config.interfaceRef).toBe('SharedConfig');
+        expect(info.createTimeline.helperParameters.config.nested).toBeUndefined();
+        expect(info.timelineUnits.createPractice.helperParameters.config.interfaceRef).toBe('SharedConfig');
+        expect(info.timelineUnits.createPractice.helperParameters.config.nested).toBeUndefined();
+    });
+
+    it('overlays per-field defaults from binding elements (non-hoisted inline literal)', () => {
+        const info = getTimelineInfo(destructuredFixturePath);
+        // createWidget uses an inline type literal, so it is not hoisted and keeps nested members
+        const widgetConfig = info.timelineUnits.createWidget.helperParameters.config;
+        expect(widgetConfig.interfaceRef).toBeUndefined();
+        expect(widgetConfig.nested).toBeDefined();
+        expect(widgetConfig.nested!.label.type).toBe('string');
+        expect(widgetConfig.nested!.label.default).toBe('"ok"');
+        expect(widgetConfig.nested!.repeat.default).toBe('2');
+        // an inline object literal type is never hoisted into the shared interfaces section
+        expect(Object.keys(info.interfaces)).toEqual(['SharedConfig']);
+    });
+
+    it('renders `typeof X` types instead of expanding or mangling them', () => {
+        const info = getTimelineInfo(destructuredFixturePath);
+        expect(info.interfaces.SharedConfig.interfaceParameters.text_object.type).toBe('typeof trial_text');
+        expect(info.interfaces.SharedConfig.interfaceParameters.text_object.nested).toBeUndefined();
     });
 });
 
