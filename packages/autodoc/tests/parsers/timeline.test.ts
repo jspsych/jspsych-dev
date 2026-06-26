@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturePath = path.resolve(__dirname, '../fixtures/timeline/basic.ts');
 const destructuredFixturePath = path.resolve(__dirname, '../fixtures/timeline/destructured.ts');
+const typeofHoistFixturePath = path.resolve(__dirname, '../fixtures/timeline/typeof-hoist.ts');
 
 describe('getTimelineInfo', () => {
     it('extracts createTimeline helperParameters with types and defaults', () => {
@@ -113,10 +114,56 @@ describe('getTimelineInfo with destructured parameters', () => {
         expect(Object.keys(info.interfaces)).toEqual(['SharedConfig']);
     });
 
-    it('renders `typeof X` types instead of expanding or mangling them', () => {
+    it('keeps the `typeof X` label and expands the value shape inline when not hoisted', () => {
         const info = getTimelineInfo(destructuredFixturePath);
-        expect(info.interfaces.SharedConfig.interfaceParameters.text_object.type).toBe('typeof trial_text');
-        expect(info.interfaces.SharedConfig.interfaceParameters.text_object.nested).toBeUndefined();
+        // typeof trial_text is only referenced once (as a nested field), so it is not
+        // hoisted; its underlying object shape is expanded inline instead.
+        const textObject = info.interfaces.SharedConfig.interfaceParameters.text_object;
+        expect(textObject.type).toBe('typeof trial_text');
+        expect(textObject.nested).toEqual({
+            next: { type: 'string', default: '"Next"' },
+            count: { type: 'number', default: '3' },
+        });
+    });
+});
+
+describe('getTimelineInfo with `typeof` value-shape parameters', () => {
+    it('hoists a `typeof x` object shape used as a parameter type in 2+ functions', () => {
+        const info = getTimelineInfo(typeofHoistFixturePath);
+        expect(Object.keys(info.interfaces)).toEqual(['trial_text']);
+        expect(info.interfaces.trial_text.description).toBe('the text bag shared across the task');
+    });
+
+    it('infers field types from the object values and keeps each value as the default', () => {
+        const info = getTimelineInfo(typeofHoistFixturePath);
+        const fields = info.interfaces.trial_text.interfaceParameters;
+        expect(fields.next_button.type).toBe('string');
+        expect(fields.next_button.default).toBe('"Next"');
+        expect(fields.next_button.description).toBe('the go-ahead label');
+        expect(fields.pages.type).toBe('string');
+        expect(fields.pages.array).toBe(true);
+        expect(fields.format.type).toBe('function');
+    });
+
+    it('replaces each hoisted `typeof x` site with an interfaceRef while keeping the typeof label', () => {
+        const info = getTimelineInfo(typeofHoistFixturePath);
+        const instructionsText = info.timelineUnits.createInstructions.helperParameters.text;
+        expect(instructionsText.type).toBe('typeof trial_text');
+        expect(instructionsText.interfaceRef).toBe('trial_text');
+        expect(instructionsText.nested).toBeUndefined();
+        expect(info.timelineUnits.createDebrief.helperParameters.text.interfaceRef).toBe('trial_text');
+    });
+
+    it('collapses a hoisted type to a ref even where it appears nested inside another type', () => {
+        const info = getTimelineInfo(typeofHoistFixturePath);
+        // createTimeline's inline config has a `text_object: typeof trial_text` field;
+        // since trial_text is hoisted, that nested field should be a ref, not expanded inline.
+        const config = info.createTimeline.helperParameters.config;
+        expect(config.nested).toBeDefined();
+        const textObject = config.nested!.text_object;
+        expect(textObject.type).toBe('typeof trial_text');
+        expect(textObject.interfaceRef).toBe('trial_text');
+        expect(textObject.nested).toBeUndefined();
     });
 });
 

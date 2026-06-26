@@ -1,13 +1,37 @@
 import ts from "typescript";
-import { TimelineInfo, TimelineHelperInfo, TimelineInterfaceInfo, ParameterInfo } from "../types/info.js";
+import { TimelineInfo, TimelineHelperInfo, ParameterInfo } from "../types/info.js";
 import { collectExamples, dedent, extractJsDocComment, printer } from "./utils.js";
 
 
 // --- INTERFACE MAP ---
 
-/** pairs together interface declarations with the corresponding 
- * source file it was found in */
-type InterfaceEntry = { decl: ts.InterfaceDeclaration; source: ts.SourceFile };
+/** pairs together an interface declaration with the source file it was found in */
+type InterfaceEntry = { kind: "interface"; decl: ts.InterfaceDeclaration; source: ts.SourceFile };
+
+/**
+ * pairs together a `const x = { ... }` object value with the source file it was
+ * found in, so that `typeof x` parameter types can be expanded and hoisted the
+ * same way interfaces are (e.g. BART's `text_object: typeof trial_text`).
+ */
+type ValueShapeEntry = {
+  kind: "value";
+  objLiteral: ts.ObjectLiteralExpression;
+  decl: ts.VariableDeclaration;
+  source: ts.SourceFile;
+};
+
+/** anything that can be hoisted into the shared Configuration Options section */
+type HoistEntry = InterfaceEntry | ValueShapeEntry;
+
+/**
+ * the hoist key for a parsed type: an interface uses its own name, while a
+ * `typeof x` value-shape uses the bare value name `x` (so the shared section is
+ * titled `x`, not `typeof x`). Kept in sync with the `typeof ` prefix that
+ * `parseTypeNode` writes for value-shape types.
+ */
+function hoistKeyForType(type: string): string {
+  return type.startsWith("typeof ") ? type.slice("typeof ".length) : type;
+}
 
 /** 
  * pairs together names of interface with their corresponding `ParameterInfo`s. 
@@ -17,20 +41,21 @@ type UsageMap = Map<string, ParameterInfo[]>;
 
 function recordInterfaceUsage(
   usageMap: UsageMap,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   info: ParameterInfo,
 ): void {
-  if (!info.nested || !interfaceMap.has(info.type)) return;
-  const sites = usageMap.get(info.type);
+  const key = hoistKeyForType(info.type);
+  if (!info.nested || !interfaceMap.has(key)) return;
+  const sites = usageMap.get(key);
   if (sites) sites.push(info);
-  else usageMap.set(info.type, [info]);
+  else usageMap.set(key, [info]);
 }
 
 function buildInterfaceMap(
   source: ts.SourceFile,
   program?: ts.Program,
-): Map<string, InterfaceEntry> {
-  const map = new Map<string, InterfaceEntry>();
+): Map<string, HoistEntry> {
+  const map = new Map<string, HoistEntry>();
   const filesToSearch = program
     ? [
         source,
@@ -42,7 +67,29 @@ function buildInterfaceMap(
   for (const file of filesToSearch) {
     for (const stmt of file.statements) {
       if (ts.isInterfaceDeclaration(stmt) && !map.has(stmt.name.text)) {
-        map.set(stmt.name.text, { decl: stmt, source: file });
+        map.set(stmt.name.text, { kind: "interface", decl: stmt, source: file });
+      }
+    }
+  }
+  // second pass: object-valued consts, used to expand `typeof x` parameter types.
+  // interfaces win on name collisions (added first, and not overwritten here).
+  for (const file of filesToSearch) {
+    for (const stmt of file.statements) {
+      if (!ts.isVariableStatement(stmt)) continue;
+      for (const decl of stmt.declarationList.declarations) {
+        if (
+          ts.isIdentifier(decl.name) &&
+          decl.initializer &&
+          ts.isObjectLiteralExpression(decl.initializer) &&
+          !map.has(decl.name.text)
+        ) {
+          map.set(decl.name.text, {
+            kind: "value",
+            objLiteral: decl.initializer,
+            decl,
+            source: file,
+          });
+        }
       }
     }
   }
@@ -122,7 +169,7 @@ function parseTypeNode(
   typeSource: ts.SourceFile,
   defaultExpr: ts.Expression | undefined,
   defaultSource: ts.SourceFile,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   visited: Set<string>,
   usageMap: UsageMap,
 ): ParameterInfo {
@@ -157,7 +204,7 @@ function parseTypeNode(
 
     if (!visited.has(typeName)) {
       const entry = interfaceMap.get(typeName);
-      if (entry) {
+      if (entry?.kind === "interface") {
         const defaultObjLiteral =
           defaultExpr && ts.isObjectLiteralExpression(defaultExpr) ? defaultExpr : undefined;
         info.nested = parseInterfaceMembers(
@@ -174,9 +221,18 @@ function parseTypeNode(
     return info as ParameterInfo;
   }
 
-  // catch typeof Interface to make sure it doesn't get parsed any further
+  // `typeof x`: keep the readable `typeof x` label, but if `x` resolves to a known
+  // object-valued const, expand its shape so the type can be hoisted (and so a
+  // single use still renders its fields inline).
   if (ts.isTypeQueryNode(typeNode)) {
-    info.type = `typeof ${entityNameText(typeNode.exprName)}`;
+    const valueName = entityNameText(typeNode.exprName);
+    info.type = `typeof ${valueName}`;
+    if (!visited.has(valueName)) {
+      const entry = interfaceMap.get(valueName);
+      if (entry?.kind === "value") {
+        info.nested = parseValueShapeMembers(entry.objLiteral, entry.source);
+      }
+    }
     return info as ParameterInfo;
   }
 
@@ -201,7 +257,7 @@ function parseInterfaceMembers(
   entry: InterfaceEntry,
   defaultObjLiteral: ts.ObjectLiteralExpression | undefined,
   defaultSource: ts.SourceFile,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   visited: Set<string>,
   usageMap: UsageMap,
 ): Record<string, ParameterInfo> {
@@ -241,7 +297,7 @@ function parseTypeLiteralMembers(
   typeSource: ts.SourceFile,
   defaultObjLiteral: ts.ObjectLiteralExpression | undefined,
   defaultSource: ts.SourceFile,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   visited: Set<string>,
   usageMap: UsageMap,
 ): Record<string, ParameterInfo> {
@@ -256,6 +312,73 @@ function parseTypeLiteralMembers(
     const desc = extractJsDocComment(member, typeSource);
     if (desc) info.description = desc;
     // see comment in parseInterfaceMembers: nested member usage is intentionally not recorded
+    result[name] = info;
+  }
+  return result;
+}
+
+// --- VALUE SHAPE PARSING (for `typeof x`) ---
+
+/**
+ * Infers a parameter type string from a value expression (an object-const's
+ * property), since these are plain values with no type annotations. Resolves a
+ * single level of identifier reference (e.g. `instruction_pages` -> its array)
+ * and array element types one level deep.
+ */
+function inferValueType(expr: ts.Expression, source: ts.SourceFile, depth = 0): { type: string; array?: boolean } {
+  if (ts.isStringLiteral(expr) || ts.isNoSubstitutionTemplateLiteral(expr) || ts.isTemplateExpression(expr))
+    return { type: "string" };
+  if (ts.isNumericLiteral(expr)) return { type: "number" };
+  if (expr.kind === ts.SyntaxKind.TrueKeyword || expr.kind === ts.SyntaxKind.FalseKeyword)
+    return { type: "boolean" };
+  if (ts.isPrefixUnaryExpression(expr)) return inferValueType(expr.operand, source, depth);
+  if (ts.isArrowFunction(expr) || ts.isFunctionExpression(expr)) return { type: "function" };
+  if (ts.isArrayLiteralExpression(expr)) {
+    const first = expr.elements[0];
+    const inner = first && depth < 3 ? inferValueType(first, source, depth + 1) : { type: "unknown" };
+    return { type: inner.type, array: true };
+  }
+  if (ts.isObjectLiteralExpression(expr)) return { type: "object" };
+  if (ts.isIdentifier(expr) && depth < 1) {
+    const resolved = resolveDefaultExpr(expr, source);
+    if (resolved !== expr) return inferValueType(resolved, source, depth + 1);
+  }
+  return { type: "unknown" };
+}
+
+/**
+ * Parses an object-const's literal into `ParameterInfo`s for a `typeof x` type.
+ * Field types are inferred from the values, and each value's source text is kept
+ * as the "default" (these values are the defaults a researcher would override).
+ */
+function parseValueShapeMembers(
+  objLiteral: ts.ObjectLiteralExpression,
+  source: ts.SourceFile,
+): Record<string, ParameterInfo> {
+  const result: Record<string, ParameterInfo> = {};
+  for (const prop of objLiteral.properties) {
+    let name: string | undefined;
+    let valueExpr: ts.Expression | undefined;
+    if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
+      name = prop.name.text;
+      valueExpr = prop.initializer;
+    } else if (ts.isShorthandPropertyAssignment(prop)) {
+      name = prop.name.text;
+      valueExpr = prop.name;
+    } else if (ts.isMethodDeclaration(prop) && ts.isIdentifier(prop.name)) {
+      name = prop.name.text;
+    }
+    if (!name) continue;
+
+    const info = { type: "function" } as ParameterInfo;
+    if (valueExpr) {
+      const inferred = inferValueType(valueExpr, source);
+      info.type = inferred.type;
+      info.default = valueExpr.getText(source);
+      if (inferred.array) info.array = true;
+    }
+    const desc = extractJsDocComment(prop, source);
+    if (desc) info.description = desc;
     result[name] = info;
   }
   return result;
@@ -294,7 +417,7 @@ function parseDestructuredParam(
   param: ts.ParameterDeclaration,
   pattern: ts.ObjectBindingPattern,
   source: ts.SourceFile,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   usageMap: UsageMap,
 ): ParameterInfo {
   const defaultExpr =
@@ -316,7 +439,7 @@ function parseDestructuredParam(
 function parseFunctionParams(
   funcNode: ts.FunctionDeclaration,
   source: ts.SourceFile,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   usageMap: UsageMap,
 ): Record<string, ParameterInfo> {
   const result: Record<string, ParameterInfo> = {};
@@ -351,7 +474,7 @@ function parseFunctionParams(
 function parseHelperFunction(
   funcNode: ts.FunctionDeclaration,
   source: ts.SourceFile,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   usageMap: UsageMap,
 ): TimelineHelperInfo {
   return {
@@ -405,41 +528,61 @@ function findCreateTimeline(source: ts.SourceFile): ts.FunctionDeclaration {
 }
 
 /**
- * modifies `result` to hoist interfaces used in 2 or more times across timeline functions.
- * 
- * every `ParameterInfo` that contains a to-be-hoisted interface will have its `nested`
- * field deleted and replaced with an `interfaceRef` to the given hoisted interface.
+ * recursively rewrites every `ParameterInfo` whose type was hoisted: its `nested`
+ * expansion is dropped and replaced with an `interfaceRef`. Walking the tree (rather
+ * than only the directly-recorded param sites) means a hoisted type also collapses
+ * to a ref where it appears nested inside another type's fields.
+ */
+function refHoistedTypes(params: Record<string, ParameterInfo>, hoisted: Set<string>): void {
+  for (const info of Object.values(params)) {
+    if (!info.nested) continue;
+    const key = hoistKeyForType(info.type);
+    if (hoisted.has(key)) {
+      delete info.nested;
+      info.interfaceRef = key;
+    } else {
+      refHoistedTypes(info.nested, hoisted);
+    }
+  }
+}
+
+/**
+ * modifies `result` to hoist interfaces (and `typeof` value-shapes) used directly as
+ * a parameter in 2 or more timeline functions into the shared section, then replaces
+ * every occurrence of a hoisted type -- including nested ones -- with an `interfaceRef`.
  */
 function hoistSharedInterfaces(
   result: TimelineInfo,
   usageMap: UsageMap,
-  interfaceMap: Map<string, InterfaceEntry>,
+  interfaceMap: Map<string, HoistEntry>,
   source: ts.SourceFile,
 ): void {
+  const hoisted = new Set<string>();
   for (const [name, sites] of usageMap) {
-    if (sites.length < 2) continue;
-    const entry = interfaceMap.get(name);
-    if (!entry) continue;
+    if (sites.length >= 2 && interfaceMap.has(name)) hoisted.add(name);
+  }
 
-    const interfaceParameters = parseInterfaceMembers(
-      entry,
-      undefined,
-      source,
-      interfaceMap,
-      new Set([name]),
-      usageMap,
-    );
-    const info: TimelineInterfaceInfo = {
+  // build each shared section first, so nested refs (applied below) resolve to it
+  for (const name of hoisted) {
+    const entry = interfaceMap.get(name)!;
+    const interfaceParameters =
+      entry.kind === "interface"
+        ? parseInterfaceMembers(entry, undefined, source, interfaceMap, new Set([name]), usageMap)
+        : parseValueShapeMembers(entry.objLiteral, entry.source);
+    result.interfaces[name] = {
       description: extractJsDocComment(entry.decl, entry.source) ?? "",
       interfaceParameters,
     };
-    result.interfaces[name] = info;
-
-    for (const site of sites) {
-      delete site.nested;
-      site.interfaceRef = name;
-    }
   }
+
+  // rewrite every site (params and the shared sections themselves) in one tree walk
+  const allParams = [
+    result.createTimeline.helperParameters,
+    ...Object.values(result.timelineUnits).map((u) => u.helperParameters),
+    ...Object.values(result.utils).map((u) => u.helperParameters),
+    ...Object.values(result.interfaces).map((i) => i.interfaceParameters),
+  ];
+  for (const params of allParams) refHoistedTypes(params, hoisted);
 }
 
 export function getTimelineInfo(filePath: string): TimelineInfo {
