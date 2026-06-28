@@ -1,5 +1,5 @@
 import { ExtensionInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, topParameterChart, topDataChart } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string =>
   array ? `array of ${type}` : type;
@@ -7,7 +7,7 @@ const getTypeName = (type: string, array?: boolean): string =>
 const toJsPsychExtensionName = (name: string): string =>
   "jsPsychExtension" + name.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
 
-const mainTemplate: SectionTemplate<ExtensionInfo>[] = [
+export const defaultExtensionTemplate: SectionTemplate<ExtensionInfo>[] = [
   {
     heading: "introduction",
     render: (info) => {
@@ -102,12 +102,9 @@ ${sections}
   },
 ]
 
-export function getExtensionDocs(info: ExtensionInfo): Record<string, string> {
-  return Object.fromEntries(
-    mainTemplate.map((section) => {
-      const content = section.render(info);
-      const wrapped = `<!-- jspsych-autodocs:${section.heading}:start -->\n${content}\n<!-- jspsych-autodocs:${section.heading}:end -->`;
-      return [section.heading, wrapped];
-    }),
-  );
+export function getExtensionDocs(
+  info: ExtensionInfo,
+  template: SectionTemplate<ExtensionInfo>[] = defaultExtensionTemplate,
+): Record<string, string> {
+  return renderSections(info, template);
 }

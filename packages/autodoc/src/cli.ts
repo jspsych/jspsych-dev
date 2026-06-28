@@ -2,7 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
 import { Command } from "commander";
@@ -21,7 +21,7 @@ import { getExtensionInfo, getExtensionInfoAndExamples } from "./parsers/extensi
 import { getExtensionDocs } from "./renderers/extension.js";
 import { getTimelineInfo, getTimelineInfoAndExamples } from "./parsers/timeline.js";
 import { getTimelineDocs } from "./renderers/timeline.js";
-import { ExtensionInfo, PluginInfo, TimelineInfo } from "./types/info.js";
+import { AutodocConfig, ExtensionInfo, PluginInfo, TimelineInfo } from "./types/info.js";
 
 // auto get version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -38,10 +38,22 @@ interface CliOptions {
   example?: string;
   packageJson?: string;
   dryRun?: boolean;
+  config?: string;
+}
+
+async function loadConfig(configPath: string | undefined): Promise<AutodocConfig> {
+  if (!configPath) return {};
+  const resolved = path.resolve(configPath);
+  if (!fs.existsSync(resolved)) {
+    throw new Error(`Config file not found at ${resolved}.`);
+  }
+  const mod = (await import(pathToFileURL(resolved).href)) as { default?: AutodocConfig };
+  return mod.default ?? {};
 }
 
 // TODO: simulation mode-- detect if simulation mode is supported via these plugins.
-function main(options: CliOptions): void {
+async function main(options: CliOptions): Promise<void> {
+  const userConfig = await loadConfig(options.config);
 
   let cachedAnchor: string | undefined;
 
@@ -94,6 +106,14 @@ function main(options: CliOptions): void {
   console.log(`  dest         ${destPath} (${mark(!!options.dest)})`);
   console.log(`  package.json ${packageJsonPath} (${mark(!!options.packageJson)})`);
   console.log(`  example      ${examplePath ?? "(none)"} (${mark(!!options.example)})`);
+  if (options.config) {
+    const overrides = Object.keys(userConfig).filter(
+      (k) => Array.isArray((userConfig as Record<string, unknown>)[k]),
+    );
+    console.log(
+      `  config       ${options.config} (overrides: ${overrides.length ? overrides.join(", ") : "none"})`,
+    );
+  }
 
   if (options.dryRun) {
     console.log("\n--dry-run: no files written.");
@@ -112,7 +132,7 @@ function main(options: CliOptions): void {
 
     extensionInfo.version = packageJsonInfo.version;
 
-    docs = getExtensionDocs(extensionInfo);
+    docs = getExtensionDocs(extensionInfo, userConfig.extension);
   } else if (type === "plugin") {
     let pluginInfo: PluginInfo;
     if (examplePath) {
@@ -123,7 +143,7 @@ function main(options: CliOptions): void {
 
     pluginInfo.version = packageJsonInfo.version;
 
-    docs = getPluginDocs(pluginInfo);
+    docs = getPluginDocs(pluginInfo, userConfig.plugin);
   } else if (type === "timeline") {
     let timelineInfo: TimelineInfo;
     if (examplePath) {
@@ -136,7 +156,7 @@ function main(options: CliOptions): void {
     timelineInfo.description = packageJsonInfo.description;
     timelineInfo.version = packageJsonInfo.version;
 
-    docs = getTimelineDocs(timelineInfo);
+    docs = getTimelineDocs(timelineInfo, userConfig.timeline);
   } else {
     throw new Error("Unrecognized package type.");
   }
@@ -170,6 +190,10 @@ program
     "Path to the package.json to read name/description/version from (optional, auto-detected from the package root)",
   )
   .option("--dry-run", "Print the resolved source/dest/example paths and exit without writing (optional)")
+  .option(
+    "--config <path>",
+    "Path to a JS config module whose default export provides custom section templates that fully replace the defaults (optional)",
+  )
   .option("-v, --verbose", "Enable verbose logging (optional)")
   .option(
     "-f, --force",
@@ -183,14 +207,13 @@ Examples:
   $ autodoc                                  # run inside a package; everything auto-detected
   $ autodoc --dry-run                        # preview what would be resolved, write nothing
   $ autodoc --source src/index.ts --dest docs/index.md
-  $ autodoc --source src/index.ts --dest docs/index.md --example examples/`,
+  $ autodoc --source src/index.ts --dest docs/index.md --example examples/
+  $ autodoc --config autodoc.config.js          # custom section templates`,
   );
 
 program.parse();
 const options = program.opts<CliOptions>();
-try {
-  main(options);
-} catch (err) {
+main(options).catch((err) => {
   console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
-}
+});

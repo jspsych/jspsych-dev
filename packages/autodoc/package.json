@@ -4,6 +4,13 @@
   "description": "CLI tool to generate documentation for jsPsych plugins",
   "type": "module",
   "bin": "./dist/cli.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
     "templates"

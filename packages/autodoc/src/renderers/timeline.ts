@@ -1,5 +1,5 @@
 import { SectionTemplate, TimelineInfo, TimelineHelperInfo, TimelineInterfaceInfo, ParameterInfo } from "../types/info.js";
-import { topParameterChart } from "./utils.js";
+import { renderSections, topParameterChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string => (array ? `array of ${type}` : type);
 
@@ -55,7 +55,7 @@ function renderHelperGroup(group: Record<string, TimelineHelperInfo>): string {
   return sections || "*None*";
 }
 
-const mainTemplate: SectionTemplate<TimelineInfo>[] = [
+export const defaultTimelineTemplate: SectionTemplate<TimelineInfo>[] = [
   {
     heading: "introduction",
     render: (info) => {
@@ -138,12 +138,9 @@ ${sections}
   },
 ];
 
-export function getTimelineDocs(info: TimelineInfo): Record<string, string> {
-  return Object.fromEntries(
-    mainTemplate.map((section) => {
-      const content = section.render(info);
-      const wrapped = `<!-- jspsych-autodocs:${section.heading}:start -->\n${content}\n<!-- jspsych-autodocs:${section.heading}:end -->`;
-      return [section.heading, wrapped];
-    }),
-  );
+export function getTimelineDocs(
+  info: TimelineInfo,
+  template: SectionTemplate<TimelineInfo>[] = defaultTimelineTemplate,
+): Record<string, string> {
+  return renderSections(info, template);
 }

@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`timeline renderer (default template) matches the rendered snapshot 1`] = `
+{
+  "api-reference": "<!-- jspsych-autodocs:api-reference:start -->
+## API Reference
+<!-- jspsych-autodocs:api-reference:end -->",
+  "configuration-options": "<!-- jspsych-autodocs:configuration-options:start -->
+## Configuration Options
+
+These types are shared by multiple parameters above.
+
+*None*
+<!-- jspsych-autodocs:configuration-options:end -->",
+  "create-timeline": "<!-- jspsych-autodocs:create-timeline:start -->
+### \`createTimeline()\`
+
+Builds the timeline.
+
+| Parameter | Type | Default Value | Description |
+| --------- | ---- | ------------- | ----------- |
+| stimuli | array of string[] | \`undefined\` | List of stimuli. |
+<!-- jspsych-autodocs:create-timeline:end -->",
+  "examples": "<!-- jspsych-autodocs:examples:start -->
+## Examples
+
+### Basic example (examples/basic.html)
+
+\`\`\`js
+createTimeline(jsPsych);
+\`\`\`
+<!-- jspsych-autodocs:examples:end -->",
+  "installation": "<!-- jspsych-autodocs:installation:start -->
+## Installation
+      
+TODO
+<!-- jspsych-autodocs:installation:end -->",
+  "introduction": "<!-- jspsych-autodocs:introduction:start -->
+# test-timeline
+
+A test timeline.
+
+Current version: 1.0.0
+<!-- jspsych-autodocs:introduction:end -->",
+  "timeline-units": "<!-- jspsych-autodocs:timeline-units:start -->
+### \`timelineUnits\`
+
+The following helper functions are exported as part of \`timelineUnits\` and can be used to build pieces of the timeline.
+
+#### \`trial()\`
+
+A single trial unit.
+
+| Parameter | Type | Default Value | Description |
+| --------- | ---- | ------------- | ----------- |
+*None*
+<!-- jspsych-autodocs:timeline-units:end -->",
+  "utils": "<!-- jspsych-autodocs:utils:start -->
+### \`utils\`
+
+The following helper functions are exported as part of \`utils\`.
+
+*None*
+<!-- jspsych-autodocs:utils:end -->",
+}
+`;

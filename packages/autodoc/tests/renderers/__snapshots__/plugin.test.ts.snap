@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`plugin renderer (default template) matches the rendered snapshot 1`] = `
+{
+  "data": "<!-- jspsych-autodocs:data:start -->
+## Data
+
+In addition to the [default data collected by all plugins](https://www.jspsych.org/latest/overview/plugins#data-collected-by-all-plugins), this plugin collects the following data for each trial.
+
+| Name | Type | Value |
+| ---- | ---- | ----- |
+| rt | integer | Response time in ms. |
+| response | string | The key pressed. |
+<!-- jspsych-autodocs:data:end -->",
+  "examples": "<!-- jspsych-autodocs:examples:start -->
+## Examples
+
+### Basic example (examples/basic.html)
+
+\`\`\`js
+const trial = { type: jsPsychTestPlugin };
+\`\`\`
+<!-- jspsych-autodocs:examples:end -->",
+  "introduction": "<!-- jspsych-autodocs:introduction:start -->
+# test-plugin
+
+A test plugin.
+
+Current version: 1.0.0
+<!-- jspsych-autodocs:introduction:end -->",
+  "parameters": "<!-- jspsych-autodocs:parameters:start -->
+## Parameters
+
+In addition to the [parameters available in all plugins](https://www.jspsych.org/latest/overview/plugins#parameters-available-in-all-plugins), this plugin accepts the following parameters. Parameters with a default value of \`undefined\` must be specified. Other parameters can be left unspecified if the default value is acceptable.
+
+| Parameter | Type | Default Value | Description |
+| --------- | ---- | ------------- | ----------- |
+| stimulus | HTML string | \`undefined\` | The stimulus. |
+| trials | integer | 1 | Number of trials. |
+| choices | array of keys | \`"ALL_KEYS"\` | Valid keys. |
+<!-- jspsych-autodocs:parameters:end -->",
+}
+`;

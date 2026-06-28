@@ -61,6 +61,12 @@ export interface ExampleInfo {
 }
 
 export interface SectionTemplate<T> {
-    heading: string; 
+    heading: string;
     render: (info: T) => string;
+}
+
+export interface AutodocConfig {
+    plugin?: SectionTemplate<PluginInfo>[];
+    extension?: SectionTemplate<ExtensionInfo>[];
+    timeline?: SectionTemplate<TimelineInfo>[];
 }

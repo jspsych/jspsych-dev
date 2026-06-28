@@ -1,5 +1,5 @@
 import { PluginInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, topParameterChart, topDataChart } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart } from "./utils.js";
 
 const stringifyTypeMap: Record<string, string> = {
   "ParameterType.STRING": "string",
@@ -23,7 +23,7 @@ const getTypeName = (type: string, array?: boolean): string => {
   return array ? `array of ${baseType}` : baseType;
 };
 
-const mainTemplate: SectionTemplate<PluginInfo>[] = [
+export const defaultPluginTemplate: SectionTemplate<PluginInfo>[] = [
   {
     heading: "introduction",
     render: (info) => {
@@ -85,12 +85,9 @@ ${sections}
   },
 ];
 
-export function getPluginDocs(info: PluginInfo): Record<string, string> {
-  return Object.fromEntries(
-    mainTemplate.map((section) => {
-      const content = section.render(info);
-      const wrapped = `<!-- jspsych-autodocs:${section.heading}:start -->\n${content}\n<!-- jspsych-autodocs:${section.heading}:end -->`;
-      return [section.heading, wrapped];
-    }),
-  );
+export function getPluginDocs(
+  info: PluginInfo,
+  template: SectionTemplate<PluginInfo>[] = defaultPluginTemplate,
+): Record<string, string> {
+  return renderSections(info, template);
 }

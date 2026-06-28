@@ -1,4 +1,22 @@
-import { ParameterInfo } from "../types/info.js";
+import { ParameterInfo, SectionTemplate } from "../types/info.js";
+
+/** 
+ * renders a given template with `info`, returning a record keyed with the 
+ * section headers, and values containing the rendered content per section.
+ * used in each `get*Docs` function.
+ */
+export function renderSections<T>(
+  info: T,
+  template: SectionTemplate<T>[],
+): Record<string, string> {
+  return Object.fromEntries(
+    template.map((section) => {
+      const content = section.render(info);
+      const wrapped = `<!-- jspsych-autodocs:${section.heading}:start -->\n${content}\n<!-- jspsych-autodocs:${section.heading}:end -->`;
+      return [section.heading, wrapped];
+    }),
+  );
+}
 
 export const topParameterChart = `| Parameter | Type | Default Value | Description |
 | --------- | ---- | ------------- | ----------- |`;

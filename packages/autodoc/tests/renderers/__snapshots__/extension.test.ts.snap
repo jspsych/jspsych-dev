@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extension renderer (default template) matches the rendered snapshot 1`] = `
+{
+  "data": "<!-- jspsych-autodocs:data:start -->
+## Data Generated
+
+| Name | Type | Value |
+| ---- | ---- | ----- |
+| samples | ParameterType.OBJECT | Collected samples. |
+<!-- jspsych-autodocs:data:end -->",
+  "examples": "<!-- jspsych-autodocs:examples:start -->
+## Examples
+
+### Basic example (examples/basic.html)
+
+\`\`\`js
+initJsPsych({ extensions: [...] });
+\`\`\`
+<!-- jspsych-autodocs:examples:end -->",
+  "init-parameters": "<!-- jspsych-autodocs:init-parameters:start -->
+### Initialization Parameters
+Initialization parameters are set when calling \`initJsPsych()\`.
+
+\`\`\`js
+initJsPsych({
+  extensions: {
+    { type: jsPsychExtensionTestExtension, params: { ... } }
+  }
+})
+\`\`\`
+
+| Parameter | Type | Default Value | Description |
+| --------- | ---- | ------------- | ----------- |
+| tracking | ParameterType.BOOL | \`true\` | Whether to track. |
+<!-- jspsych-autodocs:init-parameters:end -->",
+  "introduction": "<!-- jspsych-autodocs:introduction:start -->
+# test-extension
+
+A test extension.
+
+Current version: 1.0.0
+<!-- jspsych-autodocs:introduction:end -->",
+  "parameters": "<!-- jspsych-autodocs:parameters:start -->
+## Parameters 
+
+<!-- jspsych-autodocs:parameters:end -->",
+  "trial-parameters": "<!-- jspsych-autodocs:trial-parameters:start -->
+### Trial Parameters
+
+Trial parameters are set when adding an extension to the trial object.
+
+\`\`\`js
+var trial = {
+  type: jsPsych...,
+  extensions: [
+    { type: jsPsychExtensionTestExtension, params: { ... } }
+  ]
+}
+\`\`\`
+
+| Parameter | Type | Default Value | Description |
+| --------- | ---- | ------------- | ----------- |
+| label | ParameterType.STRING | \`undefined\` | Trial label. |
+<!-- jspsych-autodocs:trial-parameters:end -->",
+}
+`;
