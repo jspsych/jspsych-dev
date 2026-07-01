@@ -30,9 +30,9 @@ describe('getPluginInfo', () => {
     it('extracts parameters with types and descriptions', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
-        expect(info.parameters.single.type).toBe('ParameterType.STRING');
+        expect(info.parameters.single.type).toBe('string');
         expect(info.parameters.single.description).toBe('Single-line description.');
-        expect(info.parameters.double_double.type).toBe('ParameterType.INT');
+        expect(info.parameters.double_double.type).toBe('integer');
         expect(info.parameters.double_double.description).toBe('Multi-line description. It has two lines for a parameter.');
     });
 
@@ -45,9 +45,9 @@ describe('getPluginInfo', () => {
     it('extracts data parameters', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
-        expect(info.data.data_param.type).toBe('ParameterType.FLOAT');
+        expect(info.data.data_param.type).toBe('float');
         expect(info.data.data_param.description).toBe('Data parameter description.');
-        expect(info.data.double_data.type).toBe('ParameterType.BOOL');
+        expect(info.data.double_data.type).toBe('boolean');
         expect(info.data.double_data.description).toBe('Multi-line data parameter description. It has two lines for data.');
     });
 });

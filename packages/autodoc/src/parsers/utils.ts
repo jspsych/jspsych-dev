@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { ExampleInfo, ParameterInfo } from "../types/info.js";
+import { PARAMETER_TYPE_MAP } from "../renderers/utils.js";
 
 // --- PARSE SRC FILE UTILS ---
 
@@ -48,7 +49,8 @@ function extractParameter(node: ts.ObjectLiteralExpression, source: ts.SourceFil
     switch (key) {
       case "type": {
         if (ts.isPropertyAccessExpression(prop.initializer)) {
-          result.type = prop.initializer.getText(source);
+          const raw = prop.initializer.getText(source);
+          result.type = PARAMETER_TYPE_MAP[raw] ?? raw;
         }
         break;
       }

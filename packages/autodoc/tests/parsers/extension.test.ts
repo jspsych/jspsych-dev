@@ -78,16 +78,16 @@ describe('getExtensionInfo', () => {
     it('extracts data parameters', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
-        expect(info.data.data_param.type).toBe('ParameterType.FLOAT');
+        expect(info.data.data_param.type).toBe('float');
         expect(info.data.data_param.description).toBe('Data parameter description.');
-        expect(info.data.double_data.type).toBe('ParameterType.BOOL');
+        expect(info.data.double_data.type).toBe('boolean');
         expect(info.data.double_data.description).toBe('Multi-line data parameter description. It has two lines for data.');
     });
 
     it('extracts nested data parameters', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
-        expect(info.data.grid.type).toBe('ParameterType.COMPLEX');
+        expect(info.data.grid.type).toBe('object');
         expect(info.data.grid.description).toBe("Now let's have a grid.");
         expect(info.data.grid.nested).toBeDefined();
     });

@@ -7,7 +7,7 @@ exports[`extension renderer (default template) matches the rendered snapshot 1`]
 
 | Name | Type | Value |
 | ---- | ---- | ----- |
-| samples | ParameterType.OBJECT | Collected samples. |
+| samples | object | Collected samples. |
 <!-- jspsych-autodocs:data:end -->",
   "examples": "<!-- jspsych-autodocs:examples:start -->
 ## Examples
@@ -32,7 +32,7 @@ initJsPsych({
 
 | Parameter | Type | Default Value | Description |
 | --------- | ---- | ------------- | ----------- |
-| tracking | ParameterType.BOOL | \`true\` | Whether to track. |
+| tracking | boolean | \`true\` | Whether to track. |
 <!-- jspsych-autodocs:init-parameters:end -->",
   "introduction": "<!-- jspsych-autodocs:introduction:start -->
 # test-extension
@@ -61,7 +61,7 @@ var trial = {
 
 | Parameter | Type | Default Value | Description |
 | --------- | ---- | ------------- | ----------- |
-| label | ParameterType.STRING | \`undefined\` | Trial label. |
+| label | string | \`undefined\` | Trial label. |
 <!-- jspsych-autodocs:trial-parameters:end -->",
 }
 `;

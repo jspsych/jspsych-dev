@@ -18,6 +18,23 @@ export function renderSections<T>(
   );
 }
 
+export const PARAMETER_TYPE_MAP: Record<string, string> = {
+  "ParameterType.STRING": "string",
+  "ParameterType.INT": "integer",
+  "ParameterType.FLOAT": "float",
+  "ParameterType.BOOL": "boolean",
+  "ParameterType.FUNCTION": "function",
+  "ParameterType.KEY": "key",
+  "ParameterType.KEYS": "keys",
+  "ParameterType.SELECT": "selection",
+  "ParameterType.HTML_STRING": "HTML string",
+  "ParameterType.IMAGE": "image file",
+  "ParameterType.AUDIO": "audio file",
+  "ParameterType.VIDEO": "video file",
+  "ParameterType.OBJECT": "object",
+  "ParameterType.COMPLEX": "object",
+};
+
 export const topParameterChart = `| Parameter | Type | Default Value | Description |
 | --------- | ---- | ------------- | ----------- |`;
 

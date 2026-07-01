@@ -39,6 +39,12 @@ describe("plugin renderer (default template)", () => {
     expect(docs.examples).toContain("examples/basic.html");
   });
 
+  it("maps ParameterType values to human-readable strings in the data table", () => {
+    expect(docs.data).toContain("integer");
+    expect(docs.data).toContain("string");
+    expect(docs.data).not.toContain("ParameterType");
+  });
+
   it("matches the rendered snapshot", () => {
     expect(getPluginDocs(info)).toMatchSnapshot();
   });

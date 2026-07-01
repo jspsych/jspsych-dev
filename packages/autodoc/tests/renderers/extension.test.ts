@@ -6,15 +6,15 @@ const info: ExtensionInfo = {
   description: "A test extension.",
   version: "1.0.0",
   initializeParameters: {
-    tracking: { type: "ParameterType.BOOL", default: "true", description: "Whether to track." },
+    tracking: { type: "boolean", default: "true", description: "Whether to track." },
   },
   onStartParameters: {
-    label: { type: "ParameterType.STRING", default: "undefined", description: "Trial label." },
+    label: { type: "string", default: "undefined", description: "Trial label." },
   },
   onLoadParameters: {},
   onFinishParameters: {},
   data: {
-    samples: { type: "ParameterType.OBJECT", default: "", description: "Collected samples." },
+    samples: { type: "object", default: "", description: "Collected samples." },
   },
   examples: {
     "Basic example": { path: "examples/basic.html", code: "initJsPsych({ extensions: [...] });" },
@@ -37,6 +37,14 @@ describe("extension renderer (default template)", () => {
 
   it("derives the jsPsychExtension name in the usage snippets", () => {
     expect(docs["init-parameters"]).toContain("jsPsychExtensionTestExtension");
+  });
+
+  it("renders human-readable type strings in parameter and data tables", () => {
+    expect(docs["init-parameters"]).toContain("boolean");
+    expect(docs["trial-parameters"]).toContain("string");
+    expect(docs["data"]).toContain("object");
+    expect(docs["init-parameters"]).not.toContain("ParameterType");
+    expect(docs["data"]).not.toContain("ParameterType");
   });
 
   it("matches the rendered snapshot", () => {
