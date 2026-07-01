@@ -6,15 +6,15 @@ const info: ExtensionInfo = {
   description: "A test extension.",
   version: "1.0.0",
   initializeParameters: {
-    tracking: { type: "ParameterType.BOOL", default: "true", description: "Whether to track." },
+    tracking: { type: "boolean", default: "true", description: "Whether to track." },
   },
   onStartParameters: {
-    label: { type: "ParameterType.STRING", default: "undefined", description: "Trial label." },
+    label: { type: "string", default: "undefined", description: "Trial label." },
   },
   onLoadParameters: {},
   onFinishParameters: {},
   data: {
-    samples: { type: "ParameterType.OBJECT", default: "", description: "Collected samples." },
+    samples: { type: "object", default: "", description: "Collected samples." },
   },
   examples: {
     "Basic example": { path: "examples/basic.html", code: "initJsPsych({ extensions: [...] });" },
