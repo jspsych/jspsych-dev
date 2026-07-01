@@ -39,6 +39,14 @@ describe("extension renderer (default template)", () => {
     expect(docs["init-parameters"]).toContain("jsPsychExtensionTestExtension");
   });
 
+  it("renders human-readable type strings in parameter and data tables", () => {
+    expect(docs["init-parameters"]).toContain("boolean");
+    expect(docs["trial-parameters"]).toContain("string");
+    expect(docs["data"]).toContain("object");
+    expect(docs["init-parameters"]).not.toContain("ParameterType");
+    expect(docs["data"]).not.toContain("ParameterType");
+  });
+
   it("matches the rendered snapshot", () => {
     expect(getExtensionDocs(info)).toMatchSnapshot();
   });

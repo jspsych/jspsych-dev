@@ -1,5 +1,20 @@
-import { renderSections } from "../../src/renderers/utils.js";
+import { renderSections, PARAMETER_TYPE_MAP } from "../../src/renderers/utils.js";
 import { SectionTemplate } from "../../src/types/info.js";
+
+describe("PARAMETER_TYPE_MAP", () => {
+  it("maps common ParameterType values to human-readable strings", () => {
+    expect(PARAMETER_TYPE_MAP["ParameterType.BOOL"]).toBe("boolean");
+    expect(PARAMETER_TYPE_MAP["ParameterType.STRING"]).toBe("string");
+    expect(PARAMETER_TYPE_MAP["ParameterType.INT"]).toBe("integer");
+    expect(PARAMETER_TYPE_MAP["ParameterType.FLOAT"]).toBe("float");
+    expect(PARAMETER_TYPE_MAP["ParameterType.HTML_STRING"]).toBe("HTML string");
+    expect(PARAMETER_TYPE_MAP["ParameterType.COMPLEX"]).toBe("object");
+  });
+
+  it("returns undefined for unknown ParameterType values", () => {
+    expect(PARAMETER_TYPE_MAP["ParameterType.UNKNOWN"]).toBeUndefined();
+  });
+});
 
 // `renderSections` is the shared, type-agnostic wrapper behind every `get*Docs`
 // function. It does not know about any particular `*Info` shape or default
