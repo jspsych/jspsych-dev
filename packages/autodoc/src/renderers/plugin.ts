@@ -1,22 +1,7 @@
 import { PluginInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
 
-const stringifyTypeMap: Record<string, string> = {
-  "ParameterType.STRING": "string",
-  "ParameterType.INT": "integer",
-  "ParameterType.FLOAT": "float",
-  "ParameterType.BOOL": "boolean",
-  "ParameterType.FUNCTION": "function",
-  "ParameterType.KEY": "key",
-  "ParameterType.KEYS": "keys",
-  "ParameterType.SELECT": "selection", //TODO: infer type from options
-  "ParameterType.HTML_STRING": "HTML string",
-  "ParameterType.IMAGE": "image file",
-  "ParameterType.AUDIO": "audio file",
-  "ParameterType.VIDEO": "video file",
-  "ParameterType.OBJECT": "object",
-  "ParameterType.COMPLEX": "object",
-};
+const stringifyTypeMap = PARAMETER_TYPE_MAP;
 
 const getTypeName = (type: string, array?: boolean): string => {
   const baseType = stringifyTypeMap[type] || type;
