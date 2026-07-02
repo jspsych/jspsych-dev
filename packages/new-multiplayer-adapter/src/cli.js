@@ -71,9 +71,9 @@ async function getRemoteGitUrl() {
   if (repoRoot) {
     const currentDir = process.cwd();
     const relativePath = path.relative(repoRoot, currentDir);
-    if (relativePath) {
-      remoteGitUrl = `${remoteGitRootUrl}/tree/main/${relativePath}`;
-    }
+    remoteGitUrl = relativePath
+      ? `${remoteGitRootUrl}/blob/main/${relativePath}`
+      : `${remoteGitRootUrl}/blob/main`;
     return remoteGitUrl;
   }
   return "";
