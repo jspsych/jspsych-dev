@@ -8,7 +8,8 @@
         "prepare": "husky install",
         "changeset": "changeset",
         "changeset:version": "changeset version",
-        "changeset:publish": "changeset publish"
+        "changeset:publish": "changeset publish",
+        "test": "node --experimental-vm-modules node_modules/.bin/jest"
     },
     "dependencies": {},
     "devDependencies": {
@@ -35,7 +36,7 @@
     },
     "jest": {
         "projects": [
-            "<rootDir>/packages/*"
+            "<rootDir>/packages/*/jest.config.js"
         ]
     },
     "name": "",

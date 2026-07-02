@@ -8,6 +8,6 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { useESM: true, tsconfig: './tests/tsconfig.json' }],
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true, tsconfig: '<rootDir>/tests/tsconfig.json' }],
   },
 };
