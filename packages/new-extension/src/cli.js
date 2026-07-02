@@ -188,16 +188,16 @@ async function runPrompts(cwdInfo) {
     loop: false,
   });
 
-  // If not in the jspsych-contrib repository, ask for the path to the README.md file
-  let readmePath;
+  // If not in the jspsych-contrib repository, ask for the path to the documentation file
+  let documentationPath;
   if (!cwdInfo.isContribRepo) {
     const remoteGitUrl = await getRemoteGitUrl();
-    readmePath = await input({
-      message: "Enter the path to the README.md file for this extension package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/extension-${getHyphenateName(name)}/README.md`, // '/extension-${name}/README.md' if not a Git repository
+    documentationPath = await input({
+      message: "Enter the path to the documentation file for this extension package [Optional]:",
+      default: getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/extension-${getHyphenateName(name)}/docs/extension-${getHyphenateName(name)}.md` : `docs/extension-${getHyphenateName(name)}.md`, // '/extension-${name}/docs/extension-${name}.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/jspsych/jspsych-contrib/packages/extension-${getHyphenateName(name)}/README.md`;
+    documentationPath = `https://github.com/jspsych/jspsych-contrib/blob/main/packages/extension-${getHyphenateName(name)}/docs/extension-${getHyphenateName(name)}.md`;
   }
 
   return {
@@ -206,7 +206,7 @@ async function runPrompts(cwdInfo) {
     author: author,
     authorUrl: authorUrl,
     language: language,
-    readmePath: readmePath,
+    documentationPath: documentationPath,
     destDir: cwdInfo.destDir,
     isContribRepo: cwdInfo.isContribRepo,
   };
@@ -258,7 +258,7 @@ async function processAnswers(answers) {
       .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
-      .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{documentationUrl}", answers.documentationPath))
       .pipe(replace("{packageDir}", packageDir))
       .pipe(
         // npm renames a literal ".gitignore" to ".npmignore" when this package is
@@ -344,13 +344,13 @@ async function runWithArgs(cwdInfo, options) {
   const name = options.name;
   const language = options.language || 'ts';
   
-  let readmePath = options.readmePath;
-  if (!readmePath) {
+  let documentationPath = options.documentationPath;
+  if (!documentationPath) {
     if (!cwdInfo.isContribRepo) {
       const remoteGitUrl = await getRemoteGitUrl();
-      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/extension-${getHyphenateName(name)}/README.md`;
+      documentationPath = getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/extension-${getHyphenateName(name)}/docs/extension-${getHyphenateName(name)}.md` : `docs/extension-${getHyphenateName(name)}.md`;
     } else {
-      readmePath = `https://github.com/jspsych/jspsych-contrib/packages/extension-${getHyphenateName(name)}/README.md`;
+      documentationPath = `https://github.com/jspsych/jspsych-contrib/blob/main/packages/extension-${getHyphenateName(name)}/docs/extension-${getHyphenateName(name)}.md`;
     }
   }
 
@@ -360,7 +360,7 @@ async function runWithArgs(cwdInfo, options) {
     author: options.author,
     authorUrl: options.authorUrl || '',
     language: language,
-    readmePath: readmePath,
+    documentationPath: documentationPath,
     destDir: cwdInfo.destDir,
     isContribRepo: cwdInfo.isContribRepo,
   };
@@ -378,7 +378,7 @@ program
   .option('--author <author>', 'Name of the author (required)')
   .option('--author-url <url>', 'Profile URL for the author (optional)')
   .option('--language <lang>', 'Language to use: ts or js (default: ts)', 'ts')
-  .option('--readme-path <path>', 'Path to README.md file (optional)')
+  .option('--documentation-path <path>', 'Path to the documentation file (optional)')
   .addHelpText('after', `
 
 Examples:

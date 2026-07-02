@@ -188,16 +188,16 @@ async function runPrompts(cwdInfo) {
     loop: false,
   });
 
-  // If not in the jspsych-timelines repository, ask for the path to the README.md file
-  let readmePath;
+  // If not in the jspsych-timelines repository, ask for the path to the documentation file
+  let documentationPath;
   if (!cwdInfo.isTimelinesRepo) {
     const remoteGitUrl = await getRemoteGitUrl();
-    readmePath = await input({
-      message: "Enter the path to the README.md file for this timeline package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/${getHyphenateName(name)}/README.md`, // '/${name}/README.md' if not a Git repository
+    documentationPath = await input({
+      message: "Enter the path to the documentation file for this timeline package [Optional]:",
+      default: getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/${getHyphenateName(name)}/docs/${getHyphenateName(name)}.md` : `docs/${getHyphenateName(name)}.md`, // '/${name}/docs/${name}.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/jspsych/jspsych-timelines/packages/${getHyphenateName(name)}/README.md`;
+    documentationPath = `https://github.com/jspsych/jspsych-timelines/blob/main/packages/${getHyphenateName(name)}/docs/${getHyphenateName(name)}.md`;
   }
 
   return {
@@ -206,7 +206,7 @@ async function runPrompts(cwdInfo) {
     author: author,
     authorUrl: authorUrl,
     language: language,
-    readmePath: readmePath,
+    documentationPath: documentationPath,
     destDir: cwdInfo.destDir,
     isTimelinesRepo: cwdInfo.isTimelinesRepo,
   };
@@ -257,7 +257,7 @@ async function processAnswers(answers) {
       .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
-      .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{documentationUrl}", answers.documentationPath))
       .pipe(replace("{packageDir}", packageDir))
       .pipe(
         // npm renames a literal ".gitignore" to ".npmignore" when this package is
@@ -331,13 +331,13 @@ async function runWithArgs(cwdInfo, options) {
   const name = options.name;
   const language = options.language || 'ts';
   
-  let readmePath = options.readmePath;
-  if (!readmePath) {
+  let documentationPath = options.documentationPath;
+  if (!documentationPath) {
     if (!cwdInfo.isTimelinesRepo) {
       const remoteGitUrl = await getRemoteGitUrl();
-      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/${getHyphenateName(name)}/README.md`;
+      documentationPath = getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/${getHyphenateName(name)}/docs/${getHyphenateName(name)}.md` : `docs/${getHyphenateName(name)}.md`;
     } else {
-      readmePath = `https://github.com/jspsych/jspsych-timelines/packages/${getHyphenateName(name)}/README.md`;
+      documentationPath = `https://github.com/jspsych/jspsych-timelines/blob/main/packages/${getHyphenateName(name)}/docs/${getHyphenateName(name)}.md`;
     }
   }
 
@@ -347,7 +347,7 @@ async function runWithArgs(cwdInfo, options) {
     author: options.author,
     authorUrl: options.authorUrl || '',
     language: language,
-    readmePath: readmePath,
+    documentationPath: documentationPath,
     destDir: cwdInfo.destDir,
     isTimelinesRepo: cwdInfo.isTimelinesRepo,
   };
@@ -365,7 +365,7 @@ program
   .option('--author <author>', 'Name of the author (required)')
   .option('--author-url <url>', 'Profile URL for the author (optional)')
   .option('--language <lang>', 'Language to use: ts or js (default: ts)', 'ts')
-  .option('--readme-path <path>', 'Path to README.md file (optional)')
+  .option('--documentation-path <path>', 'Path to the documentation file (optional)')
   .addHelpText('after', `
 
 Examples:
