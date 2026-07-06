@@ -75,9 +75,10 @@ export function getExtensionInfo(
 /**
  * Fallback code block extractor for HTML extension example files without sentinels. Requires
  * exactly one inline script block. Extracts the `initJsPsych` call and all trial variables
- * (camel/snake case) whose object literal contains an `extensions` field. For each matched
- * trial, its direct local dependencies (one level of indirection) are also included.
- * The initJsPsych variable itself is never treated as a dependency.
+ * (any variable name that matches the "trial" pattern in camel/snake case) OR whose object
+ * literal contains an `extensions` field. For each matched trial, its direct local
+ * dependencies (one level of indirection) are also included. The initJsPsych variable itself
+ * is never treated as a dependency.
  */
 function inferCodeBlock(sourceContent: string, sourcePath: string): string {
   const scriptRegex = /<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi;
