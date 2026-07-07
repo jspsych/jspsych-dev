@@ -124,6 +124,22 @@ describe('getExtensionInfoAndExamples', () => {
         warnSpy.mockRestore();
     });
 
+    it('keeps both examples when two files have the same default title but different paths', () => {
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-filepath-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        expect(Object.values(info.examples)).toHaveLength(2);
+        const displayPaths = Object.values(info.examples).map((e) => e.displayPath);
+        expect(displayPaths).toContain('path1/duplicated_filename.html');
+        expect(displayPaths).toContain('path2/duplicated_filename.html');
+        const titles = Object.values(info.examples).map((e) => e.title);
+        expect(titles).toHaveLength(2);
+        // duplicate titles remain the same — source/displayPath appended at render time keeps the full headings unique
+        expect(new Set(titles).size).toBe(1);
+        expect(titles[0]).toBe('TestExtension Example');
+        expect(titles[1]).toBe('TestExtension Example');
+    });
+
     it('should extract examples from a provided directory', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, examplesDir);

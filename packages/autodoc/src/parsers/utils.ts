@@ -260,12 +260,14 @@ export function collectExamples(
 
   if (stat.isDirectory()) {
     isDirectory = true;
-    htmlFiles.push(
-      ...fs
-        .readdirSync(examplePath)
-        .filter((f) => f.endsWith(".html"))
-        .map((f) => path.join(examplePath, f)),
-    );
+    const collectHtml = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) collectHtml(full);
+        else if (entry.name.endsWith(".html")) htmlFiles.push(full);
+      }
+    };
+    collectHtml(examplePath);
   } else if (stat.isFile()) {
     if (!examplePath.endsWith(".html")) {
       throw new Error(`Example file must be an HTML file: ${examplePath}`);
@@ -282,12 +284,14 @@ export function collectExamples(
       const info = getExampleInfo(file, inferFallback);
       if (info) {
         info.displayPath = isDirectory ? path.relative(examplePath, info.path) : path.basename(info.path);
-        const baseTitle = info.title;
-        const count = titleCounts.get(baseTitle) ?? 0;
-        titleCounts.set(baseTitle, count + 1);
-        if (count > 0) {
-          info.title = `${baseTitle} (${count + 1})`;
-          console.warn(`Warning: duplicate example title "${baseTitle}" in ${file}, renamed to "${info.title}"`);
+        if (info.hasCustomTitle) {
+          const baseTitle = info.title;
+          const count = titleCounts.get(baseTitle) ?? 0;
+          titleCounts.set(baseTitle, count + 1);
+          if (count > 0) {
+            info.title = `${baseTitle} (${count + 1})`;
+            console.warn(`Warning: duplicate example title "${baseTitle}" in ${file}, renamed to "${info.title}"`);
+          }
         }
         result[info.path] = info;
       }

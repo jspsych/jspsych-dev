@@ -47,6 +47,32 @@ describe("extension renderer (default template)", () => {
     expect(docs["data"]).not.toContain("ParameterType");
   });
 
+  it("renders both examples with their subdirectory path in the section heading", () => {
+    const infoWithPathCollision: ExtensionInfo = {
+      ...info,
+      examples: {
+        "examples/path1/duplicated_filename.html": {
+          title: "TestExtension Example",
+          hasCustomTitle: false,
+          path: "examples/path1/duplicated_filename.html",
+          displayPath: "path1/duplicated_filename.html",
+          code: "const trial1 = {};",
+        },
+        "examples/path2/duplicated_filename.html": {
+          title: "TestExtension Example",
+          hasCustomTitle: false,
+          path: "examples/path2/duplicated_filename.html",
+          displayPath: "path2/duplicated_filename.html",
+          code: "const trial2 = {};",
+        },
+      },
+    };
+    const docs = getExtensionDocs(infoWithPathCollision);
+    expect(docs.examples).toContain("### TestExtension Example (path1/duplicated_filename.html)");
+    expect(docs.examples).toContain("### TestExtension Example (path2/duplicated_filename.html)");
+    expect(docs.examples).not.toContain("### TestExtension Example (duplicated_filename.html)");
+  });
+
   it("matches the rendered snapshot", () => {
     expect(getExtensionDocs(info)).toMatchSnapshot();
   });
