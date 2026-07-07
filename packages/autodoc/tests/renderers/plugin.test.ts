@@ -36,7 +36,7 @@ describe("plugin renderer (default template)", () => {
 
   it("renders data rows and examples", () => {
     expect(docs.data).toContain("Response time in ms.");
-    expect(docs.examples).toContain("examples/basic.html");
+    expect(docs.examples).toContain("Basic example");
   });
 
   it("maps ParameterType values to human-readable strings in the data table", () => {
