@@ -122,8 +122,8 @@ ${sections || "*None*"}`;
     render: (info) => {
       const sections = Object.entries(info.examples)
         .map(
-          ([title, example]) =>
-            `### ${title} (${example.path})
+          ([, example]) =>
+            `### ${example.title}${example.hasCustomTitle ? "" : ` (${example.displayPath})`}
 
 \`\`\`js
 ${example.code}

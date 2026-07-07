@@ -225,7 +225,7 @@ export function getCodeBlock(
 export function getExampleInfo(
   sourcePath: string,
   inferFallback: (content: string, path: string) => string,
-): Record<string, ExampleInfo> | undefined {
+): ExampleInfo | undefined {
   const content = fs.readFileSync(sourcePath, "utf-8");
 
   if (/<!--\s*jspsych-autodoc:ignore\s*-->/.test(content)) return undefined;
@@ -233,6 +233,7 @@ export function getExampleInfo(
   let title: string;
 
   const sentinelMatch = content.match(/<!--\s*jspsych-autodoc:title\s+(.+?)\s*-->/);
+  const hasCustomTitle = !!sentinelMatch;
   if (sentinelMatch) {
     title = sentinelMatch[1].trim();
   } else {
@@ -241,9 +242,7 @@ export function getExampleInfo(
     title = titleTagMatch[1].trim();
   }
 
-  return {
-    [title]: { path: sourcePath, code: getCodeBlock(content, sourcePath, inferFallback) },
-  };
+  return { title, hasCustomTitle, path: sourcePath, displayPath: sourcePath, code: getCodeBlock(content, sourcePath, inferFallback) };
 }
 
 /** Collects example info from a directory or single HTML file. */
@@ -257,8 +256,10 @@ export function collectExamples(
 
   const stat = fs.statSync(examplePath);
   const htmlFiles: string[] = [];
+  let isDirectory = false;
 
   if (stat.isDirectory()) {
+    isDirectory = true;
     htmlFiles.push(
       ...fs
         .readdirSync(examplePath)
@@ -275,9 +276,24 @@ export function collectExamples(
   }
 
   const result: Record<string, ExampleInfo> = {};
+  const titleCounts = new Map<string, number>();
   for (const file of htmlFiles) {
-    const exampleInfo = getExampleInfo(file, inferFallback);
-    if (exampleInfo) Object.assign(result, exampleInfo);
+    try {
+      const info = getExampleInfo(file, inferFallback);
+      if (info) {
+        info.displayPath = isDirectory ? path.relative(examplePath, info.path) : path.basename(info.path);
+        const baseTitle = info.title;
+        const count = titleCounts.get(baseTitle) ?? 0;
+        titleCounts.set(baseTitle, count + 1);
+        if (count > 0) {
+          info.title = `${baseTitle} (${count + 1})`;
+          console.warn(`Warning: duplicate example title "${baseTitle}" in ${file}, renamed to "${info.title}"`);
+        }
+        result[info.path] = info;
+      }
+    } catch (e) {
+      console.warn(`Warning: skipping ${file}: ${e instanceof Error ? e.message : e}`);
+    }
   }
   return result;
 }
