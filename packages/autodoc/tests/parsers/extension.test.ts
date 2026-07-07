@@ -3,6 +3,7 @@ import ts from 'typescript';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { jest } from '@jest/globals';
 import { identifyPackageType } from '../../src/utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -107,6 +108,20 @@ describe('getExtensionInfoAndExamples', () => {
         expect(info.examples[filePath].code).toBe(
             'var trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};'
         );
+    });
+
+    it('produces unique titles when two files share the same jspsych-autodoc:title sentinel', () => {
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-sentinel-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        const titles = Object.values(info.examples).map((e) => e.title);
+        expect(titles).toHaveLength(2);
+        expect(new Set(titles).size).toBe(2);
+        expect(titles[0]).toBe("my example");
+        expect(titles[1]).toBe("my example (2)");
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('my example'));
+        warnSpy.mockRestore();
     });
 
     it('should extract examples from a provided directory', () => {
