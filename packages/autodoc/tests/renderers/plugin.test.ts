@@ -17,7 +17,7 @@ const info: PluginInfo = {
     response: { type: "ParameterType.STRING", default: "", description: "The key pressed." },
   },
   examples: {
-    "Basic example": { path: "examples/basic.html", code: "const trial = { type: jsPsychTestPlugin };" },
+    "examples/basic.html": { title: "Basic example", hasCustomTitle: true, path: "examples/basic.html", displayPath: "basic.html", code: "const trial = { type: jsPsychTestPlugin };" },
   },
 };
 

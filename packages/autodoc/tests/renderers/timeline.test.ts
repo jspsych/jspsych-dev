@@ -17,7 +17,7 @@ const info: TimelineInfo = {
   utils: {},
   interfaces: {},
   examples: {
-    "Basic example": { path: "examples/basic.html", code: "createTimeline(jsPsych);" },
+    "examples/basic.html": { title: "Basic example", hasCustomTitle: true, path: "examples/basic.html", displayPath: "basic.html", code: "createTimeline(jsPsych);" },
   },
 };
 

@@ -17,7 +17,7 @@ const info: ExtensionInfo = {
     samples: { type: "object", default: "", description: "Collected samples." },
   },
   examples: {
-    "Basic example": { path: "examples/basic.html", code: "initJsPsych({ extensions: [...] });" },
+    "examples/basic.html": { title: "Basic example", hasCustomTitle: true, path: "examples/basic.html", displayPath: "basic.html", code: "initJsPsych({ extensions: [...] });" },
   },
 };
 
