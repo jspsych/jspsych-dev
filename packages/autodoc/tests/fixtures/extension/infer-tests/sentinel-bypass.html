@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- jspsych-autodoc:title sentinel bypass example -->
+</head>
+<body>
+<script>
+// This file has no initJsPsych call, which would cause inferCodeBlock to throw.
+// But since start/end sentinels are present, inferCodeBlock is never called.
+
+// jspsych-autodoc:start
+const trial = {
+  type: jsPsychTestPlugin,
+  stimulus: "test",
+  extensions: [{type: jsPsychTestExtension}]
+};
+// jspsych-autodoc:end
+</script>
+</body>
+</html>
