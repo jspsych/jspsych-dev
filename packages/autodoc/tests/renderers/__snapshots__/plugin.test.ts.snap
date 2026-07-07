@@ -15,7 +15,7 @@ In addition to the [default data collected by all plugins](https://www.jspsych.o
   "examples": "<!-- jspsych-autodocs:examples:start -->
 ## Examples
 
-### Basic example (examples/basic.html)
+### Basic example
 
 \`\`\`js
 const trial = { type: jsPsychTestPlugin };
