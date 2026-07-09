@@ -75,9 +75,10 @@ export function getExtensionInfo(
 /**
  * Fallback code block extractor for HTML extension example files without sentinels. Requires
  * exactly one inline script block. Extracts the `initJsPsych` call and all trial variables
- * (camel/snake case) whose object literal contains an `extensions` field. For each matched
- * trial, its direct local dependencies (one level of indirection) are also included.
- * The initJsPsych variable itself is never treated as a dependency.
+ * (any variable name that matches the "trial" pattern in camel/snake case) OR whose object
+ * literal contains an `extensions` field. For each matched trial, its direct local
+ * dependencies (one level of indirection) are also included. The initJsPsych variable itself
+ * is never treated as a dependency.
  */
 function inferCodeBlock(sourceContent: string, sourcePath: string): string {
   const scriptRegex = /<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi;
@@ -97,7 +98,23 @@ function inferCodeBlock(sourceContent: string, sourcePath: string): string {
   const trialPattern = /^[a-zA-Z_$]*[Tt]rial(_?\d+)?$/;
   let initStatement: ts.VariableStatement | undefined;
   let initJsPsychVarName: string | undefined;
+  let initJsPsychHasExtensions = false;
   const trialNodes: ts.VariableDeclaration[] = [];
+
+  function hasExtensionsProperty(node: ts.Node): boolean {
+    if (ts.isCallExpression(node)) return false;
+    if (
+      ts.isObjectLiteralExpression(node) &&
+      node.properties.some(
+        (p) =>
+          ts.isPropertyAssignment(p) &&
+          ts.isIdentifier(p.name) &&
+          p.name.text === "extensions",
+      )
+    )
+      return true;
+    return ts.forEachChild(node, hasExtensionsProperty) ?? false;
+  }
 
   function visitNodes(node: ts.Node) {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
@@ -113,17 +130,10 @@ function inferCodeBlock(sourceContent: string, sourcePath: string): string {
         if (ts.isVariableStatement(stmt)) {
           initStatement = stmt;
           initJsPsychVarName = node.name.text;
+          initJsPsychHasExtensions = init.arguments.some(hasExtensionsProperty);
         }
-      }
-
-      if (trialPattern.test(node.name.text) && init && ts.isObjectLiteralExpression(init)) {
-        const hasExtensions = init.properties.some(
-          (p) =>
-            ts.isPropertyAssignment(p) &&
-            ts.isIdentifier(p.name) &&
-            p.name.text === "extensions",
-        );
-        if (hasExtensions) trialNodes.push(node);
+      } else if (init && (trialPattern.test(node.name.text) || hasExtensionsProperty(init))) {
+        trialNodes.push(node);
       }
     }
     ts.forEachChild(node, visitNodes);
@@ -137,7 +147,9 @@ function inferCodeBlock(sourceContent: string, sourcePath: string): string {
 
   if (trialNodes.length === 0)
     throw new Error(
-      `${sourcePath}: no trial variables with an "extensions" field found — use jspsych-autodoc:start/end sentinels instead`,
+      initJsPsychHasExtensions
+        ? `${sourcePath}: extension found in initJsPsych but no trial variables found that use the extension — use jspsych-autodoc:start/end sentinels instead`
+        : `${sourcePath}: no variables with an "extensions" field found — use jspsych-autodoc:start/end sentinels instead`,
     );
 
   // build map of all local variable declarations, excluding trial nodes themselves  

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>mixed detection example</title>
+</head>
+<body>
+<script>
+const jsPsych = initJsPsych();
+
+const trial = {
+  type: jsPsychTestPlugin,
+  stimulus: "Hello"
+};
+
+const myBlock = {
+  type: jsPsychTestPlugin,
+  stimulus: "World",
+  extensions: [{type: jsPsychTestExtension}]
+};
+
+jsPsych.run([trial, myBlock]);
+</script>
+</body>
+</html>

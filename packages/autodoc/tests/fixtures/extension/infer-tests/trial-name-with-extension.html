@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>trial name example</title>
+</head>
+<body>
+<script>
+const jsPsych = initJsPsych();
+
+const trial = {
+  type: jsPsychTestPlugin,
+  stimulus: "Hello",
+  extensions: [
+    {type: jsPsychTestExtension, params: {test: "named trial"}}
+  ]
+};
+
+jsPsych.run([trial]);
+</script>
+</body>
+</html>

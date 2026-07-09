@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>trial name no extension example</title>
+</head>
+<body>
+<script>
+const jsPsych = initJsPsych();
+
+const stimulus = "Hello, world!";
+
+const trial = {
+  type: jsPsychTestPlugin,
+  stimulus: stimulus
+};
+
+jsPsych.run([trial]);
+</script>
+</body>
+</html>
