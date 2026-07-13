@@ -18,6 +18,15 @@ exports[`extension renderer (default template) matches the rendered snapshot 1`]
 initJsPsych({ extensions: [...] });
 \`\`\`
 <!-- jspsych-autodocs:examples:end -->",
+  "functions": "<!-- jspsych-autodocs:functions:start -->
+## Functions
+
+In addition to the standard extension lifecycle methods, this extension exposes the following helper functions.
+
+### \`reset()\`
+
+Clears the collected samples.
+<!-- jspsych-autodocs:functions:end -->",
   "init-parameters": "<!-- jspsych-autodocs:init-parameters:start -->
 ### Initialization Parameters
 Initialization parameters are set when calling \`initJsPsych()\`.

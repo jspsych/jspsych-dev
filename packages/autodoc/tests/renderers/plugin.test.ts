@@ -16,6 +16,18 @@ const info: PluginInfo = {
     rt: { type: "ParameterType.INT", default: "", description: "Response time in ms." },
     response: { type: "ParameterType.STRING", default: "", description: "The key pressed." },
   },
+  functions: {
+    computeScore: {
+      description: "Computes the score for a response.",
+      isStatic: true,
+      parameters: {
+        response: { type: "string", default: "undefined", description: "The participant response." },
+        partialCredit: { type: "boolean", default: "false", description: "Whether to allow partial credit." },
+      },
+      returns: { type: "number", description: "The computed score." },
+      examples: ['jsPsychTestPlugin.computeScore("a", true);'],
+    },
+  },
   examples: {
     "Basic example": { path: "examples/basic.html", code: "const trial = { type: jsPsychTestPlugin };" },
   },
@@ -25,7 +37,14 @@ describe("plugin renderer (default template)", () => {
   const docs = getPluginDocs(info);
 
   it("produces the default sections", () => {
-    expect(Object.keys(docs)).toEqual(["introduction", "parameters", "data", "examples"]);
+    expect(Object.keys(docs)).toEqual(["introduction", "parameters", "data", "functions", "examples"]);
+  });
+
+  it("renders helper functions with signature, return, and example", () => {
+    expect(docs.functions).toContain("### `static computeScore(response, partialCredit)`");
+    expect(docs.functions).toContain("Computes the score for a response.");
+    expect(docs.functions).toContain("**Returns:** `number` — The computed score.");
+    expect(docs.functions).toContain('jsPsychTestPlugin.computeScore("a", true);');
   });
 
   it("maps ParameterType values to human-readable names", () => {

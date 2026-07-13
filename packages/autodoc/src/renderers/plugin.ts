@@ -1,5 +1,5 @@
 import { PluginInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderFunctionGroup, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
 
 const stringifyTypeMap = PARAMETER_TYPE_MAP;
 
@@ -46,6 +46,17 @@ In addition to the [default data collected by all plugins](https://www.jspsych.o
 
 ${topDataChart}
 ${rows ?? "*None*"}
+`.trim();
+    },
+  },
+  {
+    heading: "functions",
+    render: (info) => {
+      return `## Functions
+
+In addition to the standard plugin lifecycle methods, this plugin exposes the following helper functions.
+
+${renderFunctionGroup(info.functions)}
 `.trim();
     },
   },

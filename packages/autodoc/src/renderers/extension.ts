@@ -1,5 +1,5 @@
 import { ExtensionInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderFunctionGroup, renderSections, topParameterChart, topDataChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string =>
   array ? `array of ${type}` : type;
@@ -80,6 +80,17 @@ ${topDataChart}
 ${rows ?? "*None*"}
 `.trim();
   },
+  },
+  {
+    heading: "functions",
+    render: (info) => {
+      return `## Functions
+
+In addition to the standard extension lifecycle methods, this extension exposes the following helper functions.
+
+${renderFunctionGroup(info.functions)}
+`.trim();
+    },
   },
   {
     heading: "examples",

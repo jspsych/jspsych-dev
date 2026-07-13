@@ -52,6 +52,55 @@ describe('getPluginInfo', () => {
     });
 });
 
+describe('getPluginInfo helper functions', () => {
+    const parse = () => {
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        return getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
+    };
+
+    it('collects public static and instance helpers, excluding lifecycle and private members', () => {
+        const info = parse();
+        expect(Object.keys(info.functions).sort()).toEqual(['computeScore', 'configure', 'formatLabel', 'load']);
+        expect(info.functions.trial).toBeUndefined();
+        expect(info.functions.simulate).toBeUndefined();
+        expect(info.functions.cleanup).toBeUndefined();
+    });
+
+    it('preserves generic type arguments in a return type', () => {
+        const { load } = parse().functions;
+        expect(load.returns?.type).toBe('Promise<Record<string, number>>');
+        expect(load.returns?.description).toBe('the parsed payload');
+    });
+
+    it('marks static members and records params, return, and example', () => {
+        const { computeScore } = parse().functions;
+        expect(computeScore.isStatic).toBe(true);
+        expect(computeScore.parameters.response.type).toBe('string');
+        expect(computeScore.parameters.response.description).toBe("the participant's response");
+        expect(computeScore.parameters.partialCredit.type).toBe('boolean');
+        expect(computeScore.parameters.partialCredit.default).toBe('false');
+        expect(computeScore.returns?.type).toBe('number');
+        expect(computeScore.returns?.description).toBe('the numeric score');
+        expect(computeScore.examples).toEqual(['const s = TestPlugin.computeScore("a", true);']);
+    });
+
+    it('expands inline object-literal parameter types and omits a void return', () => {
+        const { configure } = parse().functions;
+        expect(configure.isStatic).toBe(false);
+        expect(configure.parameters.options.nested?.verbose.type).toBe('boolean');
+        expect(configure.parameters.options.nested?.retries.type).toBe('number');
+        expect(configure.returns).toBeUndefined();
+    });
+
+    it('parses arrow-function properties, reading TSDoc from the property', () => {
+        const { formatLabel } = parse().functions;
+        expect(formatLabel.isStatic).toBe(false);
+        expect(formatLabel.parameters.label.description).toBe('the raw label');
+        expect(formatLabel.returns?.type).toBe('string');
+        expect(formatLabel.returns?.description).toBe('the upper-cased label');
+    });
+});
+
 describe('getPluginInfoAndExamples', () => {
     const examplesDir = path.resolve(__dirname, '../fixtures/plugin/examples');
 

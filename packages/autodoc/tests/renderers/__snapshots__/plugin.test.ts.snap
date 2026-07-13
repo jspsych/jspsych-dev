@@ -21,6 +21,26 @@ In addition to the [default data collected by all plugins](https://www.jspsych.o
 const trial = { type: jsPsychTestPlugin };
 \`\`\`
 <!-- jspsych-autodocs:examples:end -->",
+  "functions": "<!-- jspsych-autodocs:functions:start -->
+## Functions
+
+In addition to the standard plugin lifecycle methods, this plugin exposes the following helper functions.
+
+### \`static computeScore(response, partialCredit)\`
+
+Computes the score for a response.
+
+| Parameter | Type | Default Value | Description |
+| --------- | ---- | ------------- | ----------- |
+| response | string | \`undefined\` | The participant response. |
+| partialCredit | boolean | \`false\` | Whether to allow partial credit. |
+
+**Returns:** \`number\` — The computed score.
+
+\`\`\`js
+jsPsychTestPlugin.computeScore("a", true);
+\`\`\`
+<!-- jspsych-autodocs:functions:end -->",
   "introduction": "<!-- jspsych-autodocs:introduction:start -->
 # test-plugin
 
