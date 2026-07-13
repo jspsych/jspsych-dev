@@ -1,6 +1,14 @@
 import ts from "typescript";
 import { ExtensionInfo } from "../types/info.js";
-import { collectExamples, dedent, extractJsDocComment, parseParamGroup, parseTSParamGroup } from "./utils.js";
+import {
+  EXTENSION_LIFECYCLE_METHODS,
+  collectClassFunctions,
+  collectExamples,
+  dedent,
+  extractJsDocComment,
+  parseParamGroup,
+  parseTSParamGroup,
+} from "./utils.js";
 
 export function getExtensionInfo(
   source: ts.SourceFile,
@@ -15,6 +23,7 @@ export function getExtensionInfo(
     onLoadParameters: {},
     onFinishParameters: {},
     data: {},
+    functions: {},
     examples: {},
   };
 
@@ -68,6 +77,8 @@ export function getExtensionInfo(
       }
     }
   }
+
+  result.functions = collectClassFunctions(classNode, source, EXTENSION_LIFECYCLE_METHODS);
 
   return result;
 }

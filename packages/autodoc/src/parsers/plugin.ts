@@ -1,6 +1,13 @@
 import ts from "typescript";
 import { PluginInfo } from "../types/info.js";
-import { collectExamples, dedent, extractJsDocComment, parseParamGroup } from "./utils.js";
+import {
+  PLUGIN_LIFECYCLE_METHODS,
+  collectClassFunctions,
+  collectExamples,
+  dedent,
+  extractJsDocComment,
+  parseParamGroup,
+} from "./utils.js";
 
 /**
  * Extracts plugin information from a TypeScript AST. Source must already be
@@ -19,6 +26,7 @@ export function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDeclarat
     version: "",
     parameters: {},
     data: {},
+    functions: {},
     examples: {},
   };
 
@@ -63,6 +71,8 @@ export function getPluginInfo(source: ts.SourceFile, classNode: ts.ClassDeclarat
   if (dataProp && ts.isObjectLiteralExpression(dataProp.initializer)) {
     result.data = parseParamGroup(dataProp.initializer, source);
   }
+
+  result.functions = collectClassFunctions(classNode, source, PLUGIN_LIFECYCLE_METHODS);
 
   return result;
 }

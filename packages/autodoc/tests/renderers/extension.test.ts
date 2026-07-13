@@ -16,6 +16,14 @@ const info: ExtensionInfo = {
   data: {
     samples: { type: "object", default: "", description: "Collected samples." },
   },
+  functions: {
+    reset: {
+      description: "Clears the collected samples.",
+      isStatic: false,
+      parameters: {},
+      examples: [],
+    },
+  },
   examples: {
     "Basic example": { path: "examples/basic.html", code: "initJsPsych({ extensions: [...] });" },
   },
@@ -31,8 +39,15 @@ describe("extension renderer (default template)", () => {
       "init-parameters",
       "trial-parameters",
       "data",
+      "functions",
       "examples",
     ]);
+  });
+
+  it("renders instance helper functions without a static marker", () => {
+    expect(docs.functions).toContain("### `reset()`");
+    expect(docs.functions).not.toContain("static reset");
+    expect(docs.functions).toContain("Clears the collected samples.");
   });
 
   it("derives the jsPsychExtension name in the usage snippets", () => {

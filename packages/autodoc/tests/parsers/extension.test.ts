@@ -93,6 +93,36 @@ describe('getExtensionInfo', () => {
     });
 });
 
+describe('getExtensionInfo helper functions', () => {
+    const parse = () => {
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        return getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
+    };
+
+    it('collects public helpers, excluding lifecycle and private members', () => {
+        const info = parse();
+        expect(Object.keys(info.functions).sort()).toEqual(['average', 'clear']);
+        expect(info.functions.initialize).toBeUndefined();
+        expect(info.functions.on_start).toBeUndefined();
+        expect(info.functions.tick).toBeUndefined();
+    });
+
+    it('parses a static helper with an array param and a return', () => {
+        const { average } = parse().functions;
+        expect(average.isStatic).toBe(true);
+        expect(average.parameters.samples.type).toBe('number');
+        expect(average.parameters.samples.array).toBe(true);
+        expect(average.returns?.type).toBe('number');
+        expect(average.returns?.description).toBe('the mean value');
+    });
+
+    it('omits a void return on an instance helper', () => {
+        const { clear } = parse().functions;
+        expect(clear.isStatic).toBe(false);
+        expect(clear.returns).toBeUndefined();
+    });
+});
+
 describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
     const inferTestsDir = path.resolve(__dirname, '../fixtures/extension/infer-tests');
     let classNode: ts.ClassDeclaration;
