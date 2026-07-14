@@ -41,6 +41,18 @@ describe("timeline renderer (default template)", () => {
     expect(docs["create-timeline"]).toContain("Builds the timeline.");
   });
 
+  it("collapses configuration-options when there are no shared interfaces", () => {
+    expect(docs["configuration-options"]).toContain("jspsych-autodocs:configuration-options:start");
+    expect(docs["configuration-options"]).not.toContain("## Configuration Options");
+    expect(docs["configuration-options"]).not.toContain("*None*");
+  });
+
+  it("collapses examples when there are none", () => {
+    const emptyExamples = getTimelineDocs({ ...info, examples: {} });
+    expect(emptyExamples.examples).toContain("jspsych-autodocs:examples:start");
+    expect(emptyExamples.examples).not.toContain("## Examples");
+  });
+
   it("matches the rendered snapshot", () => {
     expect(getTimelineDocs(info)).toMatchSnapshot();
   });

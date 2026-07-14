@@ -69,6 +69,23 @@ describe("plugin renderer (default template)", () => {
   });
 });
 
+describe("plugin renderer (empty optional sections)", () => {
+  const emptyInfo: PluginInfo = { ...info, functions: {}, examples: {} };
+  const docs = getPluginDocs(emptyInfo);
+
+  it("keeps every section anchor so re-runs stay idempotent", () => {
+    expect(Object.keys(docs)).toEqual(["introduction", "parameters", "data", "functions", "examples"]);
+    expect(docs.functions).toContain("jspsych-autodocs:functions:start");
+    expect(docs.examples).toContain("jspsych-autodocs:examples:start");
+  });
+
+  it("omits the visible heading when a section is empty", () => {
+    expect(docs.functions).not.toContain("## Functions");
+    expect(docs.functions).not.toContain("*None*");
+    expect(docs.examples).not.toContain("## Examples");
+  });
+});
+
 describe("plugin renderer (custom template)", () => {
   it("fully replaces the default sections", () => {
     const custom: SectionTemplate<PluginInfo>[] = [

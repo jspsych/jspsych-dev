@@ -6,11 +6,7 @@ exports[`timeline renderer (default template) matches the rendered snapshot 1`] 
 ## API Reference
 <!-- jspsych-autodocs:api-reference:end -->",
   "configuration-options": "<!-- jspsych-autodocs:configuration-options:start -->
-## Configuration Options
 
-These types are shared by multiple parameters above.
-
-*None*
 <!-- jspsych-autodocs:configuration-options:end -->",
   "create-timeline": "<!-- jspsych-autodocs:create-timeline:start -->
 ### \`createTimeline()\`

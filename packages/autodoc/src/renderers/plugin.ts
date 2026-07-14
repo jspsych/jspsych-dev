@@ -52,6 +52,7 @@ ${rows ?? "*None*"}
   {
     heading: "functions",
     render: (info) => {
+      if (Object.keys(info.functions).length === 0) return "";
       return `## Functions
 
 In addition to the standard plugin lifecycle methods, this plugin exposes the following helper functions.
@@ -63,6 +64,7 @@ ${renderFunctionGroup(info.functions)}
   {
     heading: "examples",
     render: (info) => {
+      if (Object.keys(info.examples).length === 0) return "";
       const sections = Object.entries(info.examples)
         .map(
           ([title, example]) =>

@@ -66,3 +66,15 @@ describe("extension renderer (default template)", () => {
     expect(getExtensionDocs(info)).toMatchSnapshot();
   });
 });
+
+describe("extension renderer (empty optional sections)", () => {
+  const emptyInfo: ExtensionInfo = { ...info, functions: {}, examples: {} };
+  const docs = getExtensionDocs(emptyInfo);
+
+  it("keeps the section anchors while omitting the visible headings", () => {
+    expect(docs.functions).toContain("jspsych-autodocs:functions:start");
+    expect(docs.functions).not.toContain("## Functions");
+    expect(docs.examples).toContain("jspsych-autodocs:examples:start");
+    expect(docs.examples).not.toContain("## Examples");
+  });
+});
