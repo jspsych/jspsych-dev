@@ -18,6 +18,18 @@ export function renderSections<T>(
   );
 }
 
+/**
+ * Strips a leading bold "title" from a parsed class description. jsPsych plugin,
+ * extension, and timeline docblocks conventionally open with the package name wrapped
+ * in bold (e.g. `**plugin-redirect-to-url**` or `**jsPsychPipe**`) before the real
+ * description. The exact form of that name isn't predictable, so we remove whatever
+ * leading `**...**` bold span is present. Descriptions with no leading bold span are
+ * returned unchanged.
+ */
+export function removePackageName(description: string): string {
+  return description.replace(/^\s*\*\*.+?\*\*\s*/, "").trim();
+}
+
 export const PARAMETER_TYPE_MAP: Record<string, string> = {
   "ParameterType.STRING": "string",
   "ParameterType.INT": "integer",

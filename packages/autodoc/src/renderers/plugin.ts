@@ -1,5 +1,5 @@
 import { PluginInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderFunctionGroup, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderFunctionGroup, removePackageName, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
 
 const stringifyTypeMap = PARAMETER_TYPE_MAP;
 
@@ -14,7 +14,7 @@ export const defaultPluginTemplate: SectionTemplate<PluginInfo>[] = [
     render: (info) => {
       return `# ${info.name}
 
-${info.description}
+${removePackageName(info.description)}
 
 Current version: ${info.version}`.trim();
     },

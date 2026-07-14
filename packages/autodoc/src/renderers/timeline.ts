@@ -1,5 +1,5 @@
 import { SectionTemplate, TimelineInfo, TimelineHelperInfo, TimelineInterfaceInfo, ParameterInfo } from "../types/info.js";
-import { renderSections, topParameterChart } from "./utils.js";
+import { removePackageName, renderSections, topParameterChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string => (array ? `array of ${type}` : type);
 
@@ -61,7 +61,7 @@ export const defaultTimelineTemplate: SectionTemplate<TimelineInfo>[] = [
     render: (info) => {
       return `# ${info.name}
 
-${info.description}
+${removePackageName(info.description)}
 
 Current version: ${info.version}`.trim();
     },

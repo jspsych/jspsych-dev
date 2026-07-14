@@ -1,5 +1,5 @@
 import { ExtensionInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderFunctionGroup, renderSections, topParameterChart, topDataChart } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderFunctionGroup, removePackageName, renderSections, topParameterChart, topDataChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string =>
   array ? `array of ${type}` : type;
@@ -13,7 +13,7 @@ export const defaultExtensionTemplate: SectionTemplate<ExtensionInfo>[] = [
     render: (info) => {
       return `# ${info.name}
 
-${info.description}
+${removePackageName(info.description)}
 
 Current version: ${info.version}`.trim();
       },

@@ -80,6 +80,7 @@ async function main(options: CliOptions): Promise<void> {
 
   const sourcePath = options.source ?? discoverSource(anchor());
   const packageJsonPath = options.packageJson ?? path.join(anchor(), "package.json");
+  console.log(sourcePath);
   
   // example discovery is optional, so shouldn't really have to deal w/ fail-fast
   // behavior if not necessary

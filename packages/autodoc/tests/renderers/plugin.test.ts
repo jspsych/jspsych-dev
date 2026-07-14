@@ -53,6 +53,12 @@ describe("plugin renderer (default template)", () => {
     expect(docs.parameters).toContain("array of keys");
   });
 
+  it("strips the bold package-name title from the introduction", () => {
+    const withTitle = getPluginDocs({ ...info, description: "**jsPsychTest** A test plugin." });
+    expect(withTitle.introduction).toContain("A test plugin.");
+    expect(withTitle.introduction).not.toContain("**jsPsychTest**");
+  });
+
   it("renders data rows and examples", () => {
     expect(docs.data).toContain("Response time in ms.");
     expect(docs.examples).toContain("examples/basic.html");
