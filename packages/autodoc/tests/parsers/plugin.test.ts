@@ -36,6 +36,21 @@ describe('getPluginInfo', () => {
         expect(info.parameters.double_double.description).toBe('Multi-line description. It has two lines for a parameter.');
     });
 
+    it('wraps a template-literal default so its backticks survive the renderer', () => {
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
+        // padded with a space + extra backtick per side so the renderer's single-backtick
+        // wrap becomes a double-backtick span, keeping the inner backticks visible.
+        expect(info.parameters.prompt.default).toBe('` `<p>string</p>` `');
+    });
+
+    it('leaves non-template-literal defaults unescaped', () => {
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);
+        expect(info.parameters.double_double.default).toBe('42');
+        expect(info.parameters.list_of_stimuli.default).toBe('[]');
+    });
+
     it('extracts array flag on parameters', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getPluginInfo(fixtureSource, classNode as ts.ClassDeclaration);

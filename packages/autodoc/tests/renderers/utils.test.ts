@@ -1,5 +1,5 @@
-import { removePackageName, renderSections, PARAMETER_TYPE_MAP } from "../../src/renderers/utils.js";
-import { SectionTemplate } from "../../src/types/info.js";
+import { removePackageName, renderSections, PARAMETER_TYPE_MAP, renderParameterRow } from "../../src/renderers/utils.js";
+import { ParameterInfo, SectionTemplate } from "../../src/types/info.js";
 
 describe("removePackageName", () => {
   it("strips a leading bold title and the whitespace after it", () => {
@@ -41,6 +41,31 @@ describe("PARAMETER_TYPE_MAP", () => {
 
   it("returns undefined for unknown ParameterType values", () => {
     expect(PARAMETER_TYPE_MAP["ParameterType.UNKNOWN"]).toBeUndefined();
+  });
+});
+
+describe("renderParameterRow", () => {
+  const identity = (type: string, array?: boolean) => (array ? `array of ${type}` : type);
+
+  it("keeps a padded backtick default visible as a double-backtick code span", () => {
+    const param: ParameterInfo = {
+      type: "HTML string",
+      // as produced by the parser's wrapBackticks for a `<p>string</p>` template default
+      default: "` `<p>string</p>` `",
+      description: "A prompt.",
+    };
+    // the renderer's single-backtick wrap combines with the padding to form a
+    // double-backtick span, so the inner backticks are not swallowed.
+    expect(renderParameterRow("prompt", param, identity)).toBe(
+      "| prompt | HTML string | `` `<p>string</p>` `` | A prompt. |",
+    );
+  });
+
+  it("renders numeric defaults without an inline-code span", () => {
+    const param: ParameterInfo = { type: "integer", default: "42", description: "A count." };
+    expect(renderParameterRow("count", param, identity)).toBe(
+      "| count | integer | 42 | A count. |",
+    );
   });
 });
 

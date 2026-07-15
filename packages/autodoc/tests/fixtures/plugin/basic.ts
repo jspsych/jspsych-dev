@@ -72,6 +72,11 @@ const info = <const>{
             default: [],
             array: true,
         },
+        /** A prompt rendered as HTML. */
+        prompt: {
+            type: ParameterType.HTML_STRING,
+            default: `<p>string</p>`,
+        },
         /** Now let's have a grid. */
         grid: {
             type: ParameterType.COMPLEX,

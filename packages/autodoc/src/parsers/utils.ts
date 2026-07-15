@@ -20,6 +20,15 @@ export function extractJsDocComment(node: ts.Node, source: ts.SourceFile): strin
     .trim();
 }
 
+/**
+ * pads a backtick-surrounded string with two backticks and a space,
+ * in order to ensure that the original backticks are not interpreted 
+ * as markdown code delimiters.
+ */
+function wrapBackticks(text: string): string {
+  return text.includes("`") ? `\` ${text} \`` : text;
+}
+
 /** Parses one parameter from an parameter node. */
 export function parseParamGroup(
   node: ts.ObjectLiteralExpression,
@@ -55,7 +64,7 @@ function extractParameter(node: ts.ObjectLiteralExpression, source: ts.SourceFil
         break;
       }
       case "default": {
-        result.default = prop.initializer.getText(source);
+        result.default = wrapBackticks(prop.initializer.getText(source));
         break;
       }
       case "array": {
