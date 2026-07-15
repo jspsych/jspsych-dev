@@ -2,6 +2,8 @@ import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
 
+import { ExampleInfo } from "./types/info.js";
+
 /**
  * Updates sections of a file delimited by sentinel tags with new content from the docs object.
  * The docs object should have keys corresponding to section headings and thus sentinel tags in
@@ -236,4 +238,20 @@ export function extractPackageJsonInfo(packageJsonPath?: string): PackageJsonInf
         `(${err instanceof Error ? err.message : String(err)})`,
     );
   }
+}
+
+/**
+ * returns a copy of the examples object with all paths made relative
+ * to the given root directory
+ */
+export function relativizeExamplePaths(
+  examples: Record<string, ExampleInfo>,
+  root: string,
+): Record<string, ExampleInfo> {
+  return Object.fromEntries(
+    Object.entries(examples).map(([title, example]) => [
+      title,
+      { ...example, path: path.relative(root, path.resolve(example.path)).split(path.sep).join("/") },
+    ]),
+  );
 }
