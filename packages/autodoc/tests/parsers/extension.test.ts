@@ -124,6 +124,22 @@ describe('getExtensionInfoAndExamples', () => {
         warnSpy.mockRestore();
     });
 
+    it('keeps both examples when two files share the same <title> tag without renaming', () => {
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-tag-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        const examples = Object.values(info.examples);
+        expect(examples).toHaveLength(2);
+        // titles are NOT renamed — displayPath in the heading handles uniqueness at render time
+        expect(examples.every((e) => e.title === 'My Example')).toBe(true);
+        const displayPaths = examples.map((e) => e.displayPath);
+        // Example headings will be unique due to the inclusion of file names/paths
+        expect(new Set(displayPaths).size).toBe(2);
+        expect(warnSpy).not.toHaveBeenCalled();
+        warnSpy.mockRestore();
+    });
+
     it('keeps both examples when two files have the same default title but different paths', () => {
         const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-filepath-collision-tests');
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
