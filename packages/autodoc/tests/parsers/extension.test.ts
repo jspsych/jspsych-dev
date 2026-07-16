@@ -148,8 +148,8 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'non-trial-name-with-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['non trial name example']).toBeDefined();
-        const code = info.examples['non trial name example'].code;
+        expect(info.examples[filePath]).toBeDefined();
+        const code = info.examples[filePath].code;
         expect(code).toContain('myBlock');
         expect(code).toContain('initJsPsych');
     });
@@ -158,8 +158,8 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-with-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['trial name example']).toBeDefined();
-        const code = info.examples['trial name example'].code;
+        expect(info.examples[filePath]).toBeDefined();
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect((code.match(/const trial\b/g) ?? []).length).toBe(1);
     });
@@ -168,8 +168,8 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-no-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['trial name no extension example']).toBeDefined();
-        const code = info.examples['trial name no extension example'].code;
+        expect(info.examples[filePath]).toBeDefined();
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect(code).toContain('initJsPsych');
     });
@@ -177,7 +177,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
     it('collects local dependencies of a trial found by name (no extensions property)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-no-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
-        const code = info.examples['trial name no extension example'].code;
+        const code = info.examples[filePath].code;
         expect(code).toContain('const stimulus');
         expect(code.indexOf('const stimulus')).toBeLessThan(code.indexOf('const trial'));
     });
@@ -186,7 +186,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'mixed-detection.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        const code = info.examples['mixed detection example'].code;
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect(code).toContain('const myBlock');
     });
@@ -195,7 +195,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-non-object.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        const code = info.examples['trial name non object example'].code;
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect(code).toContain('"experiment stimulus text"');
     });
@@ -204,7 +204,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'sentinel-bypass.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['sentinel bypass example']).toBeDefined();
+        expect(info.examples[filePath]).toBeDefined();
     });
 });
 
