@@ -305,7 +305,11 @@ export function collectExamples(
         result[info.path] = info;
       }
     } catch (e) {
-      console.warn(`Warning: skipping ${file}: ${e instanceof Error ? e.message : e}`);
+      if (isDirectory) {
+        console.warn(`Warning: skipping ${file}: ${e instanceof Error ? e.message : e}`);
+      } else {
+        throw e;
+      }
     }
   }
   return result;
