@@ -1,5 +1,5 @@
 import { ExtensionInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderFunctionGroup, removePackageName, renderSections, topParameterChart, topDataChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string =>
   array ? `array of ${type}` : type;
@@ -13,7 +13,7 @@ export const defaultExtensionTemplate: SectionTemplate<ExtensionInfo>[] = [
     render: (info) => {
       return `# ${info.name}
 
-${info.description}
+${removePackageName(info.description)}
 
 Current version: ${info.version}`.trim();
       },
@@ -82,8 +82,21 @@ ${rows ?? "*None*"}
   },
   },
   {
+    heading: "functions",
+    render: (info) => {
+      if (Object.keys(info.functions).length === 0) return "";
+      return `## Functions
+
+In addition to the standard extension lifecycle methods, this extension exposes the following helper functions.
+
+${renderFunctionGroup(info.functions)}
+`.trim();
+    },
+  },
+  {
     heading: "examples",
     render: (info) => {
+      if (Object.keys(info.examples).length === 0) return "";
       const sections = Object.entries(info.examples)
         .map(
           ([, example]) =>

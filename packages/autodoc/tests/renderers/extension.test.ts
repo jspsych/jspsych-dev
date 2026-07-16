@@ -16,6 +16,14 @@ const info: ExtensionInfo = {
   data: {
     samples: { type: "object", default: "", description: "Collected samples." },
   },
+  functions: {
+    reset: {
+      description: "Clears the collected samples.",
+      isStatic: false,
+      parameters: {},
+      examples: [],
+    },
+  },
   examples: {
     "examples/basic.html": { title: "Basic example", hasCustomTitle: true, path: "examples/basic.html", displayPath: "basic.html", code: "initJsPsych({ extensions: [...] });" },
   },
@@ -31,8 +39,15 @@ describe("extension renderer (default template)", () => {
       "init-parameters",
       "trial-parameters",
       "data",
+      "functions",
       "examples",
     ]);
+  });
+
+  it("renders instance helper functions without a static marker", () => {
+    expect(docs.functions).toContain("### `reset()`");
+    expect(docs.functions).not.toContain("static reset");
+    expect(docs.functions).toContain("Clears the collected samples.");
   });
 
   it("derives the jsPsychExtension name in the usage snippets", () => {
@@ -75,5 +90,17 @@ describe("extension renderer (default template)", () => {
 
   it("matches the rendered snapshot", () => {
     expect(getExtensionDocs(info)).toMatchSnapshot();
+  });
+});
+
+describe("extension renderer (empty optional sections)", () => {
+  const emptyInfo: ExtensionInfo = { ...info, functions: {}, examples: {} };
+  const docs = getExtensionDocs(emptyInfo);
+
+  it("keeps the section anchors while omitting the visible headings", () => {
+    expect(docs.functions).toContain("jspsych-autodocs:functions:start");
+    expect(docs.functions).not.toContain("## Functions");
+    expect(docs.examples).toContain("jspsych-autodocs:examples:start");
+    expect(docs.examples).not.toContain("## Examples");
   });
 });

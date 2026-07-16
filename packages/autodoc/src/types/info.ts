@@ -1,9 +1,11 @@
 export interface PluginInfo {
-    name: string; 
+    name: string;
     description: string;
     version: string; // gathered from package.json
     parameters: Record<string, ParameterInfo>;
     data: Record<string, ParameterInfo>;
+    /** public (static or instance) helper methods, excluding the required `trial`/`simulate` lifecycle methods */
+    functions: Record<string, FunctionInfo>;
     examples: Record<string, ExampleInfo>;
 }
 
@@ -16,6 +18,8 @@ export interface ExtensionInfo {
     onLoadParameters: Record<string, ParameterInfo>;
     onFinishParameters: Record<string, ParameterInfo>;
     data: Record<string, ParameterInfo>;
+    /** public (static or instance) helper methods, excluding the required `initialize`/`on_start`/`on_load`/`on_finish` lifecycle methods */
+    functions: Record<string, FunctionInfo>;
     examples: Record<string, ExampleInfo>;
 }
 
@@ -41,6 +45,22 @@ export interface TimelineInterfaceInfo {
 export interface TimelineHelperInfo {
     description: string;
     helperParameters: Record<string, ParameterInfo>;
+}
+
+/** name is attached via record */
+export interface FunctionInfo {
+    description: string;
+    isStatic: boolean;
+    parameters: Record<string, ParameterInfo>;
+    /** not present = returns nothing/void */
+    returns?: ReturnInfo;
+    examples: string[];
+}
+
+export interface ReturnInfo {
+    type: string;
+    array?: boolean;
+    description?: string;
 }
 
 /** name is attached via record */

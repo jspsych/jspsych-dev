@@ -13,6 +13,7 @@ import {
   discoverSource,
   extractPackageJsonInfo,
   identifyPackageType,
+  relativizeExamplePaths,
   updateDocSections,
 } from "./utils.js";
 import { getPluginInfo, getPluginInfoAndExamples } from "./parsers/plugin.js";
@@ -80,11 +81,15 @@ async function main(options: CliOptions): Promise<void> {
 
   const sourcePath = options.source ?? discoverSource(anchor());
   const packageJsonPath = options.packageJson ?? path.join(anchor(), "package.json");
+  console.log(sourcePath);
   
   // example discovery is optional, so shouldn't really have to deal w/ fail-fast
   // behavior if not necessary
   const exampleAnchor = anchorOrNull();
   const examplePath = options.example ?? (exampleAnchor ? discoverExample(exampleAnchor) : undefined);
+
+  // example paths are rendered into the docs, so they are reported relative to the package root
+  const exampleRoot = exampleAnchor ?? process.cwd();
 
   const source = ts.createSourceFile(
     sourcePath,
@@ -131,6 +136,7 @@ async function main(options: CliOptions): Promise<void> {
     }
 
     extensionInfo.version = packageJsonInfo.version;
+    extensionInfo.examples = relativizeExamplePaths(extensionInfo.examples, exampleRoot);
 
     docs = getExtensionDocs(extensionInfo, userConfig.extension);
   } else if (type === "plugin") {
@@ -142,6 +148,7 @@ async function main(options: CliOptions): Promise<void> {
     }
 
     pluginInfo.version = packageJsonInfo.version;
+    pluginInfo.examples = relativizeExamplePaths(pluginInfo.examples, exampleRoot);
 
     docs = getPluginDocs(pluginInfo, userConfig.plugin);
   } else if (type === "timeline") {
@@ -155,6 +162,7 @@ async function main(options: CliOptions): Promise<void> {
     timelineInfo.name = packageJsonInfo.name;
     timelineInfo.description = packageJsonInfo.description;
     timelineInfo.version = packageJsonInfo.version;
+    timelineInfo.examples = relativizeExamplePaths(timelineInfo.examples, exampleRoot);
 
     docs = getTimelineDocs(timelineInfo, userConfig.timeline);
   } else {

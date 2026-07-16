@@ -1,4 +1,4 @@
-import { identifyPackageType } from "../src/utils.js";
+import { identifyPackageType, relativizeExamplePaths } from "../src/utils.js";
 import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
@@ -51,5 +51,50 @@ describe("identifyPackageType", () => {
         expect(() => identifyPackageType(noClassSource)).toThrow(
             "No plugin or extension class found in source file."
         );
+    });
+});
+
+describe("relativizeExamplePaths", () => {
+    const root = path.resolve("/pkg/root");
+    const example = (p: string) => ({ "Example": { path: p, code: "const a = 1;" } });
+
+    it("rewrites an absolute path to be relative to the package root", () => {
+        const result = relativizeExamplePaths(example(path.join(root, "examples", "demo.html")), root);
+        expect(result["Example"].path).toBe("examples/demo.html");
+    });
+
+    it("keeps ../ prefixes for examples outside the package root", () => {
+        const outside = path.resolve("/pkg/shared/examples/demo.html");
+        const result = relativizeExamplePaths(example(outside), root);
+        expect(result["Example"].path).toBe("../shared/examples/demo.html");
+    });
+
+    it("normalizes a path that is already relative to the package root", () => {
+        const result = relativizeExamplePaths(example("./examples/demo.html"), process.cwd());
+        expect(result["Example"].path).toBe("examples/demo.html");
+    });
+
+    it("does not mutate the input", () => {
+        const absolute = path.join(root, "examples", "demo.html");
+        const input = example(absolute);
+        const result = relativizeExamplePaths(input, root);
+        expect(input["Example"].path).toBe(absolute);
+        expect(result["Example"]).not.toBe(input["Example"]);
+    });
+
+    it("preserves titles and code while rewriting every entry", () => {
+        const input = {
+            "First": { path: path.join(root, "examples", "one.html"), code: "one();" },
+            "Second": { path: path.join(root, "examples", "nested", "two.html"), code: "two();" },
+        };
+        const result = relativizeExamplePaths(input, root);
+        expect(result).toEqual({
+            "First": { path: "examples/one.html", code: "one();" },
+            "Second": { path: "examples/nested/two.html", code: "two();" },
+        });
+    });
+
+    it("returns an empty record when there are no examples", () => {
+        expect(relativizeExamplePaths({}, root)).toEqual({});
     });
 });

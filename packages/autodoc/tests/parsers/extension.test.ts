@@ -94,6 +94,120 @@ describe('getExtensionInfo', () => {
     });
 });
 
+describe('getExtensionInfo helper functions', () => {
+    const parse = () => {
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        return getExtensionInfo(fixtureSource, classNode as ts.ClassDeclaration);
+    };
+
+    it('collects public helpers, excluding lifecycle and private members', () => {
+        const info = parse();
+        expect(Object.keys(info.functions).sort()).toEqual(['average', 'clear']);
+        expect(info.functions.initialize).toBeUndefined();
+        expect(info.functions.on_start).toBeUndefined();
+        expect(info.functions.tick).toBeUndefined();
+    });
+
+    it('parses a static helper with an array param and a return', () => {
+        const { average } = parse().functions;
+        expect(average.isStatic).toBe(true);
+        expect(average.parameters.samples.type).toBe('number');
+        expect(average.parameters.samples.array).toBe(true);
+        expect(average.returns?.type).toBe('number');
+        expect(average.returns?.description).toBe('the mean value');
+    });
+
+    it('omits a void return on an instance helper', () => {
+        const { clear } = parse().functions;
+        expect(clear.isStatic).toBe(false);
+        expect(clear.returns).toBeUndefined();
+    });
+});
+
+describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
+    const inferTestsDir = path.resolve(__dirname, '../fixtures/extension/infer-tests');
+    let classNode: ts.ClassDeclaration;
+
+    beforeAll(() => {
+        classNode = identifyPackageType(fixtureSource).mainNode as ts.ClassDeclaration;
+    });
+
+    it('throws when no extension is found anywhere and no trial variable name', () => {
+        const filePath = path.join(inferTestsDir, 'no-trial-name-or-extension.html');
+        expect(() => getExtensionInfoAndExamples(fixtureSource, classNode, filePath))
+            .toThrow('no variables with an "extensions" field found');
+    });
+
+    it('throws when extension is found only in initJsPsych and no trial variable name', () => {
+        const filePath = path.join(inferTestsDir, 'extension-in-init-only.html');
+        expect(() => getExtensionInfoAndExamples(fixtureSource, classNode, filePath))
+            .toThrow('extension found in initJsPsych but no trial variables found that use the extension');
+    });
+
+    it('succeeds when trial object has extension and name does not match trial name regex', () => {
+        const filePath = path.join(inferTestsDir, 'non-trial-name-with-extension.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        expect(info.examples['non trial name example']).toBeDefined();
+        const code = info.examples['non trial name example'].code;
+        expect(code).toContain('myBlock');
+        expect(code).toContain('initJsPsych');
+    });
+
+    it('succeeds when trial object has extension and uses trial name regex and does not duplicate', () => {
+        const filePath = path.join(inferTestsDir, 'trial-name-with-extension.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        expect(info.examples['trial name example']).toBeDefined();
+        const code = info.examples['trial name example'].code;
+        expect(code).toContain('const trial');
+        expect((code.match(/const trial\b/g) ?? []).length).toBe(1);
+    });
+
+    it('succeeds when trial name matches regex but trial object has no extensions property', () => {
+        const filePath = path.join(inferTestsDir, 'trial-name-no-extension.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        expect(info.examples['trial name no extension example']).toBeDefined();
+        const code = info.examples['trial name no extension example'].code;
+        expect(code).toContain('const trial');
+        expect(code).toContain('initJsPsych');
+    });
+
+    it('collects local dependencies of a trial found by name (no extensions property)', () => {
+        const filePath = path.join(inferTestsDir, 'trial-name-no-extension.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        const code = info.examples['trial name no extension example'].code;
+        expect(code).toContain('const stimulus');
+        expect(code.indexOf('const stimulus')).toBeLessThan(code.indexOf('const trial'));
+    });
+
+    it('includes variables detected by both name and extensions in the same example', () => {
+        const filePath = path.join(inferTestsDir, 'mixed-detection.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        const code = info.examples['mixed detection example'].code;
+        expect(code).toContain('const trial');
+        expect(code).toContain('const myBlock');
+    });
+
+    it('includes a trial-named variable even when its initializer is not an object', () => {
+        const filePath = path.join(inferTestsDir, 'trial-name-non-object.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        const code = info.examples['trial name non object example'].code;
+        expect(code).toContain('const trial');
+        expect(code).toContain('"experiment stimulus text"');
+    });
+
+    it('does not throw when start/end sentinels are used even if inferCodeBlock would fail', () => {
+        const filePath = path.join(inferTestsDir, 'sentinel-bypass.html');
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
+        expect(Object.keys(info.examples)).toHaveLength(1);
+        expect(info.examples['sentinel bypass example']).toBeDefined();
+    });
+});
+
 describe('getExtensionInfoAndExamples', () => {
     const examplesDir = path.resolve(__dirname, '../fixtures/extension/examples');
 

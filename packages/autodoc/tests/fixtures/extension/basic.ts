@@ -90,4 +90,27 @@ class TestExtension implements JsPsychExtension {
       },
     },
   };
+
+  // initialize is a lifecycle method and must be excluded from the docs
+  initialize(_params: InitializeParameters): Promise<void> {
+    return Promise.resolve();
+  }
+
+  // on_start is a lifecycle method and must be excluded from the docs
+  on_start(_params: OnStartParameters): void {}
+
+  /**
+   * Averages a list of samples.
+   * @param samples the raw samples
+   * @returns the mean value
+   */
+  static average(samples: number[]): number {
+    return 0;
+  }
+
+  /** Clears the collected samples. */
+  clear(): void {}
+
+  /** internal helper, should not be documented */
+  private tick(): void {}
 }

@@ -1,5 +1,5 @@
 import { PluginInfo, SectionTemplate } from "../types/info.js";
-import { renderParameterRow, renderDataRow, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
+import { renderParameterRow, renderDataRow, renderFunctionGroup, removePackageName, renderSections, topParameterChart, topDataChart, PARAMETER_TYPE_MAP } from "./utils.js";
 
 const stringifyTypeMap = PARAMETER_TYPE_MAP;
 
@@ -14,7 +14,7 @@ export const defaultPluginTemplate: SectionTemplate<PluginInfo>[] = [
     render: (info) => {
       return `# ${info.name}
 
-${info.description}
+${removePackageName(info.description)}
 
 Current version: ${info.version}`.trim();
     },
@@ -50,8 +50,21 @@ ${rows ?? "*None*"}
     },
   },
   {
+    heading: "functions",
+    render: (info) => {
+      if (Object.keys(info.functions).length === 0) return "";
+      return `## Functions
+
+In addition to the standard plugin lifecycle methods, this plugin exposes the following helper functions.
+
+${renderFunctionGroup(info.functions)}
+`.trim();
+    },
+  },
+  {
     heading: "examples",
     render: (info) => {
+      if (Object.keys(info.examples).length === 0) return "";
       const sections = Object.entries(info.examples)
         .map(
           ([, example]) =>

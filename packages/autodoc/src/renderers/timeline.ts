@@ -1,5 +1,5 @@
 import { SectionTemplate, TimelineInfo, TimelineHelperInfo, TimelineInterfaceInfo, ParameterInfo } from "../types/info.js";
-import { renderSections, topParameterChart } from "./utils.js";
+import { removePackageName, renderSections, topParameterChart } from "./utils.js";
 
 const getTypeName = (type: string, array?: boolean): string => (array ? `array of ${type}` : type);
 
@@ -61,7 +61,7 @@ export const defaultTimelineTemplate: SectionTemplate<TimelineInfo>[] = [
     render: (info) => {
       return `# ${info.name}
 
-${info.description}
+${removePackageName(info.description)}
 
 Current version: ${info.version}`.trim();
     },
@@ -103,6 +103,7 @@ ${renderHelperGroup(info.utils)}`,
   {
     heading: "configuration-options",
     render: (info) => {
+      if (Object.keys(info.interfaces).length === 0) return "";
       const sections = Object.entries(info.interfaces)
         .map(([name, interfaceInfo]: [string, TimelineInterfaceInfo]) => {
           const description = interfaceInfo.description || "*No description provided.*";
@@ -114,12 +115,13 @@ ${renderHelperGroup(info.utils)}`,
 
 These types are shared by multiple parameters above.
 
-${sections || "*None*"}`;
+${sections}`;
     },
   },
   {
     heading: "examples",
     render: (info) => {
+      if (Object.keys(info.examples).length === 0) return "";
       const sections = Object.entries(info.examples)
         .map(
           ([, example]) =>
