@@ -12,7 +12,7 @@ exports[`extension renderer (default template) matches the rendered snapshot 1`]
   "examples": "<!-- jspsych-autodocs:examples:start -->
 ## Examples
 
-### Basic example (examples/basic.html)
+### Basic example
 
 \`\`\`js
 initJsPsych({ extensions: [...] });

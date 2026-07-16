@@ -99,8 +99,8 @@ ${renderFunctionGroup(info.functions)}
       if (Object.keys(info.examples).length === 0) return "";
       const sections = Object.entries(info.examples)
         .map(
-          ([title, example]) =>
-            `### ${title} (${example.path})
+          ([, example]) =>
+            `### ${example.title}${example.hasCustomTitle ? "" : ` (${example.displayPath})`}
 
 \`\`\`js
 ${example.code}

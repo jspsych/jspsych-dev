@@ -3,6 +3,7 @@ import ts from 'typescript';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { jest } from '@jest/globals';
 import { identifyPackageType } from '../../src/utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -147,8 +148,8 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'non-trial-name-with-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['non trial name example']).toBeDefined();
-        const code = info.examples['non trial name example'].code;
+        expect(info.examples[filePath]).toBeDefined();
+        const code = info.examples[filePath].code;
         expect(code).toContain('myBlock');
         expect(code).toContain('initJsPsych');
     });
@@ -157,8 +158,8 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-with-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['trial name example']).toBeDefined();
-        const code = info.examples['trial name example'].code;
+        expect(info.examples[filePath]).toBeDefined();
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect((code.match(/const trial\b/g) ?? []).length).toBe(1);
     });
@@ -167,8 +168,8 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-no-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['trial name no extension example']).toBeDefined();
-        const code = info.examples['trial name no extension example'].code;
+        expect(info.examples[filePath]).toBeDefined();
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect(code).toContain('initJsPsych');
     });
@@ -176,7 +177,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
     it('collects local dependencies of a trial found by name (no extensions property)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-no-extension.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
-        const code = info.examples['trial name no extension example'].code;
+        const code = info.examples[filePath].code;
         expect(code).toContain('const stimulus');
         expect(code.indexOf('const stimulus')).toBeLessThan(code.indexOf('const trial'));
     });
@@ -185,7 +186,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'mixed-detection.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        const code = info.examples['mixed detection example'].code;
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect(code).toContain('const myBlock');
     });
@@ -194,7 +195,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'trial-name-non-object.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        const code = info.examples['trial name non object example'].code;
+        const code = info.examples[filePath].code;
         expect(code).toContain('const trial');
         expect(code).toContain('"experiment stimulus text"');
     });
@@ -203,7 +204,7 @@ describe('inferCodeBlock (via getExtensionInfoAndExamples)', () => {
         const filePath = path.join(inferTestsDir, 'sentinel-bypass.html');
         const info = getExtensionInfoAndExamples(fixtureSource, classNode, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['sentinel bypass example']).toBeDefined();
+        expect(info.examples[filePath]).toBeDefined();
     });
 });
 
@@ -215,38 +216,89 @@ describe('getExtensionInfoAndExamples', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, filePath);
         expect(Object.keys(info.examples)).toHaveLength(1);
-        expect(info.examples['simple sentinel example']).toBeDefined();
-        expect(info.examples['simple sentinel example'].path).toBe(filePath);
-        expect(info.examples['simple sentinel example'].code).toBe(
+        expect(info.examples[filePath]).toBeDefined();
+        expect(info.examples[filePath].title).toBe('simple sentinel example');
+        expect(info.examples[filePath].path).toBe(filePath);
+        expect(info.examples[filePath].code).toBe(
             'var trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};'
         );
+    });
+
+    it('produces unique titles when two files share the same jspsych-autodoc:title sentinel', () => {
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-sentinel-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        const titles = Object.values(info.examples).map((e) => e.title);
+        expect(titles).toHaveLength(2);
+        expect(new Set(titles).size).toBe(2);
+        expect(titles[0]).toBe("my example");
+        expect(titles[1]).toBe("my example (2)");
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('my example'));
+        warnSpy.mockRestore();
+    });
+
+    it('keeps both examples when two files share the same <title> tag without renaming', () => {
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-tag-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        const examples = Object.values(info.examples);
+        expect(examples).toHaveLength(2);
+        // titles are NOT renamed — displayPath in the heading handles uniqueness at render time
+        expect(examples.every((e) => e.title === 'My Example')).toBe(true);
+        const displayPaths = examples.map((e) => e.displayPath);
+        // Example headings will be unique due to the inclusion of file names/paths
+        expect(new Set(displayPaths).size).toBe(2);
+        expect(warnSpy).not.toHaveBeenCalled();
+        warnSpy.mockRestore();
+    });
+
+    it('keeps both examples when two files have the same default title but different paths', () => {
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-filepath-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        expect(Object.values(info.examples)).toHaveLength(2);
+        const displayPaths = Object.values(info.examples).map((e) => e.displayPath);
+        expect(displayPaths).toContain('path1/duplicated_filename.html');
+        expect(displayPaths).toContain('path2/duplicated_filename.html');
+        const titles = Object.values(info.examples).map((e) => e.title);
+        expect(titles).toHaveLength(2);
+        // duplicate titles remain the same — source/displayPath appended at render time keeps the full headings unique
+        expect(new Set(titles).size).toBe(1);
+        expect(titles[0]).toBe('TestExtension Example');
+        expect(titles[1]).toBe('TestExtension Example');
     });
 
     it('should extract examples from a provided directory', () => {
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
         const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, examplesDir);
         expect(Object.keys(info.examples)).toHaveLength(4);
-        expect(info.examples['ignored example']).toBeUndefined();
+        expect(info.examples[path.join(examplesDir, 'ignored-example.html')]).toBeUndefined();
 
-        const simpleSentinelExample = info.examples['simple sentinel example'];
+        const simpleSentinelExample = info.examples[path.join(examplesDir, 'simple-sentinel-example.html')];
+        expect(simpleSentinelExample.title).toBe('simple sentinel example');
         expect(simpleSentinelExample.path).toBe(path.join(examplesDir, 'simple-sentinel-example.html'));
         expect(simpleSentinelExample.code).toBe(
             'var trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};'
         );
 
-        const complexSentinelExample = info.examples['complex sentinel example'];
+        const complexSentinelExample = info.examples[path.join(examplesDir, 'complex-sentinel-example.html')];
+        expect(complexSentinelExample.title).toBe('complex sentinel example');
         expect(complexSentinelExample.path).toBe(path.join(examplesDir, 'complex-sentinel-example.html'));
         expect(complexSentinelExample.code).toBe(
             'var jsPsych = initJsPsych({\n    extensions: [\n        {type: jsPsychTestExtension}\n    ]\n});\n\nvar helloTrial = {\n  type: jsPsychTestPlugin,\n  stimulus: "Hello",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "hi"}}\n  ]\n};\n\nvar goodbyeTrial = {\n  type: jsPsychTestPlugin,\n  stimulus: "Goodbye",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "bye"}}\n  ]\n};'
         );
 
-        const simpleInferredExample = info.examples['simple inferred example'];
+        const simpleInferredExample = info.examples[path.join(examplesDir, 'simple-inferred-example.html')];
+        expect(simpleInferredExample.title).toBe('simple inferred example');
         expect(simpleInferredExample.path).toBe(path.join(examplesDir, 'simple-inferred-example.html'));
         expect(simpleInferredExample.code).toBe(
             'var jsPsych = initJsPsych({\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "inferred"}}\n  ]\n});\n\nvar trial = {\n  type: jsPsychTestPlugin,\n  stimulus: "World",\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "trial-level inferred"}}\n  ]\n};'
         );
 
-        const complexInferredExample = info.examples['complex inferred example'];
+        const complexInferredExample = info.examples[path.join(examplesDir, 'complex-inferred-example.html')];
+        expect(complexInferredExample.title).toBe('complex inferred example');
         expect(complexInferredExample.path).toBe(path.join(examplesDir, 'complex-inferred-example.html'));
         expect(complexInferredExample.code).toBe(
             'var jsPsych = initJsPsych();\n\nvar stimulus = "Hello, world!";\n\nvar duration = 1000;\n\nvar choices = ["f", "j"];\n\nvar trial = {\n  type: jsPsychTestPlugin,\n  stimulus: stimulus,\n  trial_duration: duration,\n  choices: choices,\n  extensions: [\n    {type: jsPsychTestExtension, params: {test: "inferred complex"}}\n  ]\n};'
