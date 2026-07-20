@@ -17,7 +17,7 @@
       async function run() {
         // Connect the adapter before running the timeline. Pass any backend-specific
         // options your adapter's constructor needs.
-        await jsPsych.pluginAPI.connect(new {globalName}());
+        await jsPsych.multiplayer.connect(new {globalName}());
 
         const trial = {
           type: jsPsychMultiplayerSync,
