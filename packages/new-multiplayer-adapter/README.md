@@ -2,7 +2,7 @@
 
 This package lets you start building a [jsPsych multiplayer adapter](https://github.com/jspsych/jsPsych/blob/main/docs/developers/adapter-development.md) by simply running `npx @jspsych/new-multiplayer-adapter` from the command line.
 
-A multiplayer adapter implements jsPsych's `MultiplayerAdapter` interface and is responsible for the network I/O against a specific backend (JATOS group sessions, Firebase, a custom WebSocket server, etc.). Once written, it can be passed to `jsPsych.multiplayer.connect()` and used by any multiplayer plugin.
+A multiplayer adapter implements jsPsych's `MultiplayerAdapter` interface and is responsible for the network I/O against a specific backend (JATOS group sessions, Firebase, a custom WebSocket server, etc.). Once written, it can be passed to `jsPsych.pluginAPI.connect()` and used by any multiplayer plugin.
 
 You will be prompted to enter a name for your adapter, a description, the name of the author, an optional link to the author's GitHub profile, and an optional link to a `README.md` file. A template package containing boilerplate TypeScript code will then be generated in your current working directory.
 

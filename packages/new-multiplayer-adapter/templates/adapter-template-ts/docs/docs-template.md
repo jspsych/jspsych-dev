@@ -19,7 +19,7 @@ import {globalName} from "{npmPackageName}";
 const jsPsych = initJsPsych();
 
 // Connect the adapter before running the timeline.
-await jsPsych.multiplayer.connect(new {globalName}(/* backend-specific options */));
+await jsPsych.pluginAPI.connect(new {globalName}(/* backend-specific options */));
 
 await jsPsych.run(timeline);
 ```

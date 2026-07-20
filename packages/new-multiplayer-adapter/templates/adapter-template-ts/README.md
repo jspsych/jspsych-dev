@@ -4,7 +4,7 @@
 
 {description}
 
-This is a [jsPsych multiplayer adapter](https://github.com/jspsych/jsPsych/blob/main/docs/developers/adapter-development.md). It implements the `MultiplayerAdapter` interface so it can be passed to `jsPsych.multiplayer.connect()` and used by multiplayer plugins.
+This is a [jsPsych multiplayer adapter](https://github.com/jspsych/jsPsych/blob/main/docs/developers/adapter-development.md). It implements the `MultiplayerAdapter` interface so it can be passed to `jsPsych.pluginAPI.connect()` and used by multiplayer plugins.
 
 ## Loading
 
