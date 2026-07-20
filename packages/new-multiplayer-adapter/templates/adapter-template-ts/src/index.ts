@@ -6,7 +6,7 @@ import { GroupSessionData, MultiplayerAdapter, Unsubscribe } from "jspsych";
  * {description}
  *
  * A jsPsych multiplayer adapter implements the `MultiplayerAdapter` interface so it can be passed
- * to `jsPsych.pluginAPI.connect(new {camelCaseName}Adapter(...))`. The adapter is responsible only
+ * to `jsPsych.multiplayer.connect(new {camelCaseName}Adapter(...))`. The adapter is responsible only
  * for network I/O against a specific backend; all higher-level behavior (subscribe replay,
  * `wait()` fast-path, subscription tracking) lives in jsPsych's `MultiplayerAPI`, so it stays
  * consistent across backends.
