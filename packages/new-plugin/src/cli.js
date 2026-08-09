@@ -58,9 +58,9 @@ async function getRemoteGitUrl() {
   if (repoRoot) {
     const currentDir = process.cwd();
     const relativePath = path.relative(repoRoot, currentDir);
-    if (relativePath) {
-      remoteGitUrl = `${remoteGitRootUrl}/tree/main/${relativePath}`;
-    }
+    remoteGitUrl = relativePath
+      ? `${remoteGitRootUrl}/blob/main/${relativePath}`
+      : `${remoteGitRootUrl}/blob/main`;
     return remoteGitUrl;
   }
   return "";
@@ -208,16 +208,16 @@ async function runPrompts(cwdInfo) {
     loop: false,
   });
 
-  // If not in a known jsPsych monorepo, ask for the path to the README.md file
-  let readmePath;
+  // If not in a known jsPsych monorepo, ask for the path to the documentation file
+  let documentationPath;
   if (!cwdInfo.isContribRepo) {
     const remoteGitUrl = await getRemoteGitUrl();
-    readmePath = await input({
-      message: "Enter the path to the README.md file for this plugin package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/README.md`, // '/plugin-${name}/README.md' if not a Git repository
+    documentationPath = await input({
+      message: "Enter the path to the documentation file for this plugin package [Optional]:",
+      default: getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/docs/plugin-${getHyphenateName(name)}.md` : `docs/plugin-${getHyphenateName(name)}.md`, // '/plugin-${name}/docs/plugin-${name}.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/${cwdInfo.repoSlug}/packages/plugin-${getHyphenateName(name)}/README.md`;
+    documentationPath = `https://github.com/${cwdInfo.repoSlug}/blob/main/packages/plugin-${getHyphenateName(name)}/docs/plugin-${getHyphenateName(name)}.md`;
   }
 
   return {
@@ -226,7 +226,7 @@ async function runPrompts(cwdInfo) {
     author: author,
     authorUrl: authorUrl,
     language: language,
-    readmePath: readmePath,
+    documentationPath: documentationPath,
     destDir: cwdInfo.destDir,
     isContribRepo: cwdInfo.isContribRepo,
     scope: cwdInfo.scope,
@@ -274,7 +274,7 @@ async function processAnswers(answers) {
       .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
-      .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{documentationUrl}", answers.documentationPath))
       .pipe(replace("{packageDir}", packageDir))
       .pipe(
         // npm renames a literal ".gitignore" to ".npmignore" when this package is
@@ -360,13 +360,13 @@ async function runWithArgs(cwdInfo, options) {
   const name = options.name;
   const language = options.language || 'ts';
   
-  let readmePath = options.readmePath;
-  if (!readmePath) {
+  let documentationPath = options.documentationPath;
+  if (!documentationPath) {
     if (!cwdInfo.isContribRepo) {
       const remoteGitUrl = await getRemoteGitUrl();
-      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/README.md`;
+      documentationPath = getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/plugin-${getHyphenateName(name)}/docs/plugin-${getHyphenateName(name)}.md` : `docs/plugin-${getHyphenateName(name)}.md`;
     } else {
-      readmePath = `https://github.com/${cwdInfo.repoSlug}/packages/plugin-${getHyphenateName(name)}/README.md`;
+      documentationPath = `https://github.com/${cwdInfo.repoSlug}/blob/main/packages/plugin-${getHyphenateName(name)}/docs/plugin-${getHyphenateName(name)}.md`;
     }
   }
 
@@ -376,7 +376,7 @@ async function runWithArgs(cwdInfo, options) {
     author: options.author,
     authorUrl: options.authorUrl || '',
     language: language,
-    readmePath: readmePath,
+    documentationPath: documentationPath,
     destDir: cwdInfo.destDir,
     isContribRepo: cwdInfo.isContribRepo,
     scope: cwdInfo.scope,
@@ -396,7 +396,7 @@ program
   .option('--author <author>', 'Name of the author (required)')
   .option('--author-url <url>', 'Profile URL for the author (optional)')
   .option('--language <lang>', 'Language to use: ts or js (default: ts)', 'ts')
-  .option('--readme-path <path>', 'Path to README.md file (optional)')
+  .option('--documentation-path <path>', 'Path to the documentation file (optional)')
   .addHelpText('after', `
 
 Examples:

@@ -71,9 +71,9 @@ async function getRemoteGitUrl() {
   if (repoRoot) {
     const currentDir = process.cwd();
     const relativePath = path.relative(repoRoot, currentDir);
-    if (relativePath) {
-      remoteGitUrl = `${remoteGitRootUrl}/tree/main/${relativePath}`;
-    }
+    remoteGitUrl = relativePath
+      ? `${remoteGitRootUrl}/blob/main/${relativePath}`
+      : `${remoteGitRootUrl}/blob/main`;
     return remoteGitUrl;
   }
   return "";
@@ -194,18 +194,18 @@ async function runPrompts(cwdInfo) {
     message: "Enter a profile URL for the author, e.g. a link to their GitHub profile [Optional]:",
   });
 
-  // If not in a known monorepo, ask for the path to the README.md file
-  let readmePath;
+  // If not in a known monorepo, ask for the path to the documentation file
+  let documentationPath;
   if (!cwdInfo.isKnownRepo) {
     const remoteGitUrl = await getRemoteGitUrl();
-    readmePath = await input({
-      message: "Enter the path to the README.md file for this adapter package [Optional]:",
-      default: `${getGitHttpsUrl(remoteGitUrl)}/adapter-${getHyphenateName(name)}/README.md`, // '/adapter-${name}/README.md' if not a Git repository
+    documentationPath = await input({
+      message: "Enter the path to the documentation file for this adapter package [Optional]:",
+      default: getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/adapter-${getHyphenateName(name)}/docs/adapter-${getHyphenateName(name)}.md` : `docs/adapter-${getHyphenateName(name)}.md`, // '/adapter-${name}/docs/adapter-${name}.md' if not a Git repository
     });
   } else {
-    readmePath = `https://github.com/${
+    documentationPath = `https://github.com/${
       cwdInfo.repoConfig.repoSlug
-    }/blob/main/packages/adapter-${getHyphenateName(name)}/README.md`;
+    }/blob/main/packages/adapter-${getHyphenateName(name)}/docs/adapter-${getHyphenateName(name)}.md`;
   }
 
   return {
@@ -213,7 +213,7 @@ async function runPrompts(cwdInfo) {
     description,
     author,
     authorUrl,
-    readmePath,
+    documentationPath,
     destDir: cwdInfo.destDir,
     isKnownRepo: cwdInfo.isKnownRepo,
     repoConfig: cwdInfo.repoConfig,
@@ -261,7 +261,7 @@ async function processAnswers(answers) {
       .pipe(replace("{packageName}", packageName))
       .pipe(replace("{gitRootUrl}", gitRootUrl))
       .pipe(replace("{gitRootHttpsUrl}", gitRootHttpsUrl))
-      .pipe(replace("{documentationUrl}", answers.readmePath))
+      .pipe(replace("{documentationUrl}", answers.documentationPath))
       .pipe(replace("{packageDir}", packageDir))
       .pipe(
         // npm renames a literal ".gitignore" to ".npmignore" when this package is
@@ -344,15 +344,15 @@ async function runWithArgs(cwdInfo, options) {
 
   const name = options.name;
 
-  let readmePath = options.readmePath;
-  if (!readmePath) {
+  let documentationPath = options.documentationPath;
+  if (!documentationPath) {
     if (!cwdInfo.isKnownRepo) {
       const remoteGitUrl = await getRemoteGitUrl();
-      readmePath = `${getGitHttpsUrl(remoteGitUrl)}/adapter-${getHyphenateName(name)}/README.md`;
+      documentationPath = getGitHttpsUrl(remoteGitUrl) ? `${getGitHttpsUrl(remoteGitUrl)}/adapter-${getHyphenateName(name)}/docs/adapter-${getHyphenateName(name)}.md` : `docs/adapter-${getHyphenateName(name)}.md`;
     } else {
-      readmePath = `https://github.com/${
+      documentationPath = `https://github.com/${
         cwdInfo.repoConfig.repoSlug
-      }/blob/main/packages/adapter-${getHyphenateName(name)}/README.md`;
+      }/blob/main/packages/adapter-${getHyphenateName(name)}/docs/adapter-${getHyphenateName(name)}.md`;
     }
   }
 
@@ -361,7 +361,7 @@ async function runWithArgs(cwdInfo, options) {
     description: options.description,
     author: options.author,
     authorUrl: options.authorUrl || "",
-    readmePath,
+    documentationPath,
     destDir: cwdInfo.destDir,
     isKnownRepo: cwdInfo.isKnownRepo,
     repoConfig: cwdInfo.repoConfig,
@@ -379,7 +379,7 @@ program
   .option("--description <description>", "Brief description of the adapter package (required)")
   .option("--author <author>", "Name of the author (required)")
   .option("--author-url <url>", "Profile URL for the author (optional)")
-  .option("--readme-path <path>", "Path to README.md file (optional)")
+  .option("--documentation-path <path>", "Path to the documentation file (optional)")
   .addHelpText(
     "after",
     `
