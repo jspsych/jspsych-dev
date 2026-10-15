@@ -290,7 +290,7 @@ export function collectExamples(
   }
 
   const result: Record<string, ExampleInfo> = {};
-  const titleCounts = new Map<string, number>();
+  const usedCustomTitles = new Set<string>();
   for (const file of htmlFiles) {
     try {
       const info = getExampleInfo(file, inferFallback);
@@ -300,12 +300,14 @@ export function collectExamples(
         info.displayPath = displayPath.split(path.sep).join("/");
         if (info.hasCustomTitle) {
           const baseTitle = info.title;
-          const count = titleCounts.get(baseTitle) ?? 0;
-          titleCounts.set(baseTitle, count + 1);
-          if (count > 0) {
-            info.title = `${baseTitle} (${count + 1})`;
+          let n = 2;
+          // keep incrementing the suffix until it's unused
+          while (usedCustomTitles.has(info.title)) info.title = `${baseTitle} (${n++})`;
+          if (info.title !== baseTitle) {
             console.warn(`Warning: duplicate example title "${baseTitle}" in ${file}, renamed to "${info.title}"`);
           }
+          // store the final title in the set, so that subsequent renaming attempts can be compared against existing titles
+          usedCustomTitles.add(info.title);
         }
         result[info.path] = info;
       }
