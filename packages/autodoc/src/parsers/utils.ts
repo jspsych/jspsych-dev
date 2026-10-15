@@ -270,7 +270,10 @@ export function collectExamples(
   if (stat.isDirectory()) {
     isDirectory = true;
     const collectHtml = (dir: string) => {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      // readdirSync order is OS/filesystem-dependent, so sort entries to keep
+      // duplicate-title numbering deterministic across platforms
+      const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+      for (const entry of entries) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) collectHtml(full);
         else if (entry.name.endsWith(".html")) htmlFiles.push(full);
