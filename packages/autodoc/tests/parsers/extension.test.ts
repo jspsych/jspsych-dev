@@ -238,6 +238,19 @@ describe('getExtensionInfoAndExamples', () => {
         warnSpy.mockRestore();
     });
 
+    it('skips suffixes already taken by another sentinel title when renaming duplicates', () => {
+        // file-a: "Hello", file-b: "Hello (2)", file-c: "Hello" -> file-c must not also become "Hello (2)"
+        const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-sentinel-suffix-collision-tests');
+        const { mainNode: classNode } = identifyPackageType(fixtureSource);
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const info = getExtensionInfoAndExamples(fixtureSource, classNode as ts.ClassDeclaration, collisionDir);
+        const titles = Object.values(info.examples).map((e) => e.title);
+        expect(titles).toEqual(["Hello", "Hello (2)", "Hello (3)"]);
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('renamed to "Hello (3)"'));
+        warnSpy.mockRestore();
+    });
+
     it('keeps both examples when two files share the same <title> tag without renaming', () => {
         const collisionDir = path.resolve(__dirname, '../fixtures/extension/title-tag-collision-tests');
         const { mainNode: classNode } = identifyPackageType(fixtureSource);
