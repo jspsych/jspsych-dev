@@ -234,7 +234,7 @@ export function getCodeBlock(
 export function getExampleInfo(
   sourcePath: string,
   inferFallback: (content: string, path: string) => string,
-): Record<string, ExampleInfo> | undefined {
+): ExampleInfo | undefined {
   const content = fs.readFileSync(sourcePath, "utf-8");
 
   if (/<!--\s*jspsych-autodoc:ignore\s*-->/.test(content)) return undefined;
@@ -242,6 +242,7 @@ export function getExampleInfo(
   let title: string;
 
   const sentinelMatch = content.match(/<!--\s*jspsych-autodoc:title\s+(.+?)\s*-->/);
+  const hasCustomTitle = !!sentinelMatch;
   if (sentinelMatch) {
     title = sentinelMatch[1].trim();
   } else {
@@ -250,9 +251,7 @@ export function getExampleInfo(
     title = titleTagMatch[1].trim();
   }
 
-  return {
-    [title]: { path: sourcePath, code: getCodeBlock(content, sourcePath, inferFallback) },
-  };
+  return { title, hasCustomTitle, path: sourcePath, displayPath: sourcePath, code: getCodeBlock(content, sourcePath, inferFallback) };
 }
 
 /** Collects example info from a directory or single HTML file. */
@@ -266,14 +265,21 @@ export function collectExamples(
 
   const stat = fs.statSync(examplePath);
   const htmlFiles: string[] = [];
+  let isDirectory = false;
 
   if (stat.isDirectory()) {
-    htmlFiles.push(
-      ...fs
-        .readdirSync(examplePath)
-        .filter((f) => f.endsWith(".html"))
-        .map((f) => path.join(examplePath, f)),
-    );
+    isDirectory = true;
+    const collectHtml = (dir: string) => {
+      // readdirSync order is OS/filesystem-dependent, so sort entries to keep
+      // duplicate-title numbering deterministic across platforms
+      const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) collectHtml(full);
+        else if (entry.name.endsWith(".html")) htmlFiles.push(full);
+      }
+    };
+    collectHtml(examplePath);
   } else if (stat.isFile()) {
     if (!examplePath.endsWith(".html")) {
       throw new Error(`Example file must be an HTML file: ${examplePath}`);
@@ -284,9 +290,34 @@ export function collectExamples(
   }
 
   const result: Record<string, ExampleInfo> = {};
+  const usedCustomTitles = new Set<string>();
   for (const file of htmlFiles) {
-    const exampleInfo = getExampleInfo(file, inferFallback);
-    if (exampleInfo) Object.assign(result, exampleInfo);
+    try {
+      const info = getExampleInfo(file, inferFallback);
+      if (info) {
+        // displayPath is rendered into the docs, so always use forward slashes regardless of OS
+        const displayPath = isDirectory ? path.relative(examplePath, info.path) : path.basename(info.path);
+        info.displayPath = displayPath.split(path.sep).join("/");
+        if (info.hasCustomTitle) {
+          const baseTitle = info.title;
+          let n = 2;
+          // keep incrementing the suffix until it's unused
+          while (usedCustomTitles.has(info.title)) info.title = `${baseTitle} (${n++})`;
+          if (info.title !== baseTitle) {
+            console.warn(`Warning: duplicate example title "${baseTitle}" in ${file}, renamed to "${info.title}"`);
+          }
+          // store the final title in the set, so that subsequent renaming attempts can be compared against existing titles
+          usedCustomTitles.add(info.title);
+        }
+        result[info.path] = info;
+      }
+    } catch (e) {
+      if (htmlFiles.length > 1) {
+        console.warn(`Warning: skipping ${file}: ${e instanceof Error ? e.message : e}`);
+      } else {
+        throw e;
+      }
+    }
   }
   return result;
 }

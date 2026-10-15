@@ -25,7 +25,7 @@ const info: ExtensionInfo = {
     },
   },
   examples: {
-    "Basic example": { path: "examples/basic.html", code: "initJsPsych({ extensions: [...] });" },
+    "examples/basic.html": { title: "Basic example", hasCustomTitle: true, path: "examples/basic.html", displayPath: "basic.html", code: "initJsPsych({ extensions: [...] });" },
   },
 };
 
@@ -60,6 +60,32 @@ describe("extension renderer (default template)", () => {
     expect(docs["data"]).toContain("object");
     expect(docs["init-parameters"]).not.toContain("ParameterType");
     expect(docs["data"]).not.toContain("ParameterType");
+  });
+
+  it("renders both examples with their subdirectory path in the section heading", () => {
+    const infoWithPathCollision: ExtensionInfo = {
+      ...info,
+      examples: {
+        "examples/path1/duplicated_filename.html": {
+          title: "TestExtension Example",
+          hasCustomTitle: false,
+          path: "examples/path1/duplicated_filename.html",
+          displayPath: "path1/duplicated_filename.html",
+          code: "const trial1 = {};",
+        },
+        "examples/path2/duplicated_filename.html": {
+          title: "TestExtension Example",
+          hasCustomTitle: false,
+          path: "examples/path2/duplicated_filename.html",
+          displayPath: "path2/duplicated_filename.html",
+          code: "const trial2 = {};",
+        },
+      },
+    };
+    const docs = getExtensionDocs(infoWithPathCollision);
+    expect(docs.examples).toContain("### TestExtension Example (path1/duplicated_filename.html)");
+    expect(docs.examples).toContain("### TestExtension Example (path2/duplicated_filename.html)");
+    expect(docs.examples).not.toContain("### TestExtension Example (duplicated_filename.html)");
   });
 
   it("matches the rendered snapshot", () => {

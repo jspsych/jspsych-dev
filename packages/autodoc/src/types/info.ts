@@ -76,7 +76,10 @@ export interface ParameterInfo {
 
 /** name is attached via record */
 export interface ExampleInfo {
+    title: string;
+    hasCustomTitle: boolean;
     path: string;
+    displayPath: string;
     code: string;
 }
 

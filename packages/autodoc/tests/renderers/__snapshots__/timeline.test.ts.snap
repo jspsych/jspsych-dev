@@ -20,7 +20,7 @@ Builds the timeline.
   "examples": "<!-- jspsych-autodocs:examples:start -->
 ## Examples
 
-### Basic example (examples/basic.html)
+### Basic example
 
 \`\`\`js
 createTimeline(jsPsych);
