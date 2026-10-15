@@ -295,7 +295,9 @@ export function collectExamples(
     try {
       const info = getExampleInfo(file, inferFallback);
       if (info) {
-        info.displayPath = isDirectory ? path.relative(examplePath, info.path) : path.basename(info.path);
+        // displayPath is rendered into the docs, so always use forward slashes regardless of OS
+        const displayPath = isDirectory ? path.relative(examplePath, info.path) : path.basename(info.path);
+        info.displayPath = displayPath.split(path.sep).join("/");
         if (info.hasCustomTitle) {
           const baseTitle = info.title;
           const count = titleCounts.get(baseTitle) ?? 0;
