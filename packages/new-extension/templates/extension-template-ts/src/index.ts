@@ -44,11 +44,11 @@ class ExtensionNameExtension implements JsPsychExtension {
     });
   };
 
-  on_start = ({}: OnStartParameters): void => {};
+  on_start = ({}: OnStartParameters = {}): void => {};
 
-  on_load = ({}: OnLoadParameters): void => {};
+  on_load = ({}: OnLoadParameters = {}): void => {};
 
-  on_finish = ({}: OnFinishParameters): { [key: string]: any } => {
+  on_finish = ({}: OnFinishParameters = {}): { [key: string]: any } => {
     return {
       data1: 99, // Make sure this type and name matches the information for data1 in the data object contained within the info const.
       data2: "hello world!", // Make sure this type and name matches the information for data2 in the data object contained within the info const.
